@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.ShareInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.ShareInfo" >
+    <result column="share_code" property="shareCode" jdbcType="VARCHAR" />
+    <result column="share_name" property="shareName" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="CHAR" />
+  </resultMap>
+  <insert id="insert" parameterType="com.liuhu.socket.entity.ShareInfo" >
+    insert into share_info (share_code, share_name, status
+      )
+    values (#{shareCode,jdbcType=VARCHAR}, #{shareName,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.ShareInfo" >
+    insert into share_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="shareCode != null" >
+        share_code,
+      </if>
+      <if test="shareName != null" >
+        share_name,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="shareCode != null" >
+        #{shareCode,jdbcType=VARCHAR},
+      </if>
+      <if test="shareName != null" >
+        #{shareName,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="getShareInfo"
+	parameterType="com.liuhu.socket.entity.ShareInfo"
+	resultMap="BaseResultMap">
+	select share_code,share_name,status from share_info t
+	where 1=1
+	<if test="status != null">
+		and t.status = #{status,jdbcType=CHAR}
+	</if>
+	<if test="shareCode != null">
+		and t.share_code = #{shareCode,jdbcType=VARCHAR}
+	</if>
+  </select>
+</mapper>

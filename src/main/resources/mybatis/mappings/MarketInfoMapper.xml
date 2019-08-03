@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.MarketInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.MarketInfo" >
+    <result column="id" property="id" jdbcType="INTEGER" />
+    <result column="share_code" property="shareCode" jdbcType="VARCHAR" />
+    <result column="open_value" property="openValue" jdbcType="DOUBLE" />
+    <result column="end_value" property="endValue" jdbcType="DOUBLE" />
+    <result column="rise_fall" property="riseFall" jdbcType="DOUBLE" />
+    <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="VARCHAR" />
+    <result column="highest" property="highest" jdbcType="DOUBLE" />
+    <result column="lowest" property="lowest" jdbcType="DOUBLE" />
+    <result column="date" property="date" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfo" >
+    insert into market_info (id, open_value, end_value, 
+      rise_fall, rise_fall_ratio, highest, 
+      lowest, date)
+    values (#{id,jdbcType=INTEGER}, #{openValue,jdbcType=DOUBLE}, #{endValue,jdbcType=DOUBLE}, 
+      #{riseFall,jdbcType=DOUBLE}, #{riseFallRatio,jdbcType=VARCHAR}, #{highest,jdbcType=DOUBLE}, 
+      #{lowest,jdbcType=DOUBLE}, #{date,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.MarketInfo" >
+    insert into market_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="openValue != null" >
+        open_value,
+      </if>
+      <if test="endValue != null" >
+        end_value,
+      </if>
+      <if test="riseFall != null" >
+        rise_fall,
+      </if>
+      <if test="riseFallRatio != null" >
+        rise_fall_ratio,
+      </if>
+      <if test="highest != null" >
+        highest,
+      </if>
+      <if test="lowest != null" >
+        lowest,
+      </if>
+      <if test="date != null" >
+        date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="openValue != null" >
+        #{openValue,jdbcType=DOUBLE},
+      </if>
+      <if test="endValue != null" >
+        #{endValue,jdbcType=DOUBLE},
+      </if>
+      <if test="riseFall != null" >
+        #{riseFall,jdbcType=DOUBLE},
+      </if>
+      <if test="riseFallRatio != null" >
+        #{riseFallRatio,jdbcType=VARCHAR},
+      </if>
+      <if test="highest != null" >
+        #{highest,jdbcType=DOUBLE},
+      </if>
+      <if test="lowest != null" >
+        #{lowest,jdbcType=DOUBLE},
+      </if>
+      <if test="date != null" >
+        #{date,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <select id="getShareInfo"
+	parameterType="com.liuhu.socket.domain.MarketInputDomain"
+	resultMap="BaseResultMap">
+	select id,share_code, open_value, end_value,
+	rise_fall, rise_fall_ratio, highest,
+	lowest, date from market_info t
+	where 1=1
+	<if test="startTime != null">
+		and t.date >= #{startTime}
+	</if>
+	<if test="endTime != null">
+		and t.date <![CDATA[ <= ]]>
+		#{endTime}
+	</if>
+	<if test="shareCode != null">
+		and t.share_code = #{shareCode,jdbcType=VARCHAR}
+	</if>
+	order by t.date
+</select>
+  <select id="getLastEndList"
+          parameterType="com.liuhu.socket.domain.MarketInputDomain"
+          resultType="com.liuhu.socket.domain.MarketOutputDomain">
+    SELECT
+    b.share_code as shareCode,
+    CASE
+    WHEN a.end_value IS NULL
+    AND d.end_value IS NULL THEN
+    round(
+    (b.end_value - b.open_value) / b.open_value,
+    4
+    )
+    WHEN a.end_value IS NULL
+    AND d.end_value IS NOT NULL THEN
+    round(
+    (b.end_value - d.open_value) / d.open_value,
+    4
+    )
+    ELSE
+    round(
+    (b.end_value - a.end_value) / a.end_value,
+    4
+    )
+    END  as rate,
+    c.share_name as shareName
+    FROM
+    (
+    SELECT
+    id,
+    share_code,
+    open_value,
+    end_value,
+    rise_fall,
+    rise_fall_ratio,
+    highest,
+    lowest,
+    MAX(date) AS date
+    FROM
+    market_info t1
+    WHERE
+    1 = 1
+    <if test="endTime != null">
+      and t1.date <![CDATA[ <= ]]>
+      #{endTime}
+    </if>
+    <if test="shareCode != null">
+      and t1.share_code = #{shareCode,jdbcType=VARCHAR}
+    </if>
+    GROUP BY
+    t1.share_code
+    ) b
+    LEFT JOIN (
+    SELECT
+    id,
+    share_code,
+    open_value,
+    end_value,
+    rise_fall,
+    rise_fall_ratio,
+    highest,
+    lowest,
+    MAX(date) AS date
+    FROM
+    market_info t
+    WHERE
+    1 = 1
+    <if test="startTime != null">
+      and t.date <![CDATA[ < ]]>
+      #{startTime}
+    </if>
+    <if test="shareCode != null">
+      and t.share_code = #{shareCode,jdbcType=VARCHAR}
+    </if>
+    GROUP BY
+    t.share_code
+    ) a ON b.share_code = a.share_code
+    LEFT JOIN share_info c ON c.share_code = b.share_code
+    LEFT JOIN (
+    SELECT
+    MIN(date),
+    share_code,
+    end_value,
+    open_value
+    FROM
+    market_info
+    where 1=1
+    <if test="shareCode != null">
+      and share_code = #{shareCode,jdbcType=VARCHAR}
+    </if>
+    GROUP BY
+    share_code
+    ) d ON b.share_code = d.share_code
+
+  </select>
+</mapper>
