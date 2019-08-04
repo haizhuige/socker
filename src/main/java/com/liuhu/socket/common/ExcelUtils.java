@@ -77,15 +77,16 @@ public class ExcelUtils {
     /**
      * 导入
      *
-     * @param file csv文件(路径+文件)
+     * @param filePathString csv文件(路径+文件)
      * @return
      */
-    public static List<String> importCsv(File file){
+    public static List<String> importCsv(String filePathString){
         List<String> dataList=new ArrayList<String>();
 
         BufferedReader br=null;
         try {
-            br = new BufferedReader(new FileReader(file));
+            InputStreamReader fReader = new InputStreamReader(new FileInputStream(filePathString),"gbk");
+            br = new BufferedReader(fReader);
             String line = "";
             while ((line = br.readLine()) != null) {
                 dataList.add(line);
@@ -125,15 +126,11 @@ public class ExcelUtils {
             }
         }
       */
-       File file =null;
-        try {
-            file = new File("C:\\Users\\Administrator\\Downloads\\603712.csv");
+         String file =  "C:\\Users\\Administrator\\Downloads\\603712.csv";
             List<String> list = importCsv(file);
             String s = list.get(0);
-            s  = new String(s.getBytes("GBK"), "iso-8859-1");
+           // s  = new String(s.getBytes("unicode"), "utf-8");
             System.out.println(s);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 }
