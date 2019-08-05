@@ -1,7 +1,5 @@
 package com.liuhu.socket.common;
 
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.dto.SockerExcelEntity;
 import org.apache.http.HttpEntity;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
@@ -11,39 +9,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 public class HttpClientUtils {
-    @Value("download.url")
-    private static String url;
-    @Value("download.param")
-    private static String staticParam;
-    public static List<SockerExcelEntity> GetInfoByParam(MarketInputDomain inputDomain) {
-        // 参数
-        StringBuffer params = new StringBuffer();
-        // 字符数据最好encoding以下;这样一来，某些特殊字符才能传过去(如:某人的名字就是“&”,不encoding的话,传不过去)
-        params.append("code=" + inputDomain.getShareCode());
-        params.append("&");
-        params.append("start=" + inputDomain.getStartTime().replace("-", ""));
-        params.append("&");
-        params.append("end=" + inputDomain.getEndTime().replace("-", ""));
-        // 创建Get请求
-        String totalUrl = url + params + staticParam;
-        commonGetMethodByParam(totalUrl);
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        return null;
-    }
-
-    public static void commonGetMethodByParam (String url){
+    public static void commonGetMethodByParam(String url) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(url);
         // 响应模型

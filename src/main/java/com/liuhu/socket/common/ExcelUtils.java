@@ -52,12 +52,12 @@ public class ExcelUtils {
      * @return
      */
     public static Boolean writeExcel(OutputStream os, Class clazz, List<? extends BaseRowModel> data){
-        BufferedOutputStream bos= null;
+        BufferedOutputStream bos = null;
         try {
             bos = new BufferedOutputStream(os);
             ExcelWriter writer = new ExcelWriter(bos, ExcelTypeEnum.XLSX);
             //写第一个sheet, sheet1  数据全是List<String> 无模型映射关系
-            Sheet sheet1 = new Sheet(1, 0,clazz);
+            Sheet sheet1 = new Sheet(1, 0, clazz);
             writer.write(data, sheet1);
             writer.finish();
         } catch (Exception e) {
@@ -81,22 +81,21 @@ public class ExcelUtils {
      * @return
      */
     public static List<String> importCsv(String filePathString){
-        List<String> dataList=new ArrayList<String>();
-
-        BufferedReader br=null;
+        List<String> dataList = new ArrayList<String>();
+        BufferedReader br = null;
         try {
-            InputStreamReader fReader = new InputStreamReader(new FileInputStream(filePathString),"gbk");
+            InputStreamReader fReader = new InputStreamReader(new FileInputStream(filePathString), "gbk");
             br = new BufferedReader(fReader);
             String line = "";
             while ((line = br.readLine()) != null) {
                 dataList.add(line);
             }
-        }catch (Exception e) {
-        }finally{
-            if(br!=null){
+        } catch (Exception e) {
+        } finally {
+            if (br != null) {
                 try {
                     br.close();
-                    br=null;
+                    br = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -108,29 +107,28 @@ public class ExcelUtils {
 
     public static void main(String[] args) {
         //1.读Excel
-
-      /**  FileInputStream fis = null;
-       * try {
-            fis = new FileInputStream("C:\\Users\\Administrator\\Downloads\\603712.csv");
-            Boolean flag = ExcelUtils.readExcel(fis, SockerExcelEntity.class);
-            System.out.println("导入是否成功："+flag);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }finally {
-            if (fis != null){
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-      */
-         String file =  "C:\\Users\\Administrator\\Downloads\\603712.csv";
-            List<String> list = importCsv(file);
-            String s = list.get(0);
-           // s  = new String(s.getBytes("unicode"), "utf-8");
-            System.out.println(s);
+        /**  FileInputStream fis = null;
+         * try {
+         fis = new FileInputStream("C:\\Users\\Administrator\\Downloads\\603712.csv");
+         Boolean flag = ExcelUtils.readExcel(fis, SockerExcelEntity.class);
+         System.out.println("导入是否成功："+flag);
+         } catch (FileNotFoundException e) {
+         e.printStackTrace();
+         }finally {
+         if (fis != null){
+         try {
+         fis.close();
+         } catch (IOException e) {
+         e.printStackTrace();
+         }
+         }
+         }
+         */
+        String file = "C:\\Users\\Administrator\\Downloads\\603712.csv";
+        List<String> list = importCsv(file);
+        String s = list.get(0);
+        // s  = new String(s.getBytes("unicode"), "utf-8");
+        System.out.println(s);
 
     }
 }
