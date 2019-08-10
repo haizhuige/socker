@@ -29,4 +29,10 @@ public class MarketOutputDomain implements Serializable {
      * 大盘变化率
      */
     private double ARate;
+
+    private String rateStr;
+
+    private String startTime;
+
+    private String endTime;
 }

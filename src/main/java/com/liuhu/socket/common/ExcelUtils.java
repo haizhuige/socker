@@ -104,7 +104,41 @@ public class ExcelUtils {
 
         return dataList;
     }
+    /**
+     * 下载文件
+     *
+     * @param input
+     * @return
+     */
+    public static List<String> downloadByInputStream(InputStream input){
+        List<String> dataList = new ArrayList<String>();
+        BufferedReader br = null;
+        try {
+            InputStreamReader fReader = new InputStreamReader(input, "gbk");
+            br = new BufferedReader(fReader);
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                dataList.add(line);
+            }
+        } catch (Exception e) {
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                    br = null;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
+        return dataList;
+    }
+    public static void delFile(String filePath){
+        File file=new File(filePath);
+        if(file.exists()&&file.isFile())
+            file.delete();
+    }
     public static void main(String[] args) {
         //1.读Excel
         /**  FileInputStream fis = null;
@@ -129,6 +163,6 @@ public class ExcelUtils {
         String s = list.get(0);
         // s  = new String(s.getBytes("unicode"), "utf-8");
         System.out.println(s);
-
+        delFile(file);
     }
 }

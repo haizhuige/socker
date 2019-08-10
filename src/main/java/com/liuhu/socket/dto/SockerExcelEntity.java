@@ -28,4 +28,6 @@ public class SockerExcelEntity extends BaseRowModel {
     private double riseFall;
     @ExcelProperty(index = 9 , value = "涨跌幅")
     private double riseFallRatio;
+    @ExcelProperty(index = 10 , value = "总市值")
+    private double totalAmount;
 }

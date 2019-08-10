@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.liuhu.socket.domain.MarketInputDomain;
 import com.liuhu.socket.domain.MarketOutputDomain;
+import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 
 public interface SharesInfoService {
@@ -22,4 +23,9 @@ public interface SharesInfoService {
 	 */
 	List<MarketOutputDomain> getBuyEveryDay(MarketInputDomain input);
 
+    /**
+     * 插入更新数据
+     * @param excelList
+     */
+    void insertOrUpdateMarketInfo(List<SockerExcelEntity> excelList);
 }

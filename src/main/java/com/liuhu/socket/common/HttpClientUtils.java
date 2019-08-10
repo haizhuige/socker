@@ -1,5 +1,6 @@
 package com.liuhu.socket.common;
 
+import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
 import org.apache.http.HttpEntity;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
@@ -9,16 +10,27 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HttpClientUtils {
+    private static final Logger logger = LogManager.getLogger(SharesInfoServiceImpl.class);
 
-    public static void commonGetMethodByParam(String url) {
+    public static List<String> commonGetMethodByParam(String url) {
+        logger.info("带参数的get请求url{}",url);
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(url);
         // 响应模型
         CloseableHttpResponse response = null;
+        List<String> dataList = new ArrayList<String>();
+        BufferedReader br = null;
         try {
             // 配置信息
             RequestConfig requestConfig = RequestConfig.custom()
@@ -40,16 +52,16 @@ public class HttpClientUtils {
             // 从响应模型中获取响应实体
             HttpEntity responseEntity = response.getEntity();
             System.out.println("响应状态为:" + response.getStatusLine());
-            if (responseEntity != null) {
-                System.out.println("响应内容长度为:" + responseEntity.getContentLength());
-                System.out.println("响应内容为:" + EntityUtils.toString(responseEntity));
+            InputStream input = responseEntity.getContent();
+            InputStreamReader fReader = new InputStreamReader(input, "gbk");
+            br = new BufferedReader(fReader);
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                dataList.add(line);
             }
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return dataList;
+        } catch (Exception e) {
+          logger.info("get请求失败，e{}",e);
         } finally {
             try {
                 // 释放资源
@@ -59,10 +71,14 @@ public class HttpClientUtils {
                 if (response != null) {
                     response.close();
                 }
+                if(br!=null){
+                    br.close();
+                    br = null;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
+     return null;
     }
 }

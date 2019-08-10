@@ -1,9 +1,12 @@
 package com.liuhu.socket.service.impl;
 
+import com.liuhu.socket.common.DateUtils;
+import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.domain.MarketInputDomain;
 import com.liuhu.socket.domain.MarketOutputDomain;
+import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.enums.SpecialSockerEnum;
 import com.liuhu.socket.service.SharesInfoService;
@@ -41,7 +44,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         /**
          * 获取一段时间内的收益率
          */
-        List<MarketOutputDomain> list = marketInfoMapper.getLastEndList(input);
+        List<MarketOutputDomain> list = getMarketPriodRateInfo(input);
         MarketInputDomain aMarket = new MarketInputDomain();
         BeanUtils.copyProperties(input, aMarket);
         aMarket.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
@@ -49,11 +52,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         /**
          * 获取上证指数收益率
          */
-        if (input != null && StringUtils.isNotEmpty(input.getShareCode())) {
-            aOutPut = marketInfoMapper.getLastEndList(aMarket).get(0);
-        } else {
-            aOutPut = list.stream().filter(marketOutputDomain -> SpecialSockerEnum.A_SOCKER.getCode().equals(marketOutputDomain.getShareCode())).findFirst().get();
-        }
+        aOutPut = getMarketPriodRateInfo(aMarket).get(0);
         /**
          * 去掉list中上证指数数据
          */
@@ -98,4 +97,48 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         return outList;
     }
 
+    @Override
+    public void insertOrUpdateMarketInfo(List<SockerExcelEntity> excelList) {
+        if(excelList!=null&&excelList.size()>0){
+            marketInfoMapper.insertOrUpdateMarketInfo(excelList);
+        }
+
+    }
+    private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input){
+        List<MarketOutputDomain> returnList = new ArrayList<>();
+        List<MarketInfo> lastEndList =  marketInfoMapper.getLastEndList(input);
+        Map<String, List<MarketInfo>> map = lastEndList.stream().collect(Collectors.groupingBy(MarketInfo::getShareCode));
+        for (Entry<String, List<MarketInfo>> entry : map.entrySet()) {
+            List<MarketInfo> list = entry.getValue();
+            MarketOutputDomain marketOutputDomain = new MarketOutputDomain();
+            if(list.size()==1){
+                MarketInfo info = list.get(0);
+                BeanUtils.copyProperties(info,marketOutputDomain);
+                marketOutputDomain.setRate(Double.parseDouble(info.getRiseFallRatio()));
+                marketOutputDomain.setRateStr(info.getRiseFallRatio()+"%");
+                marketOutputDomain.setStartTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYYMMDD));
+                marketOutputDomain.setEndTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYYMMDD));
+            }else{
+                MarketInfo maxInfo = list.get(0);
+                MarketInfo minInfo = list.get(1);
+                if(maxInfo.getDate().compareTo(minInfo.getDate())<0){
+                    return null;
+                }
+                BeanUtils.copyProperties(maxInfo,marketOutputDomain);
+                double rate =0;
+                if(maxInfo.getTotalAmount()>0){
+                    double preAllAmount = minInfo.getTotalAmount()/(1+Double.parseDouble(minInfo.getRiseFallRatio())*0.01);
+                    rate =  MathConstants.Pointkeep((maxInfo.getTotalAmount() - preAllAmount)/preAllAmount,4);
+                }else{
+                    rate =  MathConstants.Pointkeep((maxInfo.getEndValue() - minInfo.getPreEndValue())/minInfo.getPreEndValue(),4);
+                }
+                marketOutputDomain.setRate(rate);
+                marketOutputDomain.setRateStr(rate*100+"%");
+                marketOutputDomain.setStartTime(DateUtils.format(minInfo.getDate(),DateUtils.DateFormat.YYYYMMDD));
+                marketOutputDomain.setEndTime(DateUtils.format(maxInfo.getDate(),DateUtils.DateFormat.YYYYMMDD));
+            }
+            returnList.add(marketOutputDomain);
+        }
+        return returnList;
+    }
 }
