@@ -17,9 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -45,6 +43,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
          * 获取一段时间内的收益率
          */
         List<MarketOutputDomain> list = getMarketPriodRateInfo(input);
+        if(list==null&&list.size()<=0){
+            return new ArrayList<>();
+        }
         MarketInputDomain aMarket = new MarketInputDomain();
         BeanUtils.copyProperties(input, aMarket);
         aMarket.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
@@ -57,10 +58,16 @@ public class SharesInfoServiceImpl implements SharesInfoService {
          * 去掉list中上证指数数据
          */
         for (MarketOutputDomain outPut : list) {
-            outPut.setARate(aOutPut.getRate());
+            outPut.setARate(aOutPut.getRateStr());
             if (!SpecialSockerEnum.A_SOCKER.getCode().equals(outPut.getShareCode())) {
                 outList.add(outPut);
             }
+        }
+        /**
+         * 根据收益率排序
+         */
+        if(outList!=null){
+            outList= outList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
         }
         return outList;
     }
@@ -104,6 +111,12 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         }
 
     }
+
+    @Override
+    public Date queryMaxDate() {
+        return marketInfoMapper.queryMaxDate();
+    }
+
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input){
         List<MarketOutputDomain> returnList = new ArrayList<>();
         List<MarketInfo> lastEndList =  marketInfoMapper.getLastEndList(input);
@@ -115,9 +128,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
                 MarketInfo info = list.get(0);
                 BeanUtils.copyProperties(info,marketOutputDomain);
                 marketOutputDomain.setRate(Double.parseDouble(info.getRiseFallRatio()));
-                marketOutputDomain.setRateStr(info.getRiseFallRatio()+"%");
-                marketOutputDomain.setStartTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYYMMDD));
-                marketOutputDomain.setEndTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYYMMDD));
+                marketOutputDomain.setRateStr(MathConstants.ParseStrPointKeep(info.getRiseFallRatio(),2)+"%");
+                marketOutputDomain.setStartTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
+                marketOutputDomain.setEndTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
             }else{
                 MarketInfo maxInfo = list.get(0);
                 MarketInfo minInfo = list.get(1);
@@ -133,9 +146,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
                     rate =  MathConstants.Pointkeep((maxInfo.getEndValue() - minInfo.getPreEndValue())/minInfo.getPreEndValue(),4);
                 }
                 marketOutputDomain.setRate(rate);
-                marketOutputDomain.setRateStr(rate*100+"%");
-                marketOutputDomain.setStartTime(DateUtils.format(minInfo.getDate(),DateUtils.DateFormat.YYYYMMDD));
-                marketOutputDomain.setEndTime(DateUtils.format(maxInfo.getDate(),DateUtils.DateFormat.YYYYMMDD));
+                marketOutputDomain.setRateStr(MathConstants.Pointkeep(rate*100,4)+"%");
+                marketOutputDomain.setStartTime(DateUtils.format(minInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
+                marketOutputDomain.setEndTime(DateUtils.format(maxInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
             }
             returnList.add(marketOutputDomain);
         }

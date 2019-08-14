@@ -1,5 +1,6 @@
 package com.liuhu.socket.service;
 
+import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.MarketInputDomain;
@@ -28,4 +29,10 @@ public interface SharesInfoService {
      * @param excelList
      */
     void insertOrUpdateMarketInfo(List<SockerExcelEntity> excelList);
+
+    /**
+     * 获取最新的时间
+     * @return
+     */
+    Date queryMaxDate();
 }

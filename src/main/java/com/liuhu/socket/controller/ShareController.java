@@ -1,9 +1,11 @@
 package com.liuhu.socket.controller;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.liuhu.socket.common.DateUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +39,10 @@ public class ShareController {
 	@ResponseBody
 	@RequestMapping("/getRiseOfRate.do")
 	public ResponseResult getRiseOfRate(@RequestBody MarketInputDomain input) {
+        String startTime = DateUtils.format(input.getStartTimeDa(),DateUtils.DateFormat.YYYY_MM_DD);
+        String endTime =DateUtils.format(input.getEndTimeDa(),DateUtils.DateFormat.YYYY_MM_DD);
+        input.setStartTime(startTime);
+        input.setEndTime(endTime);
 		List<MarketOutputDomain> rateList =	sharesInfoService.getRiseOfRate(input);
 		return ResponseResult.done(rateList);
 	} 

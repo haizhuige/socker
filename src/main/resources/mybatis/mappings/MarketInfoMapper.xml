@@ -132,11 +132,14 @@
         <if  test="endTime != null">
              t.date <![CDATA[ <= ]]> #{endTime}
         </if>
-           <if test="shareCode != null">
+           <if test="shareCode != null and shareCode !=''">
             and   t.share_code = #{shareCode,jdbcType=VARCHAR}
            </if>
        </where>
         )
+        <if test="shareCode != null and shareCode !=''">
+            and   t.share_code = #{shareCode,jdbcType=VARCHAR}
+        </if>
         UNION
         SELECT
         t3.*
@@ -152,7 +155,7 @@
             <if  test="startTime != null">
                 and  t2.date >=#{startTime}
             </if>
-            <if test="shareCode != null">
+            <if test="shareCode != null and shareCode !=''">
                 and  t2.share_code = #{shareCode,jdbcType=VARCHAR}
             </if>
         </where>
@@ -175,6 +178,9 @@
             #{it.riseFallRatio},#{it.highest},#{it.lowest},
             #{it.date},#{it.shareCode},#{it.totalAmount},#{it.preEndValue})
         </foreach>
-
     </insert>
+    <select id="queryMaxDate"
+            resultType="java.util.Date">
+        select max(date) as date  from market_info t
+    </select>
 </mapper>

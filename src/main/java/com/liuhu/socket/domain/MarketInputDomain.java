@@ -1,6 +1,7 @@
 package com.liuhu.socket.domain;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,5 +16,9 @@ public class MarketInputDomain implements Serializable {
 	private String endTime;
 	
 	private String shareCode;
+
+    private Date startTimeDa;
+
+    private Date endTimeDa;
 
 }

@@ -1,5 +1,6 @@
 package com.liuhu.socket.dao;
 
+import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.MarketInputDomain;
@@ -17,4 +18,6 @@ public interface MarketInfoMapper {
     List<MarketInfo> getLastEndList(MarketInputDomain input);
 
     void insertOrUpdateMarketInfo(List<SockerExcelEntity> list);
+
+    Date queryMaxDate();
 }
