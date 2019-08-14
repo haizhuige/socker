@@ -1,7 +1,6 @@
 package com.liuhu.socket.schedule;
 
 import com.liuhu.socket.common.DateUtils;
-import com.liuhu.socket.common.ExcelUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.ShareInfoMapper;
@@ -11,8 +10,6 @@ import com.liuhu.socket.entity.ShareInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
-import org.apache.http.HttpEntity;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,13 +18,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Component("excelTask")
-public class ExcelSchedule implements ScheduleInterface {
+@Component("scheduleTask")
+public class MarketScheduleServiceImpl implements MarketScheduleService {
     private static final Logger logger = LogManager.getLogger(SharesInfoServiceImpl.class);
     @Resource
     ShareInfoMapper shareInfoMapper;
@@ -85,6 +81,11 @@ public class ExcelSchedule implements ScheduleInterface {
         return list;
     }
 
+    /**
+     * 封装需要插入的对象
+     * @param list
+     * @return
+     */
     private static List<SockerExcelEntity> sealEntity(List<String> list) {
         List<SockerExcelEntity> excelList = new ArrayList<>();
         for (int i = 1; i < list.size(); i++) {

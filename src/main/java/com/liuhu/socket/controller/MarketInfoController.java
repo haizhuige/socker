@@ -18,7 +18,7 @@ import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.service.SharesInfoService;
 
 @Controller
-public class ShareController {
+public class MarketInfoController {
 	
 	@Resource
 	SharesInfoService sharesInfoService;

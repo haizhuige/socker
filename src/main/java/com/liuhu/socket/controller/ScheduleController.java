@@ -1,29 +1,27 @@
 package com.liuhu.socket.controller;
 
 import com.liuhu.socket.common.ResponseResult;
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.entity.MarketInfo;
-import com.liuhu.socket.schedule.ExcelSchedule;
+import com.liuhu.socket.schedule.MarketScheduleServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.List;
 
 @Controller
-public class SchedualController {
+@Slf4j
+public class ScheduleController {
     @Resource
-    ExcelSchedule excelTask;
+    MarketScheduleServiceImpl scheduleTask;
     @ResponseBody
     @RequestMapping("/getSynMarketDate.do")
     public ResponseResult getShareInfo()  {
         try {
-            excelTask.getNewMarketInfo();
+            scheduleTask.getNewMarketInfo();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("导入行情失败{}",e);
         }
         return ResponseResult.done(null);
     }
