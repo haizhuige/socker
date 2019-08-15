@@ -111,7 +111,7 @@
     <select id="getLastEndList"
             parameterType="com.liuhu.socket.domain.MarketInputDomain"
             resultType="com.liuhu.socket.entity.MarketInfo">
-        select  a.share_code as shareCode,
+        select a.share_code as shareCode,
         a.end_value as endValue,
         a.total_amount as totalAmount,
         a.rise_fall_ratio as riseFallRatio,
@@ -119,26 +119,26 @@
         a.date,
         c.share_name as shareName from
         (SELECT
-        *
+        t.*
         FROM
-        market_info t
-        WHERE
-        t.date = (
+        market_info t,
+        (
         SELECT
-        MAX(date)
+        MAX(date) AS date,
+        share_code
         FROM
         market_info t
-       <where>
-        <if  test="endTime != null">
-             t.date <![CDATA[ <= ]]> #{endTime}
+        GROUP BY
+        t.share_code
+        ) t2
+        WHERE
+            t.share_code = t2.share_code
+        AND t.date = t2.date
+        <if test="endTime != null">
+            and t.date <![CDATA[ <= ]]> #{endTime}
         </if>
-           <if test="shareCode != null and shareCode !=''">
-            and   t.share_code = #{shareCode,jdbcType=VARCHAR}
-           </if>
-       </where>
-        )
         <if test="shareCode != null and shareCode !=''">
-            and   t.share_code = #{shareCode,jdbcType=VARCHAR}
+            and t.share_code = #{shareCode,jdbcType=VARCHAR}
         </if>
         UNION
         SELECT
@@ -152,11 +152,11 @@
         FROM
         market_info t2
         <where>
-            <if  test="startTime != null">
-                and  t2.date >=#{startTime}
+            <if test="startTime != null">
+                and t2.date >=#{startTime}
             </if>
             <if test="shareCode != null and shareCode !=''">
-                and  t2.share_code = #{shareCode,jdbcType=VARCHAR}
+                and t2.share_code = #{shareCode,jdbcType=VARCHAR}
             </if>
         </where>
         GROUP BY
@@ -181,6 +181,6 @@
     </insert>
     <select id="queryMaxDate"
             resultType="java.util.Date">
-        select max(date) as date  from market_info t
+        select max(date) as date  from market_info t where t.share_code =#{shareCode,jdbcType=VARCHAR}
     </select>
 </mapper>

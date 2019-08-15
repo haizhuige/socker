@@ -34,5 +34,5 @@ public interface SharesInfoService {
      * 获取最新的时间
      * @return
      */
-    Date queryMaxDate();
+    Date queryMaxDate(String shareCode);
 }

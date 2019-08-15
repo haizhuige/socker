@@ -45,7 +45,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
         for (ShareInfo excelShare : shareInfoList) {
             String shareCode = excelShare.getShareCode();
-            Date date = sharesInfoService.queryMaxDate();
+            Date date = sharesInfoService.queryMaxDate(excelShare.getShareCode());
             /**
              * 网易股票下载当天的行情数据
              */

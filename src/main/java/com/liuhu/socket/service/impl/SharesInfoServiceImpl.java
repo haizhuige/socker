@@ -113,8 +113,8 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     }
 
     @Override
-    public Date queryMaxDate() {
-        return marketInfoMapper.queryMaxDate();
+    public Date queryMaxDate(String shareCode) {
+        return marketInfoMapper.queryMaxDate(shareCode);
     }
 
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input){

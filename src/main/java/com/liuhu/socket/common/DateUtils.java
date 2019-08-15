@@ -29,7 +29,8 @@ public class DateUtils  {
         YYYY_MM("yyyy-MM"),
         Y_MM("yyyy年M月"),
         MM_DD_HH_MM("MM-dd HH:mm"),
-        YYYY_MM_DD_POINT("yyyy.MM.dd");
+        YYYY_MM_DD_POINT("yyyy.MM.dd"),
+        YYYYMMDDHHMMSS("yyyyMMddHHmmss");
         private String format;
 
         DateFormat(String format) {

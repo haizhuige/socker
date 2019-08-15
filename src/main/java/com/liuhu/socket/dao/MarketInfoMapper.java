@@ -19,5 +19,5 @@ public interface MarketInfoMapper {
 
     void insertOrUpdateMarketInfo(List<SockerExcelEntity> list);
 
-    Date queryMaxDate();
+    Date queryMaxDate(String shareCode);
 }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.RechargeInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.RechargeInfo" >
+    <result column="id" property="id" jdbcType="BIGINT" />
+    <result column="person_id" property="personId" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="CHAR" />
+    <result column="recharge" property="recharge" jdbcType="DOUBLE" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <insert id="insert" parameterType="com.liuhu.socket.entity.RechargeInfo" >
+    insert into recharge_info (id, person_id, status, 
+      recharge, update_date)
+    values (#{id,jdbcType=BIGINT}, #{personId,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, 
+      #{recharge,jdbcType=DOUBLE}, #{updateDate,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.RechargeInfo" >
+    insert into recharge_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="personId != null" >
+        person_id,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="recharge != null" >
+        recharge,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="personId != null" >
+        #{personId,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=CHAR},
+      </if>
+      <if test="recharge != null" >
+        #{recharge,jdbcType=DOUBLE},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+</mapper>
