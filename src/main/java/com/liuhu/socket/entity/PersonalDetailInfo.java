@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.Date;
 @Setter
 @Getter
-public class TradeInfo implements Serializable {
+public class PersonalDetailInfo implements Serializable {
     private Integer id;
 
     private String personId;
@@ -16,16 +16,21 @@ public class TradeInfo implements Serializable {
 
     private Double tradePrice;
 
-    private Double handNum;
+    private Double currentPrice;
 
-    private Date tradeDate;
+    private Double handPrice;
 
-    private String type;
+    private Integer handNum;
+
+    private Integer holdDay;
+
+    private String sharePer;
+
+    private String shareAmount;
 
     private Date updateDate;
 
     private String status;
 
     private static final long serialVersionUID = 1L;
-
 }

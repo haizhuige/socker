@@ -22,7 +22,8 @@ public class ScheduleController {
             scheduleTask.getNewMarketInfo();
         } catch (IOException e) {
             log.error("导入行情失败{}",e);
+            return ResponseResult.done("导入失败");
         }
-        return ResponseResult.done(null);
+        return ResponseResult.done("导入成功");
     }
 }

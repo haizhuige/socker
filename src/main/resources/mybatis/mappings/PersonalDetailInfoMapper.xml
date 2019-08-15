@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.PersonalDetailInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.PersonalDetailInfo" >
+    <result column="id" property="id" jdbcType="INTEGER" />
+    <result column="person_id" property="personId" jdbcType="VARCHAR" />
+    <result column="share_code" property="shareCode" jdbcType="CHAR" />
+    <result column="trade_price" property="tradePrice" jdbcType="DOUBLE" />
+    <result column="current_price" property="currentPrice" jdbcType="DOUBLE" />
+    <result column="hand_price" property="handPrice" jdbcType="DOUBLE" />
+    <result column="hand_num" property="handNum" jdbcType="INTEGER" />
+    <result column="hold_day" property="holdDay" jdbcType="INTEGER" />
+    <result column="share_per" property="sharePer" jdbcType="VARCHAR" />
+    <result column="share_amount" property="shareAmount" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="status" property="status" jdbcType="CHAR" />
+  </resultMap>
+  <insert id="insert" parameterType="com.liuhu.socket.entity.PersonalDetailInfo" >
+    insert into personal_detail_info (id, person_id, share_code, 
+      trade_price, current_price, hand_price, 
+      hand_num, hold_day, share_per, 
+      share_amount, update_date, status
+      )
+    values (#{id,jdbcType=INTEGER}, #{personId,jdbcType=VARCHAR}, #{shareCode,jdbcType=CHAR}, 
+      #{tradePrice,jdbcType=DOUBLE}, #{currentPrice,jdbcType=DOUBLE}, #{handPrice,jdbcType=DOUBLE}, 
+      #{handNum,jdbcType=INTEGER}, #{holdDay,jdbcType=INTEGER}, #{sharePer,jdbcType=VARCHAR}, 
+      #{shareAmount,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.PersonalDetailInfo" >
+    insert into personal_detail_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="personId != null" >
+        person_id,
+      </if>
+      <if test="shareCode != null" >
+        share_code,
+      </if>
+      <if test="tradePrice != null" >
+        trade_price,
+      </if>
+      <if test="currentPrice != null" >
+        current_price,
+      </if>
+      <if test="handPrice != null" >
+        hand_price,
+      </if>
+      <if test="handNum != null" >
+        hand_num,
+      </if>
+      <if test="holdDay != null" >
+        hold_day,
+      </if>
+      <if test="sharePer != null" >
+        share_per,
+      </if>
+      <if test="shareAmount != null" >
+        share_amount,
+      </if>
+      <if test="updateDate != null" >
+        update_date,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="personId != null" >
+        #{personId,jdbcType=VARCHAR},
+      </if>
+      <if test="shareCode != null" >
+        #{shareCode,jdbcType=CHAR},
+      </if>
+      <if test="tradePrice != null" >
+        #{tradePrice,jdbcType=DOUBLE},
+      </if>
+      <if test="currentPrice != null" >
+        #{currentPrice,jdbcType=DOUBLE},
+      </if>
+      <if test="handPrice != null" >
+        #{handPrice,jdbcType=DOUBLE},
+      </if>
+      <if test="handNum != null" >
+        #{handNum,jdbcType=INTEGER},
+      </if>
+      <if test="holdDay != null" >
+        #{holdDay,jdbcType=INTEGER},
+      </if>
+      <if test="sharePer != null" >
+        #{sharePer,jdbcType=VARCHAR},
+      </if>
+      <if test="shareAmount != null" >
+        #{shareAmount,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+</mapper>

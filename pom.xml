@@ -9,11 +9,11 @@
 		<version>2.1.6.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>socket</artifactId>
+	<groupId>com.liuhu</groupId>
+	<artifactId>socker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>socket</name>
-	<description>socket project</description>
+	<name>socker</name>
+	<description>socker project</description>
 
 	<properties>
 		<java.version>1.8</java.version>
