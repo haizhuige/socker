@@ -67,4 +67,37 @@
       </if>
     </trim>
   </insert>
+    <select id="queryByEntity" parameterType="com.liuhu.socket.entity.PersonalInfo" resultType="com.liuhu.socket.entity.PersonalInfo">
+        select  id,person_id as personId,total_amount as totalAmount, total_share as totalShare, total_market_value as totalMarketValue
+        from personal_info
+           <where>
+               <if test="personId != null" >
+                   and  person_id =  #{personId,jdbcType=VARCHAR}
+               </if>
+               <if test="status != null" >
+                   and  status =  #{status,jdbcType=CHAR}
+               </if>
+           </where>
+    </select>
+    <update id="updateAmountByPersonId" parameterType="com.liuhu.socket.entity.PersonalInfo" >
+       update personal_info
+         <set>
+             <if test = "totalAmount >0">
+                 total_amount = #{totalAmount,jdbcType=DOUBLE},
+             </if>
+             <if test = "totalShare >0">
+                 total_share = #{totalShare,jdbcType=DOUBLE},
+             </if>
+             <if test = "totalMarketValue >0">
+                 total_market_value = #{totalMarketValue,jdbcType=DOUBLE},
+             </if>
+             <if test = "updateDate !=null">
+                 update_date = #{updateDate,jdbcType=TIMESTAMP},
+             </if>
+             <if test = "status !=null">
+                 status =  #{status,jdbcType=CHAR},
+             </if>
+         </set>
+        where  person_id = #{personId,jdbcType=DOUBLE}
+    </update>
 </mapper>

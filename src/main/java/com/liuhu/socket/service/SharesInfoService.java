@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.liuhu.socket.domain.MarketInputDomain;
 import com.liuhu.socket.domain.MarketOutputDomain;
+import com.liuhu.socket.domain.TradeInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 
@@ -35,4 +36,5 @@ public interface SharesInfoService {
      * @return
      */
     Date queryMaxDate(String shareCode);
+
 }

@@ -2,17 +2,21 @@ package com.liuhu.socket.service.impl;
 
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.CustomerInfoMapper;
+import com.liuhu.socket.dao.PersonalInfoMapper;
 import com.liuhu.socket.dao.RechargeInfoMapper;
 import com.liuhu.socket.domain.CustomerInputDomain;
 import com.liuhu.socket.domain.RechargeInputDomain;
 import com.liuhu.socket.entity.CustomerInfo;
+import com.liuhu.socket.entity.PersonalInfo;
 import com.liuhu.socket.entity.RechargeInfo;
 import com.liuhu.socket.service.RechargeInfoService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Author liuhu-jk
@@ -25,6 +29,8 @@ public class RechargeInfoServiceImpl implements RechargeInfoService {
     CustomerInfoMapper customerInfoMapper;
     @Resource
     RechargeInfoMapper rechargeInfoMapper;
+    @Resource
+    PersonalInfoMapper personalInfoMapper;
     @Override
     public Integer addCustomer(CustomerInputDomain input) {
         CustomerInfo customerInfo = new CustomerInfo();
@@ -35,14 +41,30 @@ public class RechargeInfoServiceImpl implements RechargeInfoService {
     }
 
     @Override
-    public Integer operateTrade(RechargeInputDomain input) {
+    @Transactional
+    public Integer addRecharge(RechargeInputDomain input) {
         RechargeInfo rechargeInfo = new RechargeInfo();
         BeanUtils.copyProperties(input,rechargeInfo);
         rechargeInfo.setUpdateDate(new Date());
+        String personId = input.getPersonId();
+        double amount = input.getAmount();
+        rechargeInfo.setRecharge(amount);
+        int updateNum =0;
         int i =  rechargeInfoMapper.insertSelective(rechargeInfo);
         if(i>0){
-
+            PersonalInfo personalInfo = new PersonalInfo();
+            personalInfo.setPersonId(input.getPersonId());
+            personalInfo.setUpdateDate(new Date());
+            personalInfo.setTotalAmount(amount);
+            List<PersonalInfo> list = personalInfoMapper.queryByEntity(personalInfo);
+            if(list.size()>0){
+                double originTotalAmount = list.get(0).getTotalAmount();
+                personalInfo.setTotalAmount(amount+originTotalAmount);
+                updateNum = personalInfoMapper.updateAmountByPersonId(personalInfo);
+            }else{
+                updateNum =personalInfoMapper.insertSelective(personalInfo);
+            }
         }
-        return null;
+        return updateNum;
     }
 }

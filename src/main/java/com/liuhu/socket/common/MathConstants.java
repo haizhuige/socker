@@ -58,13 +58,22 @@ public class MathConstants {
      *股票买卖手续费计算
      */
     public static  double computerCommission(double tradeValue,int handNum,int type) {
+        double commission =0;
         double transferFee =  handNum * transferPerFee;
         double dealFee =handNum*tradeValue * dealPerFee;
         double commissionFee = handNum*tradeValue *commissionPerFee;
        if (TradeStatusEnum.BUY.getCode().equals(type)){
-         return Pointkeep(transferFee + dealFee+commissionFee,2);
+           commission  = transferFee + dealFee+commissionFee;
+           if (commission<5){
+               return 5;
+           }
+         return Pointkeep(commission,2);
        }else if(TradeStatusEnum.SALE.getCode().equals(type)){
            double stampTaxFee =handNum*tradeValue*stampTaxPerFee;
+           commission = stampTaxFee+transferFee + dealFee+commissionFee;
+           if(commission<5){
+               return 5;
+           }
            return Pointkeep(stampTaxFee+transferFee + dealFee+commissionFee,2);
        }
         return 0.0;

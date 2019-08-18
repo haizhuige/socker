@@ -8,6 +8,7 @@ import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.service.RechargeInfoService;
 import com.liuhu.socket.service.SharesInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,7 +49,10 @@ public class RechargeController {
 	@ResponseBody
 	@RequestMapping("/addRecharge.do")
 	public ResponseResult operateTrade(@RequestBody RechargeInputDomain input) {
-        Integer a = rechargeInfoService.operateTrade(input);
-		return ResponseResult.done(null);
+	    if (input==null|| StringUtils.isEmpty(input.getPersonId())||input.getAmount()<=0){
+	        return ResponseResult.failed("充值入参为空");
+        }
+        Integer a = rechargeInfoService.addRecharge(input);
+		return ResponseResult.done(a);
 	}
 }

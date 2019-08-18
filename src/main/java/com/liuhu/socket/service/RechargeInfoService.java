@@ -8,5 +8,5 @@ public interface RechargeInfoService {
 
     Integer addCustomer(CustomerInputDomain input);
 
-    Integer operateTrade(RechargeInputDomain input);
+    Integer addRecharge(RechargeInputDomain input);
 }

@@ -26,7 +26,7 @@ public class PersonalDetailInfo implements Serializable {
 
     private String sharePer;
 
-    private String shareAmount;
+    private Double shareAmount;
 
     private Date updateDate;
 
