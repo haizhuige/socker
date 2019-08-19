@@ -8,6 +8,7 @@
         <result column="trade_price" property="tradePrice" jdbcType="DOUBLE"/>
         <result column="current_price" property="currentPrice" jdbcType="DOUBLE"/>
         <result column="hand_price" property="handPrice" jdbcType="DOUBLE"/>
+        <result column="commission" property="commission" jdbcType="DOUBLE"/>
         <result column="hand_num" property="handNum" jdbcType="INTEGER"/>
         <result column="hold_day" property="holdDay" jdbcType="INTEGER"/>
         <result column="share_per" property="sharePer" jdbcType="VARCHAR"/>
@@ -19,12 +20,12 @@
     insert into personal_detail_info (id, person_id, share_code, 
       trade_price, current_price, hand_price, 
       hand_num, hold_day, share_per, 
-      share_amount, update_date, status
+      share_amount, update_date, status,commission
       )
     values (#{id,jdbcType=INTEGER}, #{personId,jdbcType=VARCHAR}, #{shareCode,jdbcType=CHAR}, 
       #{tradePrice,jdbcType=DOUBLE}, #{currentPrice,jdbcType=DOUBLE}, #{handPrice,jdbcType=DOUBLE}, 
       #{handNum,jdbcType=INTEGER}, #{holdDay,jdbcType=INTEGER}, #{sharePer,jdbcType=VARCHAR}, 
-      #{shareAmount,jdbcType=DOUBLE}, #{updateDate,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR}
+      #{shareAmount,jdbcType=DOUBLE}, #{updateDate,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR},#{commission,jdbcType=DOUBLE}
       )
   </insert>
     <insert id="insertSelective" parameterType="com.liuhu.socket.entity.PersonalDetailInfo">
@@ -66,6 +67,9 @@
             <if test="status != null">
                 status,
             </if>
+            <if test="commission != null">
+                commission,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="id != null">
@@ -103,6 +107,9 @@
             </if>
             <if test="status != null">
                 #{status,jdbcType=CHAR},
+            </if>
+            <if test="commission != null">
+                #{commission,jdbcType=DOUBLE},
             </if>
         </trim>
     </insert>
@@ -142,6 +149,9 @@
             </if>
             <if test="shareAmount != null">
                 share_amount = #{shareAmount,jdbcType=DOUBLE},
+            </if>
+            <if test="commission != null">
+                commission = #{commission,jdbcType=DOUBLE},
             </if>
             <if test="updateDate != null">
                 update_date = #{updateDate,jdbcType=TIMESTAMP},

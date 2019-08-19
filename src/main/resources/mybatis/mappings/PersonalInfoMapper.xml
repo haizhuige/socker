@@ -7,16 +7,17 @@
     <result column="total_amount" property="totalAmount" jdbcType="DOUBLE" />
     <result column="total_share" property="totalShare" jdbcType="DOUBLE" />
     <result column="total_market_value" property="totalMarketValue" jdbcType="DOUBLE" />
-    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+      <result column="commission" property="commission" jdbcType="DOUBLE" />
+      <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="status" property="status" jdbcType="CHAR" />
   </resultMap>
   <insert id="insert" parameterType="com.liuhu.socket.entity.PersonalInfo" >
     insert into personal_info (id, person_id, total_amount, 
-      total_share, total_market_value, update_date, 
-      status)
+      total_share, total_market_value, update_date,
+      status,commission)
     values (#{id,jdbcType=INTEGER}, #{personId,jdbcType=VARCHAR}, #{totalAmount,jdbcType=DOUBLE}, 
       #{totalShare,jdbcType=DOUBLE}, #{totalMarketValue,jdbcType=DOUBLE}, #{updateDate,jdbcType=TIMESTAMP}, 
-      #{status,jdbcType=CHAR})
+      #{status,jdbcType=CHAR}, #{commission,jdbcType=DOUBLE})
   </insert>
   <insert id="insertSelective" parameterType="com.liuhu.socket.entity.PersonalInfo" >
     insert into personal_info
@@ -42,6 +43,9 @@
       <if test="status != null" >
         status,
       </if>
+        <if test="commission != null" >
+            commission,
+        </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides="," >
       <if test="id != null" >
@@ -65,10 +69,13 @@
       <if test="status != null" >
         #{status,jdbcType=CHAR},
       </if>
+        <if test="commission != null" >
+            #{commission,jdbcType=DOUBLE},
+        </if>
     </trim>
   </insert>
     <select id="queryByEntity" parameterType="com.liuhu.socket.entity.PersonalInfo" resultType="com.liuhu.socket.entity.PersonalInfo">
-        select  id,person_id as personId,total_amount as totalAmount, total_share as totalShare, total_market_value as totalMarketValue
+        select  id,person_id as personId,total_amount as totalAmount, total_share as totalShare, total_market_value as totalMarketValue,commission
         from personal_info
            <where>
                <if test="personId != null" >
@@ -82,13 +89,13 @@
     <update id="updateAmountByPersonId" parameterType="com.liuhu.socket.entity.PersonalInfo" >
        update personal_info
          <set>
-             <if test = "totalAmount >0">
+             <if test = "totalAmount !=null">
                  total_amount = #{totalAmount,jdbcType=DOUBLE},
              </if>
-             <if test = "totalShare >0">
+             <if test = "totalShare !=null">
                  total_share = #{totalShare,jdbcType=DOUBLE},
              </if>
-             <if test = "totalMarketValue >0">
+             <if test = "totalMarketValue !=null">
                  total_market_value = #{totalMarketValue,jdbcType=DOUBLE},
              </if>
              <if test = "updateDate !=null">
@@ -96,6 +103,9 @@
              </if>
              <if test = "status !=null">
                  status =  #{status,jdbcType=CHAR},
+             </if>
+             <if test = "commission !=null">
+                 commission = #{commission,jdbcType=DOUBLE},
              </if>
          </set>
         where  person_id = #{personId,jdbcType=DOUBLE}

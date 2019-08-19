@@ -83,4 +83,33 @@
       </if>
     </trim>
   </insert>
+    <update id="updateEntity" parameterType="com.liuhu.socket.entity.TradeInfo">
+        update trade_info
+        <set>
+            <if test="status != null">
+                status = #{status,jdbcType=CHAR},
+            </if>
+            <if test="updateDate != null">
+                update_date = #{updateDate,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where
+        person_id = #{personId,jdbcType=VARCHAR}
+        and share_code = #{shareCode,jdbcType=CHAR}
+    </update>
+    <select id="queryEarlyInfo" parameterType="com.liuhu.socket.entity.TradeInfo" resultMap="BaseResultMap">
+      select * from trade_info
+        where
+        person_id = #{personId,jdbcType=VARCHAR}
+        and share_code = #{shareCode,jdbcType=CHAR}
+        <if test="type != null" >
+            and type = #{type,jdbcType=CHAR}
+        </if>
+        <if test="shareCode != null" >
+         and share_code = #{shareCode,jdbcType=CHAR}
+        </if>
+        <if test="status != null" >
+         and  status = #{status,jdbcType=CHAR}
+        </if>
+    </select>
 </mapper>

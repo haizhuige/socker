@@ -128,18 +128,20 @@
         share_code
         FROM
         market_info t
-        GROUP BY
-        t.share_code
-        ) t2
-        WHERE
-            t.share_code = t2.share_code
-        AND t.date = t2.date
+        <where>
         <if test="endTime != null">
             and t.date <![CDATA[ <= ]]> #{endTime}
         </if>
         <if test="shareCode != null and shareCode !=''">
             and t.share_code = #{shareCode,jdbcType=VARCHAR}
         </if>
+        </where>
+        GROUP BY
+        t.share_code
+        ) t2
+        WHERE
+            t.share_code = t2.share_code
+        AND t.date = t2.date
         UNION
         SELECT
         t3.*

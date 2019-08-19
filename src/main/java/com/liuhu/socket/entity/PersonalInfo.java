@@ -22,5 +22,6 @@ public class PersonalInfo implements Serializable {
 
     private String status;
 
+    private double commission;
     private static final long serialVersionUID = 1L;
 }

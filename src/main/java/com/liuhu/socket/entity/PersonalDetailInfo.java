@@ -32,5 +32,7 @@ public class PersonalDetailInfo implements Serializable {
 
     private String status;
 
+    private Double commission;
+
     private static final long serialVersionUID = 1L;
 }

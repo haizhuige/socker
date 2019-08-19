@@ -10,7 +10,7 @@ public interface PersonalDetailInfoMapper {
 
     int insertSelective(PersonalDetailInfo record);
 
-    List<PersonalDetailInfo> queryDetailInfo(@Param("detailInfo") PersonalDetailInfo detailInfo);
+    List<PersonalDetailInfo> queryDetailInfo( PersonalDetailInfo detailInfo);
 
     int updatePersonalDetailByEntity(PersonalDetailInfo detailInfo);
 }

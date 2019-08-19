@@ -4,7 +4,9 @@ public enum PersonalStatusEnum {
 	//有效
     VALID("1", "有效"),
     //无效
-	INVALID("2","无效");
+	INVALID("2","无效"),
+    //清仓
+    CLEAR("3","清仓");
     private String code;
     private String value;
 
