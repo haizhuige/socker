@@ -1,13 +1,14 @@
 package com.liuhu.socket.domain;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serializable;
 import java.util.Date;
 
-import lombok.Getter;
-import lombok.Setter;
 @Setter
 @Getter
-public class MarketInputDomain implements Serializable {
+public class MarketInput2Domain implements Serializable {
 
 	private static final long serialVersionUID = -923156671835410830L;
 	

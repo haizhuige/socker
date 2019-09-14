@@ -90,6 +90,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
             PersonalDetailInfo detailInfo = new PersonalDetailInfo();
             detailInfo.setPersonId(input.getPersonId());
             detailInfo.setShareCode(input.getShareCode());
+            detailInfo.setStatus(PersonalStatusEnum.VALID.getCode());
             List<PersonalDetailInfo> detailInfoList = personalDetailInfoMapper.queryDetailInfo(detailInfo);
             /**
              * 更新个人账户详情信息，如果有则更新  无则添加

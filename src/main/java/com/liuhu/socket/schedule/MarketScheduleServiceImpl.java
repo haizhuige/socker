@@ -54,30 +54,54 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             if(date ==null){
                 inputDomain.setStartTime(DateUtils.operateDate(new Date(), -600, DateUtils.DateFormat.YYYYMMDD.getFormat()));
             }else{
-                inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+                inputDomain.setStartTime(DateUtils.operateDate(date, -2, DateUtils.DateFormat.YYYYMMDD.getFormat()));
 
             }
+            inputDomain.setShareName(excelShare.getShareName());
             inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
             List<String> list = this.getInfoByParam(inputDomain);
-            List<SockerExcelEntity> excelList = sealEntity(list);
-            if (excelList != null && excelList.size() > 0) {
-                sharesInfoService.insertOrUpdateMarketInfo(excelList);
+            if (list!=null){
+                List<SockerExcelEntity> excelList = sealEntity(list);
+                if (excelList != null && excelList.size() > 0) {
+                    sharesInfoService.insertOrUpdateMarketInfo(excelList);
+                }
             }
+
         }
     }
 
     private List<String> getInfoByParam(MarketInputDomain inputDomain) throws IOException {
-        // 参数
-        StringBuffer params = new StringBuffer();
-        // 字符数据最好encoding以下;这样一来，某些特殊字符才能传过去(如:某人的名字就是“&”,不encoding的话,传不过去)
-        params.append("code=" + "0" + inputDomain.getShareCode());
-        params.append("&");
-        params.append("start=" + inputDomain.getStartTime().replace("-", ""));
-        params.append("&");
-        params.append("end=" + inputDomain.getEndTime().replace("-", ""));
-        // 创建Get请求
-        String totalUrl = url + params + staticParam;
-        List<String> list = HttpClientUtils.commonGetMethodByParam(totalUrl);
+        List<String> list = new ArrayList<>();
+        //有的股票是前缀加0 有的股票前缀加1
+        String [] array ={"0","1"};
+        for(int i=array.length-1;i>=0;i--){
+            if(list!=null&&list.size()>1){
+                return list;
+            }
+            // 参数
+            StringBuffer params = new StringBuffer();
+            // 字符数据最好encoding以下;这样一来，某些特殊字符才能传过去(如:某人的名字就是“&”,不encoding的话,传不过去)
+            if ("A00001".equals(inputDomain.getShareCode())){
+                params.append("code=0000001");
+            }else{
+                params.append("code=" + array[i] + inputDomain.getShareCode());
+            }
+            params.append("&");
+            params.append("start=" + inputDomain.getStartTime().replace("-", ""));
+            params.append("&");
+            params.append("end=" + inputDomain.getEndTime().replace("-", ""));
+            // 创建Get请求
+            String totalUrl = url + params + staticParam;
+            list = HttpClientUtils.commonGetMethodByParam(totalUrl);
+            if(list!=null&&list.size()>=2&&list.get(1).contains(inputDomain.getShareName())){
+                if ("A00001".equals(inputDomain.getShareCode())){
+                    list.replaceAll(t->t.replace("000001","A00001"));
+                }
+                return list;
+            }else{
+                list =null;
+            }
+        }
         return list;
     }
 
@@ -118,4 +142,5 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         }
         return excelList;
     }
+
 }

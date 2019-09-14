@@ -27,15 +27,17 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Resource
     MarketInfoMapper marketInfoMapper;
-    @Resource
-    ShareInfoMapper shareInfoMapper;
 
     @Override
     public List<MarketInfo> getShareInfo(MarketInputDomain input) {
         List<MarketInfo> list = marketInfoMapper.getShareInfo(input);
         return list;
     }
-
+    /**
+     * 查询时间范围内的增长率
+     * @param input
+     * @return
+     */
     @Override
     public List<MarketOutputDomain> getRiseOfRate(MarketInputDomain input) {
         List<MarketOutputDomain> outList = new ArrayList<>();
@@ -43,7 +45,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
          * 获取一段时间内的收益率
          */
         List<MarketOutputDomain> list = getMarketPriodRateInfo(input);
-        if(list==null&&list.size()<=0){
+        if (list == null && list.size() <= 0) {
             return new ArrayList<>();
         }
         MarketInputDomain aMarket = new MarketInputDomain();
@@ -66,47 +68,14 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         /**
          * 根据收益率排序
          */
-        if(outList!=null){
-            outList= outList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
+        if (outList != null) {
+            outList = outList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
         }
         return outList;
     }
-
-    @Override
-    public List<MarketOutputDomain> getBuyEveryDay(MarketInputDomain input) {
-        List<MarketOutputDomain> outList = new ArrayList<MarketOutputDomain>();
-        List<MarketInfo> list = marketInfoMapper.getShareInfo(input);
-        Map<String, List<MarketInfo>> map = list.stream().collect(Collectors.groupingBy(MarketInfo::getShareCode));
-
-        for (Entry<String, List<MarketInfo>> entry : map.entrySet()) {
-            List<MarketInfo> shareList = entry.getValue();
-            MarketOutputDomain output = new MarketOutputDomain();
-            output.setShareCode(entry.getKey());
-            double mountShare = 0;
-            double totalAmount = 0;
-            for (int i = 0; i < shareList.size(); i++) {
-                MarketInfo market = shareList.get(i);
-                if (market.getRiseFall() < 0) {
-                    double unitValue = market.getEndValue();
-                    mountShare += 100;
-                    double amount = unitValue * 100;
-                    totalAmount += amount;
-                }
-            }
-            double fixRate = (mountShare * shareList.get(shareList.size() - 1).getEndValue() - totalAmount)
-                    / totalAmount;
-            output.setFixRate(fixRate);
-            double latelyUnit = shareList.get(shareList.size() - 1).getEndValue();
-            double earliestUnit = shareList.get(0).getEndValue();
-            output.setRate((latelyUnit - earliestUnit) / earliestUnit);
-            outList.add(output);
-        }
-        return outList;
-    }
-
     @Override
     public void insertOrUpdateMarketInfo(List<SockerExcelEntity> excelList) {
-        if(excelList!=null&&excelList.size()>0){
+        if (excelList != null && excelList.size() > 0) {
             marketInfoMapper.insertOrUpdateMarketInfo(excelList);
         }
 
@@ -117,38 +86,39 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         return marketInfoMapper.queryMaxDate(shareCode);
     }
 
-    private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input){
+    private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input) {
         List<MarketOutputDomain> returnList = new ArrayList<>();
-        List<MarketInfo> lastEndList =  marketInfoMapper.getLastEndList(input);
+        List<MarketInfo> lastEndList = marketInfoMapper.getLastEndList(input);
         Map<String, List<MarketInfo>> map = lastEndList.stream().collect(Collectors.groupingBy(MarketInfo::getShareCode));
         for (Entry<String, List<MarketInfo>> entry : map.entrySet()) {
             List<MarketInfo> list = entry.getValue();
             MarketOutputDomain marketOutputDomain = new MarketOutputDomain();
-            if(list.size()==1){
+            if (list.size() == 1) {
                 MarketInfo info = list.get(0);
-                BeanUtils.copyProperties(info,marketOutputDomain);
+                BeanUtils.copyProperties(info, marketOutputDomain);
                 marketOutputDomain.setRate(Double.parseDouble(info.getRiseFallRatio()));
-                marketOutputDomain.setRateStr(MathConstants.ParseStrPointKeep(info.getRiseFallRatio(),2)+"%");
-                marketOutputDomain.setStartTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
-                marketOutputDomain.setEndTime(DateUtils.format(info.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
-            }else{
+                marketOutputDomain.setRateStr(MathConstants.ParseStrPointKeep(info.getRiseFallRatio(), 2) + "%");
+                marketOutputDomain.setStartTime(DateUtils.format(info.getDate(), DateUtils.DateFormat.YYYY_MM_DD));
+                marketOutputDomain.setEndTime(DateUtils.format(info.getDate(), DateUtils.DateFormat.YYYY_MM_DD));
+            } else {
                 MarketInfo maxInfo = list.get(0);
                 MarketInfo minInfo = list.get(1);
-                if(maxInfo.getDate().compareTo(minInfo.getDate())<0){
+                if (maxInfo.getDate().compareTo(minInfo.getDate()) < 0) {
                     return null;
                 }
-                BeanUtils.copyProperties(maxInfo,marketOutputDomain);
-                double rate =0;
-                if(maxInfo.getTotalAmount()>0){
-                    double preAllAmount = minInfo.getTotalAmount()/(1+Double.parseDouble(minInfo.getRiseFallRatio())*0.01);
-                    rate =  MathConstants.Pointkeep((maxInfo.getTotalAmount() - preAllAmount)/preAllAmount,4);
-                }else{
-                    rate =  MathConstants.Pointkeep((maxInfo.getEndValue() - minInfo.getPreEndValue())/minInfo.getPreEndValue(),4);
+                BeanUtils.copyProperties(maxInfo, marketOutputDomain);
+                double rate = 0;
+                if (maxInfo.getTotalAmount() > 0) {
+                    double preAllAmount = minInfo.getTotalAmount() / (1 + Double.parseDouble(minInfo.getRiseFallRatio()) * 0.01);
+                    // logger.info("查询数据preAllAmount={}，maxInfo.getTotalAmount={},maxInfo={}",preAllAmount,maxInfo.getTotalAmount(),maxInfo.getShareCode());
+                    rate = MathConstants.Pointkeep((maxInfo.getTotalAmount() - preAllAmount) / preAllAmount, 4);
+                } else {
+                    rate = MathConstants.Pointkeep((maxInfo.getEndValue() - minInfo.getPreEndValue()) / minInfo.getPreEndValue(), 4);
                 }
                 marketOutputDomain.setRate(rate);
-                marketOutputDomain.setRateStr(MathConstants.Pointkeep(rate*100,4)+"%");
-                marketOutputDomain.setStartTime(DateUtils.format(minInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
-                marketOutputDomain.setEndTime(DateUtils.format(maxInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD));
+                marketOutputDomain.setRateStr(MathConstants.Pointkeep(rate * 100, 4) + "%");
+                marketOutputDomain.setStartTime(DateUtils.format(minInfo.getDate(), DateUtils.DateFormat.YYYY_MM_DD));
+                marketOutputDomain.setEndTime(DateUtils.format(maxInfo.getDate(), DateUtils.DateFormat.YYYY_MM_DD));
             }
             returnList.add(marketOutputDomain);
         }

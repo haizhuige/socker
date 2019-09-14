@@ -18,13 +18,6 @@ public interface SharesInfoService {
      * @return
      */
 	List<MarketOutputDomain> getRiseOfRate(MarketInputDomain input);
-	/**
-	 * 查询每天都买一手的收益
-	 * @param input
-	 * @return
-	 */
-	List<MarketOutputDomain> getBuyEveryDay(MarketInputDomain input);
-
     /**
      * 插入更新数据
      * @param excelList
