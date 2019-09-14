@@ -1,12 +1,7 @@
 package com.liuhu.socket.controller;
 
-import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.ResponseResult;
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.MarketOutputDomain;
 import com.liuhu.socket.domain.TradeInputDomain;
-import com.liuhu.socket.entity.MarketInfo;
-import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.TradeInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -15,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 @Controller
 @Slf4j
