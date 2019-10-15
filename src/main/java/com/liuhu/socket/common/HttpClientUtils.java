@@ -1,6 +1,9 @@
 package com.liuhu.socket.common;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
@@ -17,9 +20,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 public class HttpClientUtils {
     private static final Logger logger = LogManager.getLogger(SharesInfoServiceImpl.class);
 
@@ -80,5 +85,38 @@ public class HttpClientUtils {
             }
         }
      return null;
+    }
+
+    /**
+     * 发起http请求并获取结果
+     * @param requestUrl 请求地址
+     */
+    public static JSONArray getXpath(String requestUrl){
+        logger.info(requestUrl);
+        String res="";
+        JSONArray array = null;
+        StringBuffer buffer = new StringBuffer();
+        try{
+            URL url = new URL(requestUrl);
+            HttpURLConnection urlCon= (HttpURLConnection)url.openConnection();
+            if(200==urlCon.getResponseCode()){
+                InputStream is = urlCon.getInputStream();
+                InputStreamReader isr = new InputStreamReader(is,"utf-8");
+                BufferedReader br = new BufferedReader(isr);
+
+                String str = null;
+                while((str = br.readLine())!=null){
+                    buffer.append(str);
+                }
+                br.close();
+                isr.close();
+                is.close();
+                res = buffer.toString();
+                array = JSONArray.parseArray(res);
+            }
+        }catch(IOException e){
+            logger.error(requestUrl,e);
+        }
+        return array;
     }
 }

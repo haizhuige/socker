@@ -1,15 +1,21 @@
 package com.liuhu.socket.schedule;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
+import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.domain.MarketInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
+import com.liuhu.socket.dto.SockerSouhuImportEntity;
+import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.entity.ShareInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +24,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Component("scheduleTask")
 public class MarketScheduleServiceImpl implements MarketScheduleService {
@@ -33,9 +37,15 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     private String url;
     @Value("${download.param}")
     private String staticParam;
+    @Value("${sohuDownload.url}")
+    private String sohuUrl;
+    @Value("${sohuDownload.param}")
+    private String soHuStaticParam;
+
+    @Resource
+    MarketInfoNewMapper marketInfoNewMapper;
 
     @Scheduled(cron = "0 0 15 1/1 * ? ")
-    //@Scheduled(cron = "0 0/5 * * * ? ")
     public void getNewMarketInfo() throws IOException {
         /**
          * 查询关注的股票信息
@@ -51,16 +61,16 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
              */
             MarketInputDomain inputDomain = new MarketInputDomain();
             inputDomain.setShareCode(shareCode);
-            if(date ==null){
+            if (date == null) {
                 inputDomain.setStartTime(DateUtils.operateDate(new Date(), -600, DateUtils.DateFormat.YYYYMMDD.getFormat()));
-            }else{
+            } else {
                 inputDomain.setStartTime(DateUtils.operateDate(date, -2, DateUtils.DateFormat.YYYYMMDD.getFormat()));
 
             }
             inputDomain.setShareName(excelShare.getShareName());
             inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
             List<String> list = this.getInfoByParam(inputDomain);
-            if (list!=null){
+            if (list != null) {
                 List<SockerExcelEntity> excelList = sealEntity(list);
                 if (excelList != null && excelList.size() > 0) {
                     sharesInfoService.insertOrUpdateMarketInfo(excelList);
@@ -70,20 +80,58 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         }
     }
 
+    @Scheduled(cron = "0 0 15 1/1 * ? ")
+    public void getMarketInfoBySouHu() throws IOException {
+        /**
+         * 查询关注的股票信息
+         */
+        ShareInfo shareInfo = new ShareInfo();
+        shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+        for (ShareInfo excelShare : shareInfoList) {
+            String shareCode = excelShare.getShareCode();
+            Date date = marketInfoNewMapper.queryMaxDate(excelShare.getShareCode());
+            /**
+             * 搜狐股票下载当天的行情数据
+             */
+            MarketInputDomain inputDomain = new MarketInputDomain();
+            inputDomain.setShareCode(shareCode);
+            if (date == null) {
+                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -600, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+            } else {
+                inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+
+            }
+            inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
+            if (inputDomain.getEndTime().compareTo(inputDomain.getStartTime()) < 0) {
+                continue;
+            }
+            SockerSouhuImportEntity importEntity = this.getMarketJsonBySouhu(inputDomain);
+            if (importEntity == null) {
+                continue;
+            }
+            List<MarketInfoNew> list = importEntity.getList();
+            if (list != null && list.size() > 0) {
+                marketInfoNewMapper.insertOrUpdateMarketInfo(list);
+            }
+
+        }
+    }
+
     private List<String> getInfoByParam(MarketInputDomain inputDomain) throws IOException {
         List<String> list = new ArrayList<>();
         //有的股票是前缀加0 有的股票前缀加1
-        String [] array ={"0","1"};
-        for(int i=array.length-1;i>=0;i--){
-            if(list!=null&&list.size()>1){
-                return list;
+        String[] array = {"0", "1"};
+        for (int i = array.length - 1; i >= 0; i--) {
+            if (list != null && list.size() > 1) {
+                return new ArrayList<>();
             }
             // 参数
             StringBuffer params = new StringBuffer();
             // 字符数据最好encoding以下;这样一来，某些特殊字符才能传过去(如:某人的名字就是“&”,不encoding的话,传不过去)
-            if ("A00001".equals(inputDomain.getShareCode())){
+            if ("A00001".equals(inputDomain.getShareCode())) {
                 params.append("code=0000001");
-            }else{
+            } else {
                 params.append("code=" + array[i] + inputDomain.getShareCode());
             }
             params.append("&");
@@ -93,20 +141,67 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             // 创建Get请求
             String totalUrl = url + params + staticParam;
             list = HttpClientUtils.commonGetMethodByParam(totalUrl);
-            if(list!=null&&list.size()>=2&&list.get(1).contains(inputDomain.getShareName())){
-                if ("A00001".equals(inputDomain.getShareCode())){
-                    list.replaceAll(t->t.replace("000001","A00001"));
+            if (list != null && list.size() >= 2 && list.get(1).contains(inputDomain.getShareName())) {
+                if ("A00001".equals(inputDomain.getShareCode())) {
+                    list.replaceAll(t -> t.replace("000001", "A00001"));
                 }
                 return list;
-            }else{
-                list =null;
+            } else {
+                list = null;
             }
         }
         return list;
     }
+    @Override
+    public SockerSouhuImportEntity getMarketJsonBySouhu(MarketInputDomain inputDomain) throws IOException {
+        JSONArray array;
+        StringBuffer params = new StringBuffer();
+        if ("A00001".equals(inputDomain.getShareCode())) {
+            params.append("code=zs_000001");
+        } else {
+            params.append("code=" + "cn_" + inputDomain.getShareCode());
+        }
+        params.append("&");
+        params.append("start=" + inputDomain.getStartTime().replace("-", ""));
+        params.append("&");
+        params.append("end=" + inputDomain.getEndTime().replace("-", ""));
+        // 创建Get请求
+        String totalUrl = sohuUrl + params + soHuStaticParam;
+        array = HttpClientUtils.getXpath(totalUrl);
+        if (array == null) {
+            return null;
+        }
+        SockerSouhuImportEntity entity = array.getObject(0, SockerSouhuImportEntity.class);
+        List<List<String>> hqList = entity.getHq();
+        logger.info(hqList);
+        String code = entity.getCode();
+        List<MarketInfoNew> sohuList = new ArrayList<>();
+        for (List<String> list : hqList) {
+            MarketInfoNew socker = new MarketInfoNew();
+            socker.setDate(DateUtils.parse(list.get(0), DateUtils.DateFormat.YYYY_MM_DD));
+            socker.setShareCode(code);
+            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 4));
+            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 4));
+            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 4));
+            if (list.get(4).contains("%")) {
+                socker.setRiseFallRatio(MathConstants.ParseStrPointKeep(list.get(4).replace("%", ""), 4));
+            }
+            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
+            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
+            socker.setDealCount(Integer.parseInt(list.get(7)));
+            socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
+            if (list.get(9).contains("%")) {
+                socker.setTurnOverRate(MathConstants.ParseStrPointKeep(list.get(9).replace("%", ""), 4));
+            }
+            sohuList.add(socker);
+        }
+        entity.setList(sohuList);
+        return entity;
+    }
 
     /**
      * 封装需要插入的对象
+     *
      * @param list
      * @return
      */
@@ -142,5 +237,4 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         }
         return excelList;
     }
-
 }

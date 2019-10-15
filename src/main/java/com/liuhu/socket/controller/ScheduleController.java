@@ -19,7 +19,7 @@ public class ScheduleController {
     @RequestMapping("/getSynMarketDate.do")
     public ResponseResult getShareInfo()  {
         try {
-            scheduleTask.getNewMarketInfo();
+            scheduleTask.getMarketInfoBySouHu();
         } catch (IOException e) {
             log.error("导入行情失败{}",e);
             return ResponseResult.done("导入失败");

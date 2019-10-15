@@ -30,7 +30,7 @@ public class TradeInfoController {
 		return ResponseResult.done(a);
 	}
     /**
-     * 股票购买操作
+     * 股票售卖操作
      * @param input
      * @return
      */

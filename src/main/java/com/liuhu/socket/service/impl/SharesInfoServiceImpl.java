@@ -7,8 +7,12 @@ import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.domain.MarketInputDomain;
 import com.liuhu.socket.domain.MarketOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
+import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfo;
+import com.liuhu.socket.entity.ShareInfo;
+import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.enums.SpecialSockerEnum;
+import com.liuhu.socket.schedule.MarketScheduleService;
 import com.liuhu.socket.service.SharesInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +21,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -28,13 +33,21 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     @Resource
     MarketInfoMapper marketInfoMapper;
 
+    @Resource
+    MarketScheduleService scheduleTask;
+
+    @Resource
+    ShareInfoMapper shareInfoMapper;
+
     @Override
     public List<MarketInfo> getShareInfo(MarketInputDomain input) {
         List<MarketInfo> list = marketInfoMapper.getShareInfo(input);
         return list;
     }
+
     /**
      * 查询时间范围内的增长率
+     *
      * @param input
      * @return
      */
@@ -73,6 +86,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         }
         return outList;
     }
+
     @Override
     public void insertOrUpdateMarketInfo(List<SockerExcelEntity> excelList) {
         if (excelList != null && excelList.size() > 0) {
@@ -84,6 +98,28 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     @Override
     public Date queryMaxDate(String shareCode) {
         return marketInfoMapper.queryMaxDate(shareCode);
+    }
+
+    @Override
+    public List<MarketOutputDomain> getRiseOfRateBySohu(MarketInputDomain input) {
+        if (input == null || StringUtils.isEmpty(input.getStartTime()) || StringUtils.isEmpty(input.getEndTime())) {
+            return new ArrayList<>();
+        }
+        ShareInfo shareInfo = new ShareInfo();
+        shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfoWithoutASocker(shareInfo);
+        List<MarketOutputDomain> outputDomainList = new ArrayList<>();
+        input.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
+        MarketOutputDomain aSockerDomain = resolvingData(input);
+        for (ShareInfo result : shareInfoList) {
+            input.setShareCode(result.getShareCode());
+            MarketOutputDomain outputDomain = resolvingData(input);
+            outputDomain.setARate(aSockerDomain.getRateStr());
+            outputDomain.setShareName(result.getShareName());
+            outputDomainList.add(outputDomain);
+        }
+        outputDomainList = outputDomainList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
+        return outputDomainList;
     }
 
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input) {
@@ -124,4 +160,25 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         }
         return returnList;
     }
+
+    private MarketOutputDomain resolvingData(MarketInputDomain inputDomain) {
+        MarketOutputDomain outputDomain = new MarketOutputDomain();
+        SockerSouhuImportEntity entity;
+        try {
+            entity = scheduleTask.getMarketJsonBySouhu(inputDomain);
+            List<String> list = entity.getStat();
+            String ratio = list.get(3);
+            BeanUtils.copyProperties(inputDomain, outputDomain);
+            outputDomain.setRateStr(ratio);
+            if (ratio.contains("%")) {
+                outputDomain.setRate(Double.parseDouble(ratio.replace("%", "")));
+            }
+            return outputDomain;
+        } catch (IOException e) {
+            logger.error("查询搜狐获取行情失败，e={}", e);
+            return new MarketOutputDomain();
+        }
+
+    }
+
 }

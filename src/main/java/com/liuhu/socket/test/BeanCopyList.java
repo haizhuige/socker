@@ -22,6 +22,16 @@ public class BeanCopyList<T, V> {
     V target;
     T origin;
 
+    public void copyList(List<T> originList, List<V> targetList) {
+        Assert.notNull(originList, "originList must not be null");
+        Assert.notNull(targetList, "targetList must not be null");
+        for (int i = 0; i < originList.size(); i++) {
+            T obj = originList.get(i);
+            V tar = target;
+            BeanUtils.copyProperties(obj, tar);
+            targetList.add(tar);
+        }
+    }
     public BeanCopyList(Class<T> tiz, Class<V> clz) {
         try {
             target = clz.newInstance();
@@ -43,14 +53,4 @@ public class BeanCopyList<T, V> {
         System.out.println(JSONObject.toJSON(copyList));
     }
 
-    public void copyList(List<T> originList, List<V> targetList) {
-        Assert.notNull(originList, "originList must not be null");
-        Assert.notNull(targetList, "targetList must not be null");
-        for (int i = 0; i < originList.size(); i++) {
-            T obj = originList.get(i);
-            V tar = target;
-            BeanUtils.copyProperties(obj, tar);
-            targetList.add(tar);
-        }
-    }
 }

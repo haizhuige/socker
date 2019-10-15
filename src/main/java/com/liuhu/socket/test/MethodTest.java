@@ -11,16 +11,34 @@ import java.util.List;
  * @Description
  **/
 public class MethodTest {
+    private Integer start=1;
+    private Integer length=20;
+
+    public Integer getPageNum() {
+     /*   if (start==null||length==null){
+            return 1;
+        }*/
+        return start/length + 1;
+    }
+    public Integer getStart() {
+        return start;
+    }
+
+    public void setStart(final Integer start) {
+        this.start = start;
+    }
+
+    public Integer getLength() {
+        return length;
+    }
+
+    public void setLength(final Integer length) {
+        this.length = length;
+    }
+
     public static void main(String[] args) {
-        List<String> list = new ArrayList<>();
-        list.add("2");
-        init(list);
-        System.out.println(JSONObject.toJSON(list));
+        MethodTest basePageQuery = null;
+        System.out.println(basePageQuery.getPageNum());
     }
-
-    private static void init(List<String> list){
-        list.add("3");
-    }
-
 
 }

@@ -47,7 +47,7 @@ public class MarketInfoController {
         String endTime = DateUtils.format(input.getEndTimeDa(), DateUtils.DateFormat.YYYY_MM_DD);
         input.setStartTime(startTime);
         input.setEndTime(endTime);
-        List<MarketOutputDomain> rateList = sharesInfoService.getRiseOfRate(input);
+        List<MarketOutputDomain> rateList = sharesInfoService.getRiseOfRateBySohu(input);
         return ResponseResult.done(rateList);
     }
 

@@ -10,4 +10,6 @@ public interface ShareInfoMapper {
     int insertSelective(ShareInfo record);
     
     List<ShareInfo> getShareInfo(ShareInfo record);
+
+    List<ShareInfo> getShareInfoWithoutASocker(ShareInfo shareInfo);
 }

@@ -29,5 +29,11 @@ public interface SharesInfoService {
      * @return
      */
     Date queryMaxDate(String shareCode);
+    /**
+     * 查询时间范围内的增长率
+     * @param input
+     * @return
+     */
+    List<MarketOutputDomain> getRiseOfRateBySohu(MarketInputDomain input);
 
 }
