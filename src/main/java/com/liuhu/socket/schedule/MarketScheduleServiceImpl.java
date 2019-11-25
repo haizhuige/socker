@@ -155,6 +155,8 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     @Override
     public SockerSouhuImportEntity getMarketJsonBySouhu(MarketInputDomain inputDomain) throws IOException {
         JSONArray array;
+        String period = inputDomain.getPeriod();
+        String periodUrl;
         StringBuffer params = new StringBuffer();
         if ("A00001".equals(inputDomain.getShareCode())) {
             params.append("code=zs_000001");
@@ -166,8 +168,17 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         params.append("&");
         params.append("end=" + inputDomain.getEndTime().replace("-", ""));
         // 创建Get请求
-        String totalUrl = sohuUrl + params + soHuStaticParam;
-        array = HttpClientUtils.getXpath(totalUrl);
+        if (StringUtils.isEmpty(period)){
+            periodUrl = "&period=d";
+        }else {
+            periodUrl = "&period="+period;
+        }
+        String totalUrl = sohuUrl + params + soHuStaticParam+ periodUrl;
+        String response = HttpClientUtils.getXpath(totalUrl);
+        if ("{}".equals(response)){
+            return null;
+        }
+        array =   JSONArray.parseArray(response);
         if (array == null) {
             return null;
         }
@@ -188,7 +199,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             }
             socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
             socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
-            socker.setDealCount(Integer.parseInt(list.get(7)));
+            socker.setDealCount(Long.parseLong(list.get(7)));
             socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
             if (list.get(9).contains("%")) {
                 socker.setTurnOverRate(MathConstants.ParseStrPointKeep(list.get(9).replace("%", ""), 4));

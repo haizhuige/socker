@@ -1,15 +1,20 @@
 package com.liuhu.socket.test;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * @Author liuhu-jk
  * @Date 2019/9/8 16:13
  * @Description
  **/
+@Setter
+@Getter
 public class MethodTest {
     private Integer start=1;
     private Integer length=20;
@@ -20,25 +25,8 @@ public class MethodTest {
         }*/
         return start/length + 1;
     }
-    public Integer getStart() {
-        return start;
-    }
-
-    public void setStart(final Integer start) {
-        this.start = start;
-    }
-
-    public Integer getLength() {
-        return length;
-    }
-
-    public void setLength(final Integer length) {
-        this.length = length;
-    }
-
     public static void main(String[] args) {
-        MethodTest basePageQuery = null;
-        System.out.println(basePageQuery.getPageNum());
+
     }
 
 }

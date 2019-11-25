@@ -9,6 +9,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -50,6 +51,7 @@ public class BeanCopyList<T, V> {
         list.add(marketInputDomain);
         List<MarketInput2Domain> copyList = new ArrayList<>();
         new BeanCopyList(MarketInputDomain.class, MarketInput2Domain.class).copyList(list, copyList);
+        new HashSet<>().add("a");
         System.out.println(JSONObject.toJSON(copyList));
     }
 

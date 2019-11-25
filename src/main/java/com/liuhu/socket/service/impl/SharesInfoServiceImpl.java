@@ -1,6 +1,8 @@
 package com.liuhu.socket.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
+import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
@@ -9,6 +11,7 @@ import com.liuhu.socket.domain.MarketOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfo;
+import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.entity.ShareInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.enums.SpecialSockerEnum;
@@ -18,10 +21,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -38,6 +43,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Resource
     ShareInfoMapper shareInfoMapper;
+
+    @Value("${realTime.url}")
+    private String realTimeUrl;
 
     @Override
     public List<MarketInfo> getShareInfo(MarketInputDomain input) {
@@ -102,24 +110,115 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Override
     public List<MarketOutputDomain> getRiseOfRateBySohu(MarketInputDomain input) {
-        if (input == null || StringUtils.isEmpty(input.getStartTime()) || StringUtils.isEmpty(input.getEndTime())) {
-            return new ArrayList<>();
-        }
+
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
         List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfoWithoutASocker(shareInfo);
         List<MarketOutputDomain> outputDomainList = new ArrayList<>();
         input.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
         MarketOutputDomain aSockerDomain = resolvingData(input);
+        if (aSockerDomain == null) {
+            return new ArrayList<>();
+        }
         for (ShareInfo result : shareInfoList) {
             input.setShareCode(result.getShareCode());
             MarketOutputDomain outputDomain = resolvingData(input);
+            if (outputDomain == null) {
+                continue;
+            }
             outputDomain.setARate(aSockerDomain.getRateStr());
             outputDomain.setShareName(result.getShareName());
             outputDomainList.add(outputDomain);
         }
         outputDomainList = outputDomainList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
         return outputDomainList;
+    }
+
+    @Override
+    public List<MarketOutputDomain> getRealTimeRateByWangyi() {
+        ShareInfo shareInfo = new ShareInfo();
+        shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        String shareCodes = shareInfoMapper.getRealTimeRateByWangyi(shareInfo);
+        String newUrl = realTimeUrl + shareCodes;
+        String response = HttpClientUtils.getXpath(newUrl);
+        String jsonStr = response.substring(response.indexOf("(") + 1, response.indexOf(")"));
+        JSONObject obj = JSONObject.parseObject(jsonStr);
+        Collection<Object> collection = obj.values();
+        Iterator it = collection.iterator();
+        List<MarketOutputDomain> list = new ArrayList<>();
+        while (it.hasNext()) {
+            Object object = it.next();
+            String valueStr = JSONObject.toJSONString(object);
+            JSONObject valueObject = JSONObject.parseObject(valueStr);
+            MarketOutputDomain outputDomain = new MarketOutputDomain();
+            outputDomain.setShareCode(valueObject.getString("code"));
+            outputDomain.setShareName(valueObject.getString("name"));
+            double updowm = valueObject.getDouble("updown");
+            double yestclose = valueObject.getDouble("yestclose");
+            outputDomain.setRate(MathConstants.Pointkeep(new BigDecimal(updowm).divide(new BigDecimal(yestclose), 2).doubleValue(), 4));
+            outputDomain.setRateStr(MathConstants.Pointkeep(outputDomain.getRate() * 100, 4) + "%");
+            list.add(outputDomain);
+        }
+        list = list.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
+        return list;
+
+    }
+
+    @Override
+    public List<MarketOutputDomain> getDimentionRate(MarketInputDomain inputDomain) {
+        try {
+            SockerSouhuImportEntity entity = scheduleTask.getMarketJsonBySouhu(inputDomain);
+            List<List<String>> hqList = entity.getHq();
+            List<MarketOutputDomain> outputDomainList = new ArrayList<>();
+            MarketInputDomain sockerAInputDomain = new MarketInputDomain();
+            BeanUtils.copyProperties(inputDomain, sockerAInputDomain);
+            //查询A股数据
+            sockerAInputDomain.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
+            SockerSouhuImportEntity sockerAEntity = scheduleTask.getMarketJsonBySouhu(sockerAInputDomain);
+            List<List<String>> sockerAList = sockerAEntity.getHq();
+            double sumRate = 0;//个股汇总
+            double sumARate = 0;//a股汇总
+            for (int i = 0; i < hqList.size(); i++) {
+                List<String> list = hqList.get(i);
+                MarketOutputDomain outputDomain = new MarketOutputDomain();
+                BeanUtils.copyProperties(inputDomain, outputDomain);
+                String ratio = list.get(4);
+                outputDomain.setRateStr(ratio);
+                sumRate += Double.parseDouble(ratio.replace("%",""));
+                outputDomain.setStartTime(list.get(0));
+                for (int j = 0; j < sockerAList.size(); j++) {
+                    List<String> alist = sockerAList.get(j);
+                    if (i == j) {
+                        outputDomain.setARate(alist.get(4));
+                        sumARate +=Double.parseDouble(outputDomain.getARate().replace("%",""));
+                        break;
+                    }
+                }
+                outputDomainList.add(outputDomain);
+
+            }
+            if (outputDomainList.size()>0){
+                MarketOutputDomain sumRateOutDomain = new MarketOutputDomain();
+                BeanUtils.copyProperties(outputDomainList.get(0),sumRateOutDomain);
+                sumRateOutDomain.setARate(MathConstants.Pointkeep(sumARate,2)+"%");
+                sumRateOutDomain.setRateStr(MathConstants.Pointkeep(sumRate,2)+"%");
+                sumRateOutDomain.setStartTime("汇总");
+                outputDomainList.add(sumRateOutDomain);
+            }
+
+            return outputDomainList;
+        } catch (IOException e) {
+            logger.error("从搜狐股票获取数据失败");
+            return new ArrayList<>();
+        }
+
+    }
+
+    @Override
+    public List<ShareInfo> getShareInfo() {
+        ShareInfo shareInfo = new ShareInfo();
+        shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        return shareInfoMapper.getShareInfoWithoutASocker(shareInfo);
     }
 
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input) {
@@ -166,6 +265,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         SockerSouhuImportEntity entity;
         try {
             entity = scheduleTask.getMarketJsonBySouhu(inputDomain);
+            if (entity == null) {
+                return null;
+            }
             List<String> list = entity.getStat();
             String ratio = list.get(3);
             BeanUtils.copyProperties(inputDomain, outputDomain);
@@ -180,5 +282,6 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         }
 
     }
+
 
 }

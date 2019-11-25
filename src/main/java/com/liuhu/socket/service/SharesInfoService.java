@@ -8,6 +8,7 @@ import com.liuhu.socket.domain.MarketOutputDomain;
 import com.liuhu.socket.domain.TradeInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
+import com.liuhu.socket.entity.ShareInfo;
 
 public interface SharesInfoService {
 	
@@ -36,4 +37,20 @@ public interface SharesInfoService {
      */
     List<MarketOutputDomain> getRiseOfRateBySohu(MarketInputDomain input);
 
+    /**
+     * 查询实时股票数据
+     */
+    List<MarketOutputDomain> getRealTimeRateByWangyi();
+
+    /**
+     * 查询以周、月为维度计算收益增长率
+     * @param input
+     * @return
+     */
+    List<MarketOutputDomain> getDimentionRate(MarketInputDomain input);
+    /**
+     * 获取股票代码及其名称
+     * @return
+     */
+    List<ShareInfo> getShareInfo();
 }

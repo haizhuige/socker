@@ -20,7 +20,7 @@ public class MarketInfoNew implements Serializable {
 
     private Double lowest;
 
-    private Integer dealCount;
+    private Long dealCount;
 
     private Double dealAmount;
 
@@ -94,11 +94,11 @@ public class MarketInfoNew implements Serializable {
         this.lowest = lowest;
     }
 
-    public Integer getDealCount() {
+    public Long getDealCount() {
         return dealCount;
     }
 
-    public void setDealCount(Integer dealCount) {
+    public void setDealCount(Long dealCount) {
         this.dealCount = dealCount;
     }
 

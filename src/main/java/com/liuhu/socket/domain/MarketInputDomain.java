@@ -23,4 +23,6 @@ public class MarketInputDomain implements Serializable {
 
     private String shareName;
 
+    private String period;
+
 }

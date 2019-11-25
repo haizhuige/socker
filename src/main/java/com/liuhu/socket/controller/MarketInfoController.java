@@ -10,12 +10,14 @@ import com.liuhu.socket.domain.NetIncomeInputDomain;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -52,6 +54,40 @@ public class MarketInfoController {
     }
 
     /**
+     * 查询实时股票增长率
+     */
+    @ResponseBody
+    @RequestMapping("/getRealTimeRateByWangyi.do")
+    public ResponseResult getRealTimeRateByWangyi() {
+        List<MarketOutputDomain> rateList = sharesInfoService.getRealTimeRateByWangyi();
+        return ResponseResult.done(rateList);
+    }
+
+    /**
+     * 以周、月为维度统计股票增长率信息
+     */
+    @ResponseBody
+    @RequestMapping("/getDimentionRate.do")
+    public ResponseResult getDimentionRate(@RequestBody MarketInputDomain input) {
+        if (input == null || StringUtils.isEmpty(input.getShareCode()) || StringUtils.isEmpty(input.getPeriod()) || input.getStartTimeDa()==null || input.getEndTimeDa()==null) {
+            return ResponseResult.failed("入参为空");
+        }
+        String startTime = DateUtils.format(input.getStartTimeDa(), DateUtils.DateFormat.YYYY_MM_DD);
+        String endTime = DateUtils.format(input.getEndTimeDa(), DateUtils.DateFormat.YYYY_MM_DD);
+        input.setStartTime(startTime);
+        input.setEndTime(endTime);
+        if (StringUtils.isEmpty(input.getStartTime()) || StringUtils.isEmpty(input.getEndTime())) {
+            return ResponseResult.failed("日期传入为空");
+        }
+        String shareCode = input.getShareCode();
+        String[] taskArray = shareCode.split("\\|");
+        input.setShareCode(taskArray[0]);
+        input.setShareName(taskArray[1]);
+        List<MarketOutputDomain> rateList = sharesInfoService.getDimentionRate(input);
+        return ResponseResult.done(rateList);
+    }
+
+    /**
      * 查询买入卖出净收入
      */
     @ResponseBody
@@ -62,11 +98,11 @@ public class MarketInfoController {
         //卖出费率
         double saleCommission = MathConstants.computerCommission(input.getSaleUnit(), input.getSaleNum(), TradeStatusEnum.SALE.getCode());
         //净收入 卖出价-买入价-费率
-        double netIncome = MathConstants.Pointkeep((input.getSaleUnit() - input.getBuyUnit()) * input.getSaleNum() - buyCommission - saleCommission,2);
+        double netIncome = MathConstants.Pointkeep((input.getSaleUnit() - input.getBuyUnit()) * input.getSaleNum() - buyCommission - saleCommission, 2);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("netIncome",netIncome);
-        jsonObject.put("saleCommission",saleCommission);
-        jsonObject.put("buyCommission",buyCommission);
+        jsonObject.put("netIncome", netIncome);
+        jsonObject.put("saleCommission", saleCommission);
+        jsonObject.put("buyCommission", buyCommission);
         return ResponseResult.done(jsonObject);
     }
 }

@@ -12,4 +12,6 @@ public interface ShareInfoMapper {
     List<ShareInfo> getShareInfo(ShareInfo record);
 
     List<ShareInfo> getShareInfoWithoutASocker(ShareInfo shareInfo);
+
+    String getRealTimeRateByWangyi(ShareInfo shareInfo);
 }

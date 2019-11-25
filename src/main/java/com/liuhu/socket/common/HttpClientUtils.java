@@ -91,10 +91,9 @@ public class HttpClientUtils {
      * 发起http请求并获取结果
      * @param requestUrl 请求地址
      */
-    public static JSONArray getXpath(String requestUrl){
+    public static String getXpath(String requestUrl){
         logger.info(requestUrl);
         String res="";
-        JSONArray array = null;
         StringBuffer buffer = new StringBuffer();
         try{
             URL url = new URL(requestUrl);
@@ -112,11 +111,11 @@ public class HttpClientUtils {
                 isr.close();
                 is.close();
                 res = buffer.toString();
-                array = JSONArray.parseArray(res);
             }
         }catch(IOException e){
             logger.error(requestUrl,e);
         }
-        return array;
+        return res;
     }
+
 }

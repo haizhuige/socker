@@ -7,8 +7,8 @@ import java.io.IOException;
 
 public interface MarketScheduleService {
 
-    public void  getNewMarketInfo() throws IOException;
+     void  getNewMarketInfo() throws IOException;
 
-    public SockerSouhuImportEntity getMarketJsonBySouhu(MarketInputDomain inputDomain) throws IOException;
+     SockerSouhuImportEntity getMarketJsonBySouhu(MarketInputDomain inputDomain) throws IOException;
 
 }
