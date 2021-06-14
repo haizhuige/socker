@@ -2,17 +2,11 @@ package com.liuhu.socket.service.impl;
 
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.MathConstants;
-import com.liuhu.socket.dao.MarketInfoMapper;
-import com.liuhu.socket.dao.PersonalDetailInfoMapper;
-import com.liuhu.socket.dao.PersonalInfoMapper;
-import com.liuhu.socket.dao.TradeInfoMapper;
+import com.liuhu.socket.dao.*;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.TradeInputDomain;
-import com.liuhu.socket.entity.MarketInfo;
-import com.liuhu.socket.entity.PersonalDetailInfo;
-import com.liuhu.socket.entity.PersonalInfo;
-import com.liuhu.socket.entity.TradeInfo;
+import com.liuhu.socket.entity.*;
 import com.liuhu.socket.enums.PersonalStatusEnum;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.TradeInfoService;
@@ -25,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Author liuhu-jk
@@ -42,6 +37,13 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     MarketInfoMapper marketInfoMapper;
     @Resource
     PersonalDetailInfoMapper personalDetailInfoMapper;
+
+    @Resource
+    MarketInfoNewMapper marketInfoNewMapper;
+
+
+    @Resource
+    ShareInfoMapper shareInfoMapper;
 
     @Override
     @Transactional
@@ -249,6 +251,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     @Override
     public Map ownerLongIncome(MarketDetailInputDomain input) {
 
+
         if (input.getStartTimeDa()==null){
             String startTimeStr = DateUtils.operateDate(new Date(), -60, DateUtils.DateFormat.YYYY_MM_DD.getFormat());
             input.setStartTimeDa(DateUtils.getBeginOfDate(DateUtils.parse(startTimeStr,DateUtils.DateFormat.YYYY_MM_DD)));
@@ -257,8 +260,41 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         if (input.getEndTimeDa()==null){
             input.setEndTimeDa(DateUtils.getBeginOfDate(new Date()));
         }
+        /**
+         * 根据条件查询随机的股票代码
+         */
+        List<String> list = shareInfoMapper.getRandomSocketByCondition(input);
+        input.setShareCodeList(list);
+
+        List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByParam(input);
+
+        Map<String, List<MarketInfoNew>> marketInfoMap = marketInfoNewList.stream().collect(Collectors.groupingBy(MarketInfoNew::getShareCode));
+
+        for (Map.Entry entry:marketInfoMap.entrySet()){
+            List<MarketInfoNew> singleList = (List<MarketInfoNew>) entry.getValue();
+            Double singleShareInfo = null;
+            for (MarketInfoNew marketInfoNew:singleList){
+
+                Double endValue = marketInfoNew.getEndValue();
+                Double ratio = marketInfoNew.getRiseFallRatio();
+                double v = input.getSumCount() / input.getShareCodeList().size() /endValue;
+                if (singleShareInfo==null){
+                    singleShareInfo = endValue * v;
+                }else {
+                    singleShareInfo=singleShareInfo*(1+ratio);
+                }
+
+
+
+
+
+            }
+
+        }
+
         return null;
     }
+
 
     /**
      * 校验账户信息

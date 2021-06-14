@@ -1,5 +1,6 @@
 package com.liuhu.socket.dao;
 
+import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInput2Domain;
 import com.liuhu.socket.entity.MarketInfoNew;
 import org.apache.ibatis.annotations.Param;
@@ -18,4 +19,6 @@ public interface MarketInfoNewMapper {
     Date queryMaxDate(@Param("shareCode") String shareCode);
 
     List<Map> queryPeriodRateByShareCode(@Param("domain") MarketInput2Domain marketInput2Domain);
+
+    List<MarketInfoNew> queryMarketInfoByParam(MarketDetailInputDomain input);
 }

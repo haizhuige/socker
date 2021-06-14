@@ -79,4 +79,29 @@
         select share_code,share_name  from share_info  ORDER BY RAND() limit #{count}
 
     </select>
+    <select id="getRandomSocketByCondition" resultType="java.lang.String">
+        SELECT
+        sif.share_code
+        FROM
+        share_info sif,
+        market_info_new mark
+        WHERE
+        SUBSTR( mark.share_code, 4, 6 ) = sif.share_code
+        AND mark.date = ( SELECT MIN( date ) FROM market_info_new WHERE date >= #{startTimeDa} )
+        AND mark.end_value <![CDATA[<=#{maxUnitPrice}]]>
+        <choose>
+            <when test="shareCodeList!=null">
+                and sif.share_code in
+                <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
+                    #{shareCode}
+                </foreach>
+            </when>
+            <otherwise>
+                ORDER BY
+                RAND()
+                LIMIT #{maxCount}
+            </otherwise>
+        </choose>
+
+    </select>
 </mapper>

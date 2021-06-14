@@ -14,6 +14,7 @@
         <result column="deal_amount" property="dealAmount" jdbcType="DOUBLE"/>
         <result column="turn_over_rate" property="turnOverRate" jdbcType="DOUBLE"/>
         <result column="date" property="date" jdbcType="TIMESTAMP"/>
+        <result column="share_name" property="shareName" jdbcType="VARCHAR"/>
     </resultMap>
     <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfoNew">
     insert into market_info_new (id, share_code, open_value, 
@@ -144,4 +145,21 @@
         where SUBSTR(t1.shareCode,4,6) = t2.share_code
         order by t1.netRadio desc
     </select>
+
+    <select id = "queryMarketInfoByParam" parameterType="com.liuhu.socket.domain.input.MarketDetailInputDomain" resultMap="BaseResultMap">
+        SELECT
+        mark.*,sif.share_name
+        FROM
+        market_info_new mark,share_info sif
+        WHERE
+        date >= #{startTimeDa}
+        and
+        date <![CDATA[<=#{endTimeDa}]]>
+        and SUBSTR(share_code,4,6) in
+        <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
+            #{shareCode}
+        </foreach>
+    </select>
+
+
 </mapper>

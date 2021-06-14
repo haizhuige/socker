@@ -30,6 +30,7 @@ public class MarketInfoNew implements Serializable {
 
     private String riseFallRatioStr;
 
+    private String shareName;
     private static final long serialVersionUID = 1L;
 
     public Integer getId() {
@@ -134,6 +135,18 @@ public class MarketInfoNew implements Serializable {
 
     public String getRiseFallRatioStr() {
         return riseFallRatioStr;
+    }
+
+    public void setShareName(String shareName) {
+        this.shareName = shareName;
+    }
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
+    }
+
+    public String getShareName() {
+        return shareName;
     }
 
     @Override
