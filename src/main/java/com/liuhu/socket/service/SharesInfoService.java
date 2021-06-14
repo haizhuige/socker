@@ -3,9 +3,8 @@ package com.liuhu.socket.service;
 import java.util.Date;
 import java.util.List;
 
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.MarketOutputDomain;
-import com.liuhu.socket.domain.TradeInputDomain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.entity.ShareInfo;

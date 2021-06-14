@@ -1,9 +1,12 @@
 package com.liuhu.socket.dao;
 
+import com.liuhu.socket.domain.input.MarketInput2Domain;
 import com.liuhu.socket.entity.MarketInfoNew;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public interface MarketInfoNewMapper {
     int insert(MarketInfoNew record);
@@ -12,5 +15,7 @@ public interface MarketInfoNewMapper {
 
     void insertOrUpdateMarketInfo(List<MarketInfoNew> list);
 
-    Date queryMaxDate(String shareCode);
+    Date queryMaxDate(@Param("shareCode") String shareCode);
+
+    List<Map> queryPeriodRateByShareCode(@Param("domain") MarketInput2Domain marketInput2Domain);
 }

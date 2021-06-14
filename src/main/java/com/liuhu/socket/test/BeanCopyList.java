@@ -1,10 +1,9 @@
 package com.liuhu.socket.test;
 
 import com.alibaba.fastjson.JSONObject;
-import com.liuhu.socket.domain.MarketInput2Domain;
-import com.liuhu.socket.domain.MarketInputDomain;
+import com.liuhu.socket.domain.input.MarketInput2Domain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.Assert;
 

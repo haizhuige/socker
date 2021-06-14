@@ -1,12 +1,14 @@
 package com.liuhu.socket.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.liuhu.socket.algorithm.service.HandleService;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.common.ResponseResult;
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.MarketOutputDomain;
-import com.liuhu.socket.domain.NetIncomeInputDomain;
+import com.liuhu.socket.domain.input.MarketInput2Domain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.input.NetIncomeInputDomain;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -26,6 +27,8 @@ public class MarketInfoController {
     @Resource
     SharesInfoService sharesInfoService;
 
+    @Resource
+    HandleService handleService;
     /**
      * 查询一段时间范围内的行情数据
      *
@@ -104,5 +107,16 @@ public class MarketInfoController {
         jsonObject.put("saleCommission", saleCommission);
         jsonObject.put("buyCommission", buyCommission);
         return ResponseResult.done(jsonObject);
+    }
+
+    /**
+     * 查询随机code
+     */
+    @ResponseBody
+    @RequestMapping("/queryRandomRatio.do")
+    public ResponseResult queryRandomRatio(@RequestBody MarketInput2Domain input2Domain) {
+
+        List list = handleService.randomSelectedSocket(input2Domain);
+        return ResponseResult.done(list);
     }
 }

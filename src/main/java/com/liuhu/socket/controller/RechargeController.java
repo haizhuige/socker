@@ -1,8 +1,8 @@
 package com.liuhu.socket.controller;
 
 import com.liuhu.socket.common.ResponseResult;
-import com.liuhu.socket.domain.CustomerInputDomain;
-import com.liuhu.socket.domain.RechargeInputDomain;
+import com.liuhu.socket.domain.input.CustomerInputDomain;
+import com.liuhu.socket.domain.input.RechargeInputDomain;
 import com.liuhu.socket.service.RechargeInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

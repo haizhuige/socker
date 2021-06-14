@@ -28,6 +28,8 @@ public class MarketInfoNew implements Serializable {
 
     private Date date;
 
+    private String riseFallRatioStr;
+
     private static final long serialVersionUID = 1L;
 
     public Integer getId() {
@@ -124,6 +126,14 @@ public class MarketInfoNew implements Serializable {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public void setRiseFallRatioStr(String riseFallRatioStr) {
+        this.riseFallRatioStr = riseFallRatioStr;
+    }
+
+    public String getRiseFallRatioStr() {
+        return riseFallRatioStr;
     }
 
     @Override

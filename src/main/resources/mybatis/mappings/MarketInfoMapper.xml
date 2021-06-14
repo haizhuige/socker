@@ -90,7 +90,7 @@
         </trim>
     </insert>
     <select id="getShareInfo"
-            parameterType="com.liuhu.socket.domain.MarketInputDomain"
+            parameterType="com.liuhu.socket.domain.input.MarketInputDomain"
             resultMap="BaseResultMap">
         select id,share_code, open_value, end_value,
         rise_fall, rise_fall_ratio, highest,
@@ -109,7 +109,7 @@
         order by t.date
     </select>
     <select id="getLastEndList"
-            parameterType="com.liuhu.socket.domain.MarketInputDomain"
+            parameterType="com.liuhu.socket.domain.input.MarketInputDomain"
             resultType="com.liuhu.socket.entity.MarketInfo">
         select a.share_code as shareCode,
         a.end_value as endValue,

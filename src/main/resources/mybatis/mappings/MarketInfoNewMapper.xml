@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.liuhu.socket.dao.MarketInfoNewMapper" >
-  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.MarketInfoNew" >
-    <result column="id" property="id" jdbcType="INTEGER" />
-    <result column="share_code" property="shareCode" jdbcType="VARCHAR" />
-    <result column="open_value" property="openValue" jdbcType="DOUBLE" />
-    <result column="end_value" property="endValue" jdbcType="DOUBLE" />
-    <result column="rise_fall" property="riseFall" jdbcType="DOUBLE" />
-    <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="DOUBLE" />
-    <result column="highest" property="highest" jdbcType="DOUBLE" />
-    <result column="lowest" property="lowest" jdbcType="DOUBLE" />
-    <result column="deal_count" property="dealCount" jdbcType="INTEGER" />
-    <result column="deal_amount" property="dealAmount" jdbcType="DOUBLE" />
-    <result column="turn_over_rate" property="turnOverRate" jdbcType="DOUBLE" />
-    <result column="date" property="date" jdbcType="TIMESTAMP" />
-  </resultMap>
-  <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfoNew" >
+<mapper namespace="com.liuhu.socket.dao.MarketInfoNewMapper">
+    <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.MarketInfoNew">
+        <result column="id" property="id" jdbcType="INTEGER"/>
+        <result column="share_code" property="shareCode" jdbcType="VARCHAR"/>
+        <result column="open_value" property="openValue" jdbcType="DOUBLE"/>
+        <result column="end_value" property="endValue" jdbcType="DOUBLE"/>
+        <result column="rise_fall" property="riseFall" jdbcType="DOUBLE"/>
+        <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="DOUBLE"/>
+        <result column="highest" property="highest" jdbcType="DOUBLE"/>
+        <result column="lowest" property="lowest" jdbcType="DOUBLE"/>
+        <result column="deal_count" property="dealCount" jdbcType="INTEGER"/>
+        <result column="deal_amount" property="dealAmount" jdbcType="DOUBLE"/>
+        <result column="turn_over_rate" property="turnOverRate" jdbcType="DOUBLE"/>
+        <result column="date" property="date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfoNew">
     insert into market_info_new (id, share_code, open_value, 
       end_value, rise_fall, rise_fall_ratio, 
       highest, lowest, deal_count, 
@@ -27,99 +27,121 @@
       #{dealAmount,jdbcType=DOUBLE}, #{turnOverRate,jdbcType=DOUBLE}, #{date,jdbcType=TIMESTAMP}
       )
   </insert>
-  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.MarketInfoNew" >
-    insert into market_info_new
-    <trim prefix="(" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        id,
-      </if>
-      <if test="shareCode != null" >
-        share_code,
-      </if>
-      <if test="openValue != null" >
-        open_value,
-      </if>
-      <if test="endValue != null" >
-        end_value,
-      </if>
-      <if test="riseFall != null" >
-        rise_fall,
-      </if>
-      <if test="riseFallRatio != null" >
-        rise_fall_ratio,
-      </if>
-      <if test="highest != null" >
-        highest,
-      </if>
-      <if test="lowest != null" >
-        lowest,
-      </if>
-      <if test="dealCount != null" >
-        deal_count,
-      </if>
-      <if test="dealAmount != null" >
-        deal_amount,
-      </if>
-      <if test="turnOverRate != null" >
-        turn_over_rate,
-      </if>
-      <if test="date != null" >
-        date,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        #{id,jdbcType=INTEGER},
-      </if>
-      <if test="shareCode != null" >
-        #{shareCode,jdbcType=VARCHAR},
-      </if>
-      <if test="openValue != null" >
-        #{openValue,jdbcType=DOUBLE},
-      </if>
-      <if test="endValue != null" >
-        #{endValue,jdbcType=DOUBLE},
-      </if>
-      <if test="riseFall != null" >
-        #{riseFall,jdbcType=DOUBLE},
-      </if>
-      <if test="riseFallRatio != null" >
-        #{riseFallRatio,jdbcType=DOUBLE},
-      </if>
-      <if test="highest != null" >
-        #{highest,jdbcType=DOUBLE},
-      </if>
-      <if test="lowest != null" >
-        #{lowest,jdbcType=DOUBLE},
-      </if>
-      <if test="dealCount != null" >
-        #{dealCount,jdbcType=INTEGER},
-      </if>
-      <if test="dealAmount != null" >
-        #{dealAmount,jdbcType=DOUBLE},
-      </if>
-      <if test="turnOverRate != null" >
-        #{turnOverRate,jdbcType=DOUBLE},
-      </if>
-      <if test="date != null" >
-        #{date,jdbcType=TIMESTAMP},
-      </if>
-    </trim>
-  </insert>
+    <insert id="insertSelective" parameterType="com.liuhu.socket.entity.MarketInfoNew">
+        insert into market_info_new
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="shareCode != null">
+                share_code,
+            </if>
+            <if test="openValue != null">
+                open_value,
+            </if>
+            <if test="endValue != null">
+                end_value,
+            </if>
+            <if test="riseFall != null">
+                rise_fall,
+            </if>
+            <if test="riseFallRatio != null">
+                rise_fall_ratio,
+            </if>
+            <if test="highest != null">
+                highest,
+            </if>
+            <if test="lowest != null">
+                lowest,
+            </if>
+            <if test="dealCount != null">
+                deal_count,
+            </if>
+            <if test="dealAmount != null">
+                deal_amount,
+            </if>
+            <if test="turnOverRate != null">
+                turn_over_rate,
+            </if>
+            <if test="date != null">
+                date,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="shareCode != null">
+                #{shareCode,jdbcType=VARCHAR},
+            </if>
+            <if test="openValue != null">
+                #{openValue,jdbcType=DOUBLE},
+            </if>
+            <if test="endValue != null">
+                #{endValue,jdbcType=DOUBLE},
+            </if>
+            <if test="riseFall != null">
+                #{riseFall,jdbcType=DOUBLE},
+            </if>
+            <if test="riseFallRatio != null">
+                #{riseFallRatio,jdbcType=DOUBLE},
+            </if>
+            <if test="highest != null">
+                #{highest,jdbcType=DOUBLE},
+            </if>
+            <if test="lowest != null">
+                #{lowest,jdbcType=DOUBLE},
+            </if>
+            <if test="dealCount != null">
+                #{dealCount,jdbcType=INTEGER},
+            </if>
+            <if test="dealAmount != null">
+                #{dealAmount,jdbcType=DOUBLE},
+            </if>
+            <if test="turnOverRate != null">
+                #{turnOverRate,jdbcType=DOUBLE},
+            </if>
+            <if test="date != null">
+                #{date,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
     <insert id="insertOrUpdateMarketInfo" useGeneratedKeys="true" parameterType="java.util.List">
         replace into market_info_new
         (open_value, end_value,
         rise_fall, rise_fall_ratio, highest,
-        lowest, date,share_code,deal_count,deal_amount,turn_over_rate)
+        lowest, date,share_code,deal_count,deal_amount,turn_over_rate,rise_fall_ratio_str)
         VALUES
         <foreach collection="list" item="it" separator=",">
             (#{it.openValue},#{it.endValue},#{it.riseFall},
             #{it.riseFallRatio},#{it.highest},#{it.lowest},
-            #{it.date},#{it.shareCode},#{it.dealCount},#{it.dealAmount},#{it.turnOverRate})
+            #{it.date},#{it.shareCode},#{it.dealCount},#{it.dealAmount},#{it.turnOverRate},#{it.riseFallRatioStr})
         </foreach>
     </insert>
     <select id="queryMaxDate"
             resultType="java.util.Date">
-        select max(date) as date  from market_info_new t where t.share_code =#{shareCode,jdbcType=VARCHAR}
+        select max(date) as date  from market_info_new t where t.share_code like '%${shareCode}%'
+    </select>
+
+    <select id="queryPeriodRateByShareCode" parameterType="com.liuhu.socket.domain.input.MarketInput2Domain"
+            resultType="map">
+
+        select round(t1.netRadio,4) as netRatio,t2.share_name as shareName from
+        (SELECT EXP( SUM( LN(( 1+rise_fall_ratio * 0.01 ))))-1 AS netRadio,share_code as shareCode
+        FROM
+        market_info_new
+        WHERE
+        date >= #{domain.startTimeDa}
+        and
+        date <![CDATA[<=#{domain.endTimeDa}]]>
+        and SUBSTR(share_code,4,6) in
+        <foreach index="index" item="shareCode" collection="domain.shareCodeList" open="(" close=")" separator=",">
+            #{shareCode}
+        </foreach>
+        GROUP BY
+        share_code) t1,
+        share_info t2
+        where SUBSTR(t1.shareCode,4,6) = t2.share_code
+        order by t1.netRadio desc
     </select>
 </mapper>

@@ -1,4 +1,4 @@
-package com.liuhu.socket.domain;
+package com.liuhu.socket.domain.input;
 
 import com.liuhu.socket.common.annotation.NotNull;
 import com.liuhu.socket.common.annotation.Validator;

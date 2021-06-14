@@ -62,6 +62,8 @@
         select share_code,share_name,status,hushen_status from share_info t
         where  t.share_code != 'A00001'
              and status = #{status,jdbcType=CHAR}
+
+             and t.share_code like '%${shareCode}%'
     </select>
     <select id="getRealTimeRateByWangyi"
             parameterType="com.liuhu.socket.entity.ShareInfo"
@@ -70,5 +72,11 @@
         where
            status = #{status,jdbcType=CHAR}
           and t.share_code != 'A00001'
+    </select>
+
+    <select id="getRandomSocket" parameterType="integer" resultMap="BaseResultMap">
+
+        select share_code,share_name  from share_info  ORDER BY RAND() limit #{count}
+
     </select>
 </mapper>

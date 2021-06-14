@@ -1,13 +1,15 @@
-package com.liuhu.socket.domain;
-
-import java.io.Serializable;
-import java.util.Date;
+package com.liuhu.socket.domain.input;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
 @Setter
 @Getter
-public class MarketInputDomain implements Serializable {
+public class MarketInput2Domain implements Serializable {
 
 	private static final long serialVersionUID = -923156671835410830L;
 	
@@ -23,6 +25,10 @@ public class MarketInputDomain implements Serializable {
 
     private String shareName;
 
-    private String period;
+    private Integer count;
+    /**
+     * 股票代码集合
+     */
+    private List<String> shareCodeList;
 
 }

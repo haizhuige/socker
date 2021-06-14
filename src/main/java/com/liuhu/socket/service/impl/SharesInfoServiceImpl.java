@@ -6,23 +6,22 @@ import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.MarketOutputDomain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfo;
-import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.entity.ShareInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.enums.SpecialSockerEnum;
 import com.liuhu.socket.schedule.MarketScheduleService;
 import com.liuhu.socket.service.SharesInfoService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -113,7 +112,11 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        shareInfo.setShareCode(input.getShareCode());
         List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfoWithoutASocker(shareInfo);
+        if (CollectionUtils.isEmpty(shareInfoList)){
+            return new ArrayList<>();
+        }
         List<MarketOutputDomain> outputDomainList = new ArrayList<>();
         input.setShareCode(SpecialSockerEnum.A_SOCKER.getCode());
         MarketOutputDomain aSockerDomain = resolvingData(input);

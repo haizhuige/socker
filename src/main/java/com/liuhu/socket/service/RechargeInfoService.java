@@ -1,7 +1,7 @@
 package com.liuhu.socket.service;
 
-import com.liuhu.socket.domain.CustomerInputDomain;
-import com.liuhu.socket.domain.RechargeInputDomain;
+import com.liuhu.socket.domain.input.CustomerInputDomain;
+import com.liuhu.socket.domain.input.RechargeInputDomain;
 
 public interface RechargeInfoService {
 

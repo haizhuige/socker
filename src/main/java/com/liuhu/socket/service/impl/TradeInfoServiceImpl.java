@@ -6,8 +6,9 @@ import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.PersonalDetailInfoMapper;
 import com.liuhu.socket.dao.PersonalInfoMapper;
 import com.liuhu.socket.dao.TradeInfoMapper;
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.TradeInputDomain;
+import com.liuhu.socket.domain.input.MarketDetailInputDomain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.TradeInputDomain;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.entity.PersonalDetailInfo;
 import com.liuhu.socket.entity.PersonalInfo;
@@ -238,6 +239,25 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
         }
         return 0;
+    }
+
+    /**
+     * 长期持有获取收益
+     * @param input
+     * @return
+     */
+    @Override
+    public Map ownerLongIncome(MarketDetailInputDomain input) {
+
+        if (input.getStartTimeDa()==null){
+            String startTimeStr = DateUtils.operateDate(new Date(), -60, DateUtils.DateFormat.YYYY_MM_DD.getFormat());
+            input.setStartTimeDa(DateUtils.getBeginOfDate(DateUtils.parse(startTimeStr,DateUtils.DateFormat.YYYY_MM_DD)));
+        }
+
+        if (input.getEndTimeDa()==null){
+            input.setEndTimeDa(DateUtils.getBeginOfDate(new Date()));
+        }
+        return null;
     }
 
     /**

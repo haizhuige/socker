@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
  * @Description
  **/
 public class Calculate {
-    @DefAutowired
+   // @DefAutowired
     public int multiply(int a,int b){
         System.out.println("multiply结果是"+a*b);
         return a*b;

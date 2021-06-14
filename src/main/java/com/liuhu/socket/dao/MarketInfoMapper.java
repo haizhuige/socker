@@ -3,8 +3,7 @@ package com.liuhu.socket.dao;
 import java.util.Date;
 import java.util.List;
 
-import com.liuhu.socket.domain.MarketInputDomain;
-import com.liuhu.socket.domain.MarketOutputDomain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 public interface MarketInfoMapper {

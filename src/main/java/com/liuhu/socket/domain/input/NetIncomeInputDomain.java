@@ -1,4 +1,4 @@
-package com.liuhu.socket.domain;
+package com.liuhu.socket.domain.input;
 
 import lombok.Getter;
 import lombok.Setter;

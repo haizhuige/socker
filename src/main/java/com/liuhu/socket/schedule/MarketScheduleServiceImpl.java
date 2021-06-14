@@ -1,13 +1,12 @@
 package com.liuhu.socket.schedule;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
-import com.liuhu.socket.domain.MarketInputDomain;
+import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfoNew;
@@ -90,14 +89,14 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
         for (ShareInfo excelShare : shareInfoList) {
             String shareCode = excelShare.getShareCode();
-            Date date = marketInfoNewMapper.queryMaxDate(excelShare.getShareCode());
+            Date date = marketInfoNewMapper.queryMaxDate(shareCode);
             /**
              * 搜狐股票下载当天的行情数据
              */
             MarketInputDomain inputDomain = new MarketInputDomain();
             inputDomain.setShareCode(shareCode);
             if (date == null) {
-                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -600, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -2000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
             } else {
                 inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
 
@@ -191,14 +190,15 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             MarketInfoNew socker = new MarketInfoNew();
             socker.setDate(DateUtils.parse(list.get(0), DateUtils.DateFormat.YYYY_MM_DD));
             socker.setShareCode(code);
-            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 4));
-            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 4));
-            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 4));
+            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 2));
+            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 2));
+            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 2));
             if (list.get(4).contains("%")) {
                 socker.setRiseFallRatio(MathConstants.ParseStrPointKeep(list.get(4).replace("%", ""), 4));
             }
-            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
-            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
+            socker.setRiseFallRatioStr(list.get(4));
+            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 2));
+            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 2));
             socker.setDealCount(Long.parseLong(list.get(7)));
             socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
             if (list.get(9).contains("%")) {

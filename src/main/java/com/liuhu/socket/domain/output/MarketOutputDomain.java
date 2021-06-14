@@ -1,4 +1,4 @@
-package com.liuhu.socket.domain;
+package com.liuhu.socket.domain.output;
 
 import java.io.Serializable;
 

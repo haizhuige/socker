@@ -1,14 +1,13 @@
-package com.liuhu.socket.domain;
-
-import lombok.Getter;
-import lombok.Setter;
+package com.liuhu.socket.domain.input;
 
 import java.io.Serializable;
 import java.util.Date;
 
+import lombok.Getter;
+import lombok.Setter;
 @Setter
 @Getter
-public class MarketInput2Domain implements Serializable {
+public class MarketInputDomain implements Serializable {
 
 	private static final long serialVersionUID = -923156671835410830L;
 	
@@ -23,5 +22,7 @@ public class MarketInput2Domain implements Serializable {
     private Date endTimeDa;
 
     private String shareName;
+
+    private String period;
 
 }
