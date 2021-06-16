@@ -155,10 +155,12 @@
         date >= #{startTimeDa}
         and
         date <![CDATA[<=#{endTimeDa}]]>
-        and SUBSTR(share_code,4,6) in
+        and SUBSTR(mark.share_code,4,6) in
         <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
             #{shareCode}
         </foreach>
+        and SUBSTR(mark.share_code,4,6) = sif.share_code
+        and sif.status = 1
     </select>
 
 

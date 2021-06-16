@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -260,6 +257,19 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         if (input.getEndTimeDa()==null){
             input.setEndTimeDa(DateUtils.getBeginOfDate(new Date()));
         }
+
+        if (input.getMaxCount()==null){
+            input.setMaxCount(5);
+        }
+
+        if (input.getMaxUnitPrice()==null){
+            input.setMaxUnitPrice(200.00);
+        }
+
+        if (input.getSumCount() == null){
+            input.setSumCount(100000.00);
+        }
+
         /**
          * 根据条件查询随机的股票代码
          */
@@ -267,32 +277,63 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         input.setShareCodeList(list);
 
         List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByParam(input);
-
+        //根据shareCode 查询数据
         Map<String, List<MarketInfoNew>> marketInfoMap = marketInfoNewList.stream().collect(Collectors.groupingBy(MarketInfoNew::getShareCode));
-
+        List<Map> markList = new ArrayList<>();
         for (Map.Entry entry:marketInfoMap.entrySet()){
             List<MarketInfoNew> singleList = (List<MarketInfoNew>) entry.getValue();
+            Double surPlus = 0.00;
             Double singleShareInfo = null;
             for (MarketInfoNew marketInfoNew:singleList){
-
+                Map map = new HashMap();
                 Double endValue = marketInfoNew.getEndValue();
                 Double ratio = marketInfoNew.getRiseFallRatio();
-                double v = input.getSumCount() / input.getShareCodeList().size() /endValue;
-                if (singleShareInfo==null){
-                    singleShareInfo = endValue * v;
-                }else {
-                    singleShareInfo=singleShareInfo*(1+ratio);
+                double floor = Math.floor((input.getSumCount() / input.getShareCodeList().size()) / (endValue * 100));
+                if (singleShareInfo == null) {
+                    singleShareInfo = endValue * floor * 100;
+                    surPlus = input.getSumCount() / input.getShareCodeList().size() - singleShareInfo;
+
+                } else {
+                    singleShareInfo = singleShareInfo * (1 + ratio/100);
                 }
-
-
-
-
-
+                map.put("shareCode",marketInfoNew.getShareCode());
+                map.put("shareName",marketInfoNew.getShareName());
+                map.put("singleShareInfo",singleShareInfo);
+                map.put("tradeDate",marketInfoNew.getDate());
+                map.put("surPlus",surPlus);
+                markList.add(map);
             }
 
         }
+        //根据时间分组
+        Map<Date, List<Map>> mapInfo = markList.stream().collect(Collectors.groupingBy(TradeInfoServiceImpl::getTradeDateByMap));
+        Map<String,Object> returnMap = new TreeMap<>();
+        for (Map.Entry entry:mapInfo.entrySet()){
+            Map subMap = new HashMap();
+            List<Map> subList = (List<Map>) entry.getValue();
+            Double sumShareUnit = subList.stream().collect(Collectors.summingDouble(TradeInfoServiceImpl::getSingleShareInfoByMap));
+            Double sumSurPlus = subList.stream().collect(Collectors.summingDouble(TradeInfoServiceImpl::getSurPlusByMap));
+            Double sumCount = sumShareUnit +sumSurPlus;
+            subMap.put("sumCount",sumCount);
+            subMap.put("detail",subList);
+            returnMap.put(DateUtils.format((Date)entry.getKey(),DateUtils.DateFormat.YYYY_MM_DD),subMap);
+        }
+        return returnMap;
+    }
 
-        return null;
+    private static Date getTradeDateByMap(Map map){
+
+        return (Date) map.get("tradeDate");
+    }
+
+    private static Double getSingleShareInfoByMap(Map map){
+
+        return (Double) map.get("singleShareInfo");
+    }
+
+    private static Double getSurPlusByMap(Map map){
+
+        return (Double) map.get("surPlus");
     }
 
 
