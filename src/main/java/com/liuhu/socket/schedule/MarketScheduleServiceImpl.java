@@ -80,13 +80,20 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     }
 
     @Scheduled(cron = "0 0 15 1/1 * ? ")
-    public void getMarketInfoBySouHu() throws IOException {
+    public void getMarketInfoBySouHu(String originShareCode) throws IOException {
         /**
          * 查询关注的股票信息
          */
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
-        List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+        List<ShareInfo> shareInfoList = new ArrayList<>();
+        if (StringUtils.isEmpty(originShareCode)){
+            shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+        }else {
+            ShareInfo newShareInfo = new ShareInfo();
+            newShareInfo.setShareCode(originShareCode);
+            shareInfoList.add(newShareInfo);
+        }
         for (ShareInfo excelShare : shareInfoList) {
             String shareCode = excelShare.getShareCode();
             Date date = marketInfoNewMapper.queryMaxDate(shareCode);
@@ -159,7 +166,10 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         StringBuffer params = new StringBuffer();
         if ("A00001".equals(inputDomain.getShareCode())) {
             params.append("code=zs_000001");
-        } else {
+        }else if ("399300".equals(inputDomain.getShareCode())){
+            params.append("code=" + "zs_399300");
+        }
+        else {
             params.append("code=" + "cn_" + inputDomain.getShareCode());
         }
         params.append("&");

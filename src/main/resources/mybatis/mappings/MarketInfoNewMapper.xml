@@ -8,6 +8,7 @@
         <result column="end_value" property="endValue" jdbcType="DOUBLE"/>
         <result column="rise_fall" property="riseFall" jdbcType="DOUBLE"/>
         <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="DOUBLE"/>
+        <result column="rise_fall_ratio_str" property="riseFallRatioStr" jdbcType="DOUBLE"/>
         <result column="highest" property="highest" jdbcType="DOUBLE"/>
         <result column="lowest" property="lowest" jdbcType="DOUBLE"/>
         <result column="deal_count" property="dealCount" jdbcType="INTEGER"/>

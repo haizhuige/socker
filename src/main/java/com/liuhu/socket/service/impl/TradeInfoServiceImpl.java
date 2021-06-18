@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -282,6 +283,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         List<Map> markList = new ArrayList<>();
         for (Map.Entry entry:marketInfoMap.entrySet()){
             List<MarketInfoNew> singleList = (List<MarketInfoNew>) entry.getValue();
+            singleList = singleList.stream().sorted(Comparator.comparing(MarketInfoNew::getDate)).collect(Collectors.toList());
             Double surPlus = 0.00;
             Double singleShareInfo = null;
             for (MarketInfoNew marketInfoNew:singleList){
@@ -298,9 +300,10 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                 }
                 map.put("shareCode",marketInfoNew.getShareCode());
                 map.put("shareName",marketInfoNew.getShareName());
-                map.put("singleShareInfo",singleShareInfo);
+                map.put("singleShareInfo",MathConstants.Pointkeep(singleShareInfo,4));
                 map.put("tradeDate",marketInfoNew.getDate());
-                map.put("surPlus",surPlus);
+                map.put("surPlus",MathConstants.Pointkeep(surPlus,4));
+                map.put("ratio",marketInfoNew.getRiseFallRatioStr());
                 markList.add(map);
             }
 
@@ -314,7 +317,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
             Double sumShareUnit = subList.stream().collect(Collectors.summingDouble(TradeInfoServiceImpl::getSingleShareInfoByMap));
             Double sumSurPlus = subList.stream().collect(Collectors.summingDouble(TradeInfoServiceImpl::getSurPlusByMap));
             Double sumCount = sumShareUnit +sumSurPlus;
-            subMap.put("sumCount",sumCount);
+            subMap.put("sumCount",MathConstants.Pointkeep(sumCount,4));
             subMap.put("detail",subList);
             returnMap.put(DateUtils.format((Date)entry.getKey(),DateUtils.DateFormat.YYYY_MM_DD),subMap);
         }
