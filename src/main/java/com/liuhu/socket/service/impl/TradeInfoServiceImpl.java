@@ -282,6 +282,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         List<Map> markList = new ArrayList<>();
         for (Map.Entry entry:marketInfoMap.entrySet()){
             List<MarketInfoNew> singleList = (List<MarketInfoNew>) entry.getValue();
+            singleList = singleList.stream().sorted(Comparator.comparing(MarketInfoNew::getDate)).collect(Collectors.toList());
             Double surPlus = 0.00;
             Double singleShareInfo = null;
             for (MarketInfoNew marketInfoNew:singleList){
