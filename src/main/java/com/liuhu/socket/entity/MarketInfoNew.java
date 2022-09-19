@@ -23,7 +23,7 @@ public class MarketInfoNew implements Serializable {
     private Long dealCount;
 
     private Double dealAmount;
-
+    //换手率
     private Double turnOverRate;
 
     private Date date;

@@ -17,7 +17,7 @@ public class MathConstants {
     //成交费率
     private static  double  dealPerFee = 0.0000487;
     //佣金费率
-    private static  double  commissionPerFee = 0.0003;
+    private static  double  commissionPerFee = 0.0002;
     //印花费率
     private static  double  stampTaxPerFee = 0.001;
     public static final String TEXT = "0123456789";

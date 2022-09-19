@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -103,7 +104,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             MarketInputDomain inputDomain = new MarketInputDomain();
             inputDomain.setShareCode(shareCode);
             if (date == null) {
-                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -2000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
             } else {
                 inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
 
@@ -194,6 +195,9 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         SockerSouhuImportEntity entity = array.getObject(0, SockerSouhuImportEntity.class);
         List<List<String>> hqList = entity.getHq();
         logger.info(hqList);
+        if (CollectionUtils.isEmpty(hqList)){
+            return entity;
+        }
         String code = entity.getCode();
         List<MarketInfoNew> sohuList = new ArrayList<>();
         for (List<String> list : hqList) {
