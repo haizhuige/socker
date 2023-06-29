@@ -40,7 +40,7 @@
 
 
         <!-- 要生成哪些表 -->
-        <table tableName="personal_info" domainObjectName="PersonalInfo"
+        <table tableName="market_info_new" domainObjectName="MarketInfoNew"
                enableCountByExample="false" enableUpdateByExample="false"
                enableDeleteByExample="false" enableSelectByExample="false"
                selectByExampleQueryId="false"></table>

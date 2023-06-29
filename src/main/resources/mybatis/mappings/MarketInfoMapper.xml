@@ -1,191 +1,188 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.liuhu.socket.dao.MarketInfoMapper" >
-  <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.MarketInfo" >
-    <result column="id" property="id" jdbcType="INTEGER" />
-    <result column="share_code" property="shareCode" jdbcType="VARCHAR" />
-    <result column="open_value" property="openValue" jdbcType="DOUBLE" />
-    <result column="end_value" property="endValue" jdbcType="DOUBLE" />
-    <result column="rise_fall" property="riseFall" jdbcType="DOUBLE" />
-    <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="VARCHAR" />
-    <result column="highest" property="highest" jdbcType="DOUBLE" />
-    <result column="lowest" property="lowest" jdbcType="DOUBLE" />
-    <result column="date" property="date" jdbcType="TIMESTAMP" />
-  </resultMap>
-  <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfo" >
+<mapper namespace="com.liuhu.socket.dao.MarketInfoMapper">
+    <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.MarketInfo">
+        <result column="id" property="id" jdbcType="INTEGER"/>
+        <result column="share_code" property="shareCode" jdbcType="VARCHAR"/>
+        <result column="open_value" property="openValue" jdbcType="DOUBLE"/>
+        <result column="end_value" property="endValue" jdbcType="DOUBLE"/>
+        <result column="rise_fall" property="riseFall" jdbcType="DOUBLE"/>
+        <result column="rise_fall_ratio" property="riseFallRatio" jdbcType="VARCHAR"/>
+        <result column="highest" property="highest" jdbcType="DOUBLE"/>
+        <result column="lowest" property="lowest" jdbcType="DOUBLE"/>
+        <result column="pre_end_value" property="preEndValue" jdbcType="DOUBLE"/>
+        <result column="total_amount" property="totalAmount" jdbcType="DOUBLE"/>
+        <result column="date" property="date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    <insert id="insert" parameterType="com.liuhu.socket.entity.MarketInfo">
     insert into market_info (id, open_value, end_value, 
       rise_fall, rise_fall_ratio, highest, 
-      lowest, date)
+      lowest, date,pre_end_value,total_amount)
     values (#{id,jdbcType=INTEGER}, #{openValue,jdbcType=DOUBLE}, #{endValue,jdbcType=DOUBLE}, 
       #{riseFall,jdbcType=DOUBLE}, #{riseFallRatio,jdbcType=VARCHAR}, #{highest,jdbcType=DOUBLE}, 
-      #{lowest,jdbcType=DOUBLE}, #{date,jdbcType=TIMESTAMP})
+      #{lowest,jdbcType=DOUBLE}, #{date,jdbcType=TIMESTAMP},#{preEndValue,jdbcType=DOUBLE},#{totalAmount,jdbcType=DOUBLE})
   </insert>
-  <insert id="insertSelective" parameterType="com.liuhu.socket.entity.MarketInfo" >
-    insert into market_info
-    <trim prefix="(" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        id,
-      </if>
-      <if test="openValue != null" >
-        open_value,
-      </if>
-      <if test="endValue != null" >
-        end_value,
-      </if>
-      <if test="riseFall != null" >
-        rise_fall,
-      </if>
-      <if test="riseFallRatio != null" >
-        rise_fall_ratio,
-      </if>
-      <if test="highest != null" >
-        highest,
-      </if>
-      <if test="lowest != null" >
-        lowest,
-      </if>
-      <if test="date != null" >
-        date,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        #{id,jdbcType=INTEGER},
-      </if>
-      <if test="openValue != null" >
-        #{openValue,jdbcType=DOUBLE},
-      </if>
-      <if test="endValue != null" >
-        #{endValue,jdbcType=DOUBLE},
-      </if>
-      <if test="riseFall != null" >
-        #{riseFall,jdbcType=DOUBLE},
-      </if>
-      <if test="riseFallRatio != null" >
-        #{riseFallRatio,jdbcType=VARCHAR},
-      </if>
-      <if test="highest != null" >
-        #{highest,jdbcType=DOUBLE},
-      </if>
-      <if test="lowest != null" >
-        #{lowest,jdbcType=DOUBLE},
-      </if>
-      <if test="date != null" >
-        #{date,jdbcType=TIMESTAMP},
-      </if>
-    </trim>
-  </insert>
-  <select id="getShareInfo"
-	parameterType="com.liuhu.socket.domain.MarketInputDomain"
-	resultMap="BaseResultMap">
-	select id,share_code, open_value, end_value,
-	rise_fall, rise_fall_ratio, highest,
-	lowest, date from market_info t
-	where 1=1
-	<if test="startTime != null">
-		and t.date >= #{startTime}
-	</if>
-	<if test="endTime != null">
-		and t.date <![CDATA[ <= ]]>
-		#{endTime}
-	</if>
-	<if test="shareCode != null">
-		and t.share_code = #{shareCode,jdbcType=VARCHAR}
-	</if>
-	order by t.date
-</select>
-  <select id="getLastEndList"
-          parameterType="com.liuhu.socket.domain.MarketInputDomain"
-          resultType="com.liuhu.socket.domain.MarketOutputDomain">
-    SELECT
-    b.share_code as shareCode,
-    CASE
-    WHEN a.end_value IS NULL
-    AND d.end_value IS NULL THEN
-    round(
-    (b.end_value - b.open_value) / b.open_value,
-    4
-    )
-    WHEN a.end_value IS NULL
-    AND d.end_value IS NOT NULL THEN
-    round(
-    (b.end_value - d.open_value) / d.open_value,
-    4
-    )
-    ELSE
-    round(
-    (b.end_value - a.end_value) / a.end_value,
-    4
-    )
-    END  as rate,
-    c.share_name as shareName
-    FROM
-    (
-    SELECT
-    id,
-    share_code,
-    open_value,
-    end_value,
-    rise_fall,
-    rise_fall_ratio,
-    highest,
-    lowest,
-    MAX(date) AS date
-    FROM
-    market_info t1
-    WHERE
-    1 = 1
-    <if test="endTime != null">
-      and t1.date <![CDATA[ <= ]]>
-      #{endTime}
-    </if>
-    <if test="shareCode != null">
-      and t1.share_code = #{shareCode,jdbcType=VARCHAR}
-    </if>
-    GROUP BY
-    t1.share_code
-    ) b
-    LEFT JOIN (
-    SELECT
-    id,
-    share_code,
-    open_value,
-    end_value,
-    rise_fall,
-    rise_fall_ratio,
-    highest,
-    lowest,
-    MAX(date) AS date
-    FROM
-    market_info t
-    WHERE
-    1 = 1
-    <if test="startTime != null">
-      and t.date <![CDATA[ < ]]>
-      #{startTime}
-    </if>
-    <if test="shareCode != null">
-      and t.share_code = #{shareCode,jdbcType=VARCHAR}
-    </if>
-    GROUP BY
-    t.share_code
-    ) a ON b.share_code = a.share_code
-    LEFT JOIN share_info c ON c.share_code = b.share_code
-    LEFT JOIN (
-    SELECT
-    MIN(date),
-    share_code,
-    end_value,
-    open_value
-    FROM
-    market_info
-    where 1=1
-    <if test="shareCode != null">
-      and share_code = #{shareCode,jdbcType=VARCHAR}
-    </if>
-    GROUP BY
-    share_code
-    ) d ON b.share_code = d.share_code
-
-  </select>
+    <insert id="insertSelective" parameterType="com.liuhu.socket.entity.MarketInfo">
+        insert into market_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="openValue != null">
+                open_value,
+            </if>
+            <if test="endValue != null">
+                end_value,
+            </if>
+            <if test="riseFall != null">
+                rise_fall,
+            </if>
+            <if test="riseFallRatio != null">
+                rise_fall_ratio,
+            </if>
+            <if test="highest != null">
+                highest,
+            </if>
+            <if test="lowest != null">
+                lowest,
+            </if>
+            <if test="date != null">
+                date,
+            </if>
+            <if test="totalAmount != null">
+                total_amount,
+            </if>
+            <if test="preEndValue != null">
+                pre_end_value,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="openValue != null">
+                #{openValue,jdbcType=DOUBLE},
+            </if>
+            <if test="endValue != null">
+                #{endValue,jdbcType=DOUBLE},
+            </if>
+            <if test="riseFall != null">
+                #{riseFall,jdbcType=DOUBLE},
+            </if>
+            <if test="riseFallRatio != null">
+                #{riseFallRatio,jdbcType=VARCHAR},
+            </if>
+            <if test="highest != null">
+                #{highest,jdbcType=DOUBLE},
+            </if>
+            <if test="lowest != null">
+                #{lowest,jdbcType=DOUBLE},
+            </if>
+            <if test="date != null">
+                #{date,jdbcType=TIMESTAMP},
+            </if>
+            <if test="totalAmount != null">
+                #{totalAmount,jdbcType=DOUBLE},
+            </if>
+            <if test="preEndValue != null">
+                #{preEndValue,jdbcType=DOUBLE},
+            </if>
+        </trim>
+    </insert>
+    <select id="getShareInfo"
+            parameterType="com.liuhu.socket.domain.input.MarketInputDomain"
+            resultMap="BaseResultMap">
+        select id,share_code, open_value, end_value,
+        rise_fall, rise_fall_ratio, highest,
+        lowest, date,total_amount,pre_end_value from market_info t
+        where 1=1
+        <if test="startTime != null">
+            and t.date >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and t.date <![CDATA[ <= ]]>
+            #{endTime}
+        </if>
+        <if test="shareCode != null">
+            and t.share_code = #{shareCode,jdbcType=VARCHAR}
+        </if>
+        order by t.date
+    </select>
+    <select id="getLastEndList"
+            parameterType="com.liuhu.socket.domain.input.MarketInputDomain"
+            resultType="com.liuhu.socket.entity.MarketInfo">
+        select a.share_code as shareCode,
+        a.end_value as endValue,
+        a.total_amount as totalAmount,
+        a.rise_fall_ratio as riseFallRatio,
+        a.pre_end_value as preEndValue,
+        a.date,
+        c.share_name as shareName from
+        (SELECT
+        t.*
+        FROM
+        market_info t,
+        (
+        SELECT
+        MAX(date) AS date,
+        share_code
+        FROM
+        market_info t
+        <where>
+        <if test="endTime != null">
+            and t.date <![CDATA[ <= ]]> #{endTime}
+        </if>
+        <if test="shareCode != null and shareCode !=''">
+            and t.share_code = #{shareCode,jdbcType=VARCHAR}
+        </if>
+        </where>
+        GROUP BY
+        t.share_code
+        ) t2
+        WHERE
+            t.share_code = t2.share_code
+        AND t.date = t2.date
+        UNION
+        SELECT
+        t3.*
+        FROM
+        market_info t3,
+        (
+        SELECT
+        min(t2.date) AS date,
+        t2.share_code
+        FROM
+        market_info t2
+        <where>
+            <if test="startTime != null">
+                and t2.date >=#{startTime}
+            </if>
+            <if test="shareCode != null and shareCode !=''">
+                and t2.share_code = #{shareCode,jdbcType=VARCHAR}
+            </if>
+        </where>
+        GROUP BY
+        t2.share_code
+        ) t4
+        WHERE
+        t3.date = t4.date
+        AND t3.share_code = t4.share_code) a
+        LEFT JOIN share_info c ON c.share_code = a.share_code
+    </select>
+    <insert id="insertOrUpdateMarketInfo" useGeneratedKeys="true" parameterType="java.util.List">
+        replace into market_info
+        (open_value, end_value,
+        rise_fall, rise_fall_ratio, highest,
+        lowest, date,share_code,total_amount,pre_end_value)
+        VALUES
+        <foreach collection="list" item="it" separator=",">
+            (#{it.openValue},#{it.endValue},#{it.riseFall},
+            #{it.riseFallRatio},#{it.highest},#{it.lowest},
+            #{it.date},#{it.shareCode},#{it.totalAmount},#{it.preEndValue})
+        </foreach>
+    </insert>
+    <select id="queryMaxDate"
+            resultType="java.util.Date">
+        select max(date) as date  from market_info t where t.share_code =#{shareCode,jdbcType=VARCHAR}
+    </select>
 </mapper>

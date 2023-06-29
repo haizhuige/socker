@@ -29,7 +29,8 @@ public class DateUtils  {
         YYYY_MM("yyyy-MM"),
         Y_MM("yyyy年M月"),
         MM_DD_HH_MM("MM-dd HH:mm"),
-        YYYY_MM_DD_POINT("yyyy.MM.dd");
+        YYYY_MM_DD_POINT("yyyy.MM.dd"),
+        YYYYMMDDHHMMSS("yyyyMMddHHmmss");
         private String format;
 
         DateFormat(String format) {
@@ -328,11 +329,11 @@ public class DateUtils  {
         return hour + ":" + min + ":" + sec;
     }
     /**
-     * 几天前或者几天后的日期
+     * 字符串日期几天前或者几天后的日期
 
      */
-    public static String operateDate(String dateStr,int day){
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    public static String operateDateStr(String dateStr,int day,String pattern){
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
         Date date = null;
         try {
             date = format.parse(dateStr);
@@ -342,5 +343,16 @@ public class DateUtils  {
         Date afterDate = new Date(date .getTime() + 24*3600000*day);
         return format.format(afterDate);
     }
+    /**
+     * 字符串日期几天前或者几天后的日期
 
+     */
+    public static String operateDate(Date date,int day,String pattern){
+        SimpleDateFormat format = new SimpleDateFormat(pattern);
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        c.add(Calendar.DATE, day);
+        Date d = c.getTime();
+        return format.format(d);
+    }
 }

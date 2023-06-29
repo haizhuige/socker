@@ -1,4 +1,4 @@
-package com.liuhu.socket.domain;
+package com.liuhu.socket.domain.output;
 
 import java.io.Serializable;
 
@@ -28,5 +28,11 @@ public class MarketOutputDomain implements Serializable {
     /**
      * 大盘变化率
      */
-    private double ARate;
+    private String ARate;
+
+    private String rateStr;
+
+    private String startTime;
+
+    private String endTime;
 }

@@ -2,7 +2,7 @@ package com.liuhu.socket.enums;
 
 public enum SpecialSockerEnum {
 	//A股
-   A_SOCKER("000000", "上证代码");
+   A_SOCKER("A00001", "上证代码");
 
 
     private String code;

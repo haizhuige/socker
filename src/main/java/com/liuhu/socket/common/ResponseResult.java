@@ -1,11 +1,17 @@
 package com.liuhu.socket.common;
 
+import com.liuhu.socket.enums.RespFlagEnum;
+
 import java.io.Serializable;
 
 public class ResponseResult<T> implements Serializable {
 
 	private static final long serialVersionUID = 2131351656081166487L;
-	
+    private String flag;
+    private String code;
+    private String msg;
+    private T data;
+    private Boolean success;
 	public static ResponseResult done = new ResponseResult(true);
 
     public static <T> ResponseResult done(T data) {
@@ -13,9 +19,7 @@ public class ResponseResult<T> implements Serializable {
         result.setData(data);
         return result;
     }
-    private Boolean success;
-    private String msg;
-    private T data;
+
 
     public ResponseResult(Boolean success) {
         this.success = success;
@@ -33,7 +37,22 @@ public class ResponseResult<T> implements Serializable {
         result.data = data;
         return result;
     }
+    public ResponseResult fail(ResponseService responseService) {
+        this.code = responseService.getResponseCode();
+        this.msg = responseService.getResponseMessage();
+        return this.fail();
+    }
 
+    public ResponseResult fail(ResponseService responseService, T data) {
+        this.code = responseService.getResponseCode();
+        this.msg = responseService.getResponseMessage();
+        this.data = data;
+        return this.fail();
+    }
+    public ResponseResult fail() {
+        this.flag = RespFlagEnum.FAIL.getCode();
+        return this;
+    }
     public String getMsg() {
         return msg;
     }
