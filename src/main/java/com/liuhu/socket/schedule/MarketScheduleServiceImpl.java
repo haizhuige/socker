@@ -25,6 +25,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component("scheduleTask")
 public class MarketScheduleServiceImpl implements MarketScheduleService {
@@ -41,6 +43,10 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     private String sohuUrl;
     @Value("${sohuDownload.param}")
     private String soHuStaticParam;
+
+
+
+    ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Resource
     MarketInfoNewMapper marketInfoNewMapper;
@@ -96,32 +102,41 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             shareInfoList.add(newShareInfo);
         }
         for (ShareInfo excelShare : shareInfoList) {
-            String shareCode = excelShare.getShareCode();
-            Date date = marketInfoNewMapper.queryMaxDate(shareCode);
-            /**
-             * 搜狐股票下载当天的行情数据
-             */
-            MarketInputDomain inputDomain = new MarketInputDomain();
-            inputDomain.setShareCode(shareCode);
-            if (date == null) {
-                inputDomain.setStartTime(DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
-            } else {
-                inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+          //  queryInsert(excelShare);
+            PatchThread patchThread = new PatchThread(excelShare);
+            executorService.execute(patchThread);
 
-            }
-            inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
-            if (inputDomain.getEndTime().compareTo(inputDomain.getStartTime()) < 0) {
-                continue;
-            }
-            SockerSouhuImportEntity importEntity = this.getMarketJsonBySouhu(inputDomain);
-            if (importEntity == null) {
-                continue;
-            }
-            List<MarketInfoNew> list = importEntity.getList();
-            if (list != null && list.size() > 0) {
-                marketInfoNewMapper.insertOrUpdateMarketInfo(list);
-            }
+        }
+    }
 
+    private void queryInsert(ShareInfo excelShare) throws IOException {
+        String shareCode = excelShare.getShareCode();
+        Date date = marketInfoNewMapper.queryMaxDate(shareCode);
+
+
+        //   executorService.execute();
+        /**
+         * 搜狐股票下载当天的行情数据
+         */
+        MarketInputDomain inputDomain = new MarketInputDomain();
+        inputDomain.setShareCode(shareCode);
+        if (date == null) {
+            inputDomain.setStartTime(DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+        } else {
+            inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
+
+        }
+        inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
+        if (inputDomain.getEndTime().compareTo(inputDomain.getStartTime()) < 0) {
+            return;
+        }
+        SockerSouhuImportEntity importEntity = this.getMarketJsonBySouhu(inputDomain);
+        if (importEntity == null) {
+            return;
+        }
+        List<MarketInfoNew> list = importEntity.getList();
+        if (list != null && list.size() > 0) {
+            marketInfoNewMapper.insertOrUpdateMarketInfo(list);
         }
     }
 
@@ -261,5 +276,32 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             excelList.add(socker);
         }
         return excelList;
+    }
+
+
+    class PatchThread implements Runnable{
+
+        ShareInfo excelShare;
+
+        public void setExcelShare(ShareInfo excelShare) {
+            this.excelShare = excelShare;
+        }
+
+        public ShareInfo getExcelShare() {
+            return excelShare;
+        }
+        PatchThread(ShareInfo shareInfo){
+            excelShare = shareInfo;
+        }
+
+
+        @Override
+        public void run() {
+            try {
+                queryInsert(excelShare);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

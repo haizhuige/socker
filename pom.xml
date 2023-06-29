@@ -73,7 +73,7 @@
         <dependency>
             <artifactId>fastjson</artifactId>
             <groupId>com.alibaba</groupId>
-            <version>1.2.54</version>
+            <version>1.2.68</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
