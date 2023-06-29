@@ -110,7 +110,7 @@
                         <groupId>mysql</groupId>
                         <artifactId>mysql-connector-java</artifactId>
                         <!--版本号为5.1.30,统一配置在parent的pom文件中 -->
-                        <version>8.0.16</version>
+                        <version>8.0.28</version>
                     </dependency>
                 </dependencies></plugin>
 		</plugins>
