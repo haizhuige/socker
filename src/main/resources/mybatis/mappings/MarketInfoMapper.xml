@@ -252,6 +252,9 @@
         <if test="selectEndTime !=null">
         AND date &lt; #{selectEndTime}
         </if>
+        <if test="minTurnOverRate!=null">
+            AND   turn_over_rate > #{minTurnOverRate}
+        </if>
         ) AS hihi
         ) kk
         WHERE

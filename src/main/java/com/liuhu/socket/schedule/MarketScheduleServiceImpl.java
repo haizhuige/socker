@@ -104,13 +104,13 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
         List<ShareInfo> shareInfoList = new ArrayList<>();
         if (StringUtils.isEmpty(originShareCode)){
-          List<String>  shareCodeList =    marketInfoNewMapper.queryMaxAmount();
+       /*   List<String>  shareCodeList =    marketInfoNewMapper.queryMaxAmount();
           for (String str:shareCodeList){
               ShareInfo sh = new ShareInfo();
               sh.setShareCode(str.replace("cn_",""));
               shareInfoList.add(sh);
-          }
-      //      shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+          }*/
+           shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
         }else {
             ShareInfo newShareInfo = new ShareInfo();
             newShareInfo.setShareCode(originShareCode);

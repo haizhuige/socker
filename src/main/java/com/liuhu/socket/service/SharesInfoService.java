@@ -60,5 +60,5 @@ public interface SharesInfoService {
      * @param input2Domain
      * @return
      */
-    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain);
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) throws Exception;
 }

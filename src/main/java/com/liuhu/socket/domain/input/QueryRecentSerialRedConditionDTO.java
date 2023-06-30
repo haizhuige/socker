@@ -16,7 +16,7 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
     //查询区间 查询多少天的增长值
     private Integer period =20;
     //查询区间 开始时间
-    private Date startTime;
+    private String endTime;
     //筛选条件最小市值
     private Long minMarketValue =80000000L;
     //筛选连续增长期间最小值增长总收益率

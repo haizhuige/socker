@@ -43,4 +43,20 @@
             +#{recentDay}
         </if>
     </select>
+    <select id="queryPeriodDateList" resultType="java.util.Date">
+        SELECT
+            date
+        FROM
+            trade_date
+        WHERE
+        id > (
+        SELECT
+        id
+        FROM
+        trade_date
+        WHERE
+        date > #{date}
+        )-#{recentDay}
+         and   date &lt;= #{date}
+    </select>
 </mapper>

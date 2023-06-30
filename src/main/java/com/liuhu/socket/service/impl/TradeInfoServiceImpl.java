@@ -338,6 +338,11 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         return tradeDateMapper.getWantDate(recentDay,date,type);
     }
 
+    @Override
+    public List<Date> queryPeriodDateList(String endTime, Integer period) {
+        return tradeDateMapper.queryPeriodDateList(endTime,period);
+    }
+
     private static Date getTradeDateByMap(Map map){
 
         return (Date) map.get("tradeDate");

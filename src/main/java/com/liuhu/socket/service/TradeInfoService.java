@@ -2,8 +2,10 @@ package com.liuhu.socket.service;
 
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public interface TradeInfoService {
@@ -19,4 +21,6 @@ public interface TradeInfoService {
     Date queryMaxDate();
 
     Date getWantDate(Integer recentDay,Date date,String type);
+
+    List<Date> queryPeriodDateList(@Param("date") String endTime, @Param("period") Integer period);
 }

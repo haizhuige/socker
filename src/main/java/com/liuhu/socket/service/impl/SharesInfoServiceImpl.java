@@ -22,6 +22,7 @@ import com.liuhu.socket.enums.SpecialSockerEnum;
 import com.liuhu.socket.schedule.MarketScheduleService;
 import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.TradeInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
@@ -37,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class SharesInfoServiceImpl implements SharesInfoService {
     private static final Logger logger = LogManager.getLogger(SharesInfoServiceImpl.class);
 
@@ -234,21 +236,54 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     }
 
     @Override
-    public List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) {
+    public List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
         QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+
         if (SerialRedTypeEnum.SINGLE.getCode().equals(input2Domain.getType())){
-           BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
-            queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-            queryRecentSerialRedConditionDO.setSelectEndTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
-            queryRecentSerialRedConditionDO.setUpStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
-            queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
-            queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
-            queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
-            return   marketInfoMapper.queryRecentSerialRed(queryRecentSerialRedConditionDO);
+            //获取计算结果集
+            List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedOutPutDTOS = getSerialRed(input2Domain, queryRecentSerialRedConditionDO);
+
+            return   queryRecentSerialRedOutPutDTOS;
+        }else if (SerialRedTypeEnum.PERIOD.getCode().equals(input2Domain.getType())){
+            String endTime = input2Domain.getEndTime();
+            if (Objects.isNull(endTime)){
+               throw new Exception("截至日期不能为空");
+            }
+          List<Date> dateList =  tradeInfoService.queryPeriodDateList(endTime,input2Domain.getPeriod());
+            List<QueryRecentSerialRedOutPutDTO> allSerialRed = new ArrayList<>();
+            for (Date date:dateList){
+                input2Domain.setSelectStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                List<QueryRecentSerialRedOutPutDTO> serialRed = getSerialRed(input2Domain, queryRecentSerialRedConditionDO);
+                allSerialRed.addAll(serialRed);
+            }
+            return allSerialRed;
         }
         return null;
     }
 
+    /**
+     * 拼接连续下跌，然后再起头上涨的socker 统计
+     * @param input2Domain
+     * @param queryRecentSerialRedConditionDO
+     * @return
+     */
+    private List<QueryRecentSerialRedOutPutDTO> getSerialRed(QueryRecentSerialRedConditionDTO input2Domain, QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO) {
+        BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
+        queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+        queryRecentSerialRedConditionDO.setSelectEndTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
+        queryRecentSerialRedConditionDO.setUpStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
+        queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
+        queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
+        queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
+        List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedOutPutDTOS = marketInfoMapper.queryRecentSerialRed(queryRecentSerialRedConditionDO);
+        int size = queryRecentSerialRedOutPutDTOS.size();
+        log.info("单日满足条件的个股数量为：{}",size);
+        if (size>0){
+            long count = queryRecentSerialRedOutPutDTOS.stream().filter(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getMaxRatio() > 1).count();
+            log.info("增幅大于1的比例为：{}",count/size);
+        }
+        return queryRecentSerialRedOutPutDTOS;
+    }
 
 
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input) {

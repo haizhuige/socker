@@ -127,7 +127,7 @@ public class MarketInfoController {
      */
     @ResponseBody
     @RequestMapping("/queryRecentSerialRed.do")
-    public ResponseResult queryRecentSerialRed(@RequestBody QueryRecentSerialRedConditionDTO input2Domain) {
+    public ResponseResult queryRecentSerialRed(@RequestBody QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
 
         List<QueryRecentSerialRedOutPutDTO> list = sharesInfoService.queryRecentSerialRed(input2Domain);
         return ResponseResult.done(list);
