@@ -4,7 +4,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.entity.ShareInfo;
@@ -52,4 +54,11 @@ public interface SharesInfoService {
      * @return
      */
     List<ShareInfo> getShareInfo();
+
+    /**
+     * 查询连续吓得之后又连续增长的股票及其收益率
+     * @param input2Domain
+     * @return
+     */
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain);
 }

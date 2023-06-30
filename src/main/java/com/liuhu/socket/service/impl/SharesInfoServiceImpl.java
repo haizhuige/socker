@@ -6,16 +6,22 @@ import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
+import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
+import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.entity.ShareInfo;
+import com.liuhu.socket.enums.SerialRedTypeEnum;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.enums.SpecialSockerEnum;
 import com.liuhu.socket.schedule.MarketScheduleService;
 import com.liuhu.socket.service.SharesInfoService;
+import com.liuhu.socket.service.TradeInfoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
@@ -42,6 +48,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Resource
     ShareInfoMapper shareInfoMapper;
+
+    @Resource
+    TradeInfoService tradeInfoService;
 
     @Value("${realTime.url}")
     private String realTimeUrl;
@@ -223,6 +232,24 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
         return shareInfoMapper.getShareInfoWithoutASocker(shareInfo);
     }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) {
+        QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+        if (SerialRedTypeEnum.SINGLE.getCode().equals(input2Domain.getType())){
+           BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
+            queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            queryRecentSerialRedConditionDO.setSelectEndTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
+            queryRecentSerialRedConditionDO.setUpStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
+            queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
+            queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
+            queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
+            return   marketInfoMapper.queryRecentSerialRed(queryRecentSerialRedConditionDO);
+        }
+        return null;
+    }
+
+
 
     private List<MarketOutputDomain> getMarketPriodRateInfo(MarketInputDomain input) {
         List<MarketOutputDomain> returnList = new ArrayList<>();

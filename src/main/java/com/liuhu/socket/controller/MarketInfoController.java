@@ -7,8 +7,10 @@ import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.common.ResponseResult;
 import com.liuhu.socket.domain.input.MarketInput2Domain;
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.input.NetIncomeInputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
@@ -119,4 +121,17 @@ public class MarketInfoController {
         List list = handleService.randomSelectedSocket(input2Domain);
         return ResponseResult.done(list);
     }
+
+    /**
+     * 查询连续下跌之后又连续上涨的股票及其收益率
+     */
+    @ResponseBody
+    @RequestMapping("/queryRecentSerialRed.do")
+    public ResponseResult queryRecentSerialRed(@RequestBody QueryRecentSerialRedConditionDTO input2Domain) {
+
+        List<QueryRecentSerialRedOutPutDTO> list = sharesInfoService.queryRecentSerialRed(input2Domain);
+        return ResponseResult.done(list);
+    }
+
+
 }

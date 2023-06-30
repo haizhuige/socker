@@ -164,5 +164,23 @@
         and sif.status = 1
     </select>
 
+    <select id="queryDistinctDate" resultType="date">
+        select distinct date from market_info_new order by date
+    </select>
+
+    <select id="queryMaxAmount" resultType="java.lang.String">
+        SELECT
+	share_code
+FROM
+	market_info_new
+WHERE
+	date IN (
+		SELECT DISTINCT
+			max(date)
+		FROM
+			market_info_new
+	)
+AND deal_amount / turn_over_rate > 80000000
+    </select>
 
 </mapper>

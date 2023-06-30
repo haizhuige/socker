@@ -43,6 +43,10 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     @Resource
     ShareInfoMapper shareInfoMapper;
 
+
+    @Resource
+    TradeDateMapper tradeDateMapper;
+
     @Override
     @Transactional
     public int operateTrade(TradeInputDomain input) {
@@ -322,6 +326,16 @@ public class TradeInfoServiceImpl implements TradeInfoService {
             returnMap.put(DateUtils.format((Date)entry.getKey(),DateUtils.DateFormat.YYYY_MM_DD),subMap);
         }
         return returnMap;
+    }
+
+    @Override
+    public Date queryMaxDate() {
+        return tradeDateMapper.queryMaxDate();
+    }
+
+    @Override
+    public Date getWantDate(Integer recentDay,Date date,String type) {
+        return tradeDateMapper.getWantDate(recentDay,date,type);
     }
 
     private static Date getTradeDateByMap(Map map){

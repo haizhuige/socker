@@ -1,0 +1,25 @@
+<configuration>
+
+    <!-- 配置 MyBatis 的日志输出 -->
+  <!--  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>-->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 其他配置项 -->
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+  <!--  <logger name="java.sql.Statement" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE" />
+    </logger>-->
+
+    <root level="debug">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+        <!-- 其他配置项 -->
+
+        </configuration>

@@ -6,6 +6,7 @@ import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
+import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
@@ -20,6 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -27,6 +30,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component("scheduleTask")
 public class MarketScheduleServiceImpl implements MarketScheduleService {
@@ -51,6 +56,9 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     @Resource
     MarketInfoNewMapper marketInfoNewMapper;
 
+    @Resource
+    TradeDateMapper tradeDateMapper;
+
     @Scheduled(cron = "0 0 15 1/1 * ? ")
     public void getNewMarketInfo() throws IOException {
         /**
@@ -59,6 +67,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
         List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+        Date maxDate =null;
         for (ShareInfo excelShare : shareInfoList) {
             String shareCode = excelShare.getShareCode();
             Date date = sharesInfoService.queryMaxDate(excelShare.getShareCode());
@@ -95,7 +104,13 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
         List<ShareInfo> shareInfoList = new ArrayList<>();
         if (StringUtils.isEmpty(originShareCode)){
-            shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+          List<String>  shareCodeList =    marketInfoNewMapper.queryMaxAmount();
+          for (String str:shareCodeList){
+              ShareInfo sh = new ShareInfo();
+              sh.setShareCode(str.replace("cn_",""));
+              shareInfoList.add(sh);
+          }
+      //      shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
         }else {
             ShareInfo newShareInfo = new ShareInfo();
             newShareInfo.setShareCode(originShareCode);
@@ -107,6 +122,22 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             executorService.execute(patchThread);
 
         }
+        // 等待线程池中的任务执行完成
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            // 处理中断异常
+        }
+        //插入dateList到日志列表中
+        List<Date> dateList = queryDistinctDate();
+        Date date = tradeDateMapper.queryMaxDate();
+        List<Date> insertDateList = dateList.stream().filter(date1 -> date1.compareTo(date) > 0).sorted(Date::compareTo).collect(Collectors.toList());
+        tradeDateMapper.insertList(insertDateList);
+    }
+
+    @Transactional(propagation= Propagation.REQUIRES_NEW)
+    public List<Date> queryDistinctDate(){
+        return marketInfoNewMapper.queryDistinctDate();
     }
 
     private void queryInsert(ShareInfo excelShare) throws IOException {

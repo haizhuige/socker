@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.TradeDateMapper">
+    <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.TradeDateInfo">
+        <result column="id" property="id" jdbcType="INTEGER"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+
+    </resultMap>
+    <insert id="insert" parameterType="com.liuhu.socket.entity.TradeDateInfo">
+    insert into trade_date (date)
+    values (#{date,jdbcType=DATE})
+   </insert>
+
+    <select id="queryMaxDate" resultType="java.util.Date" >
+        select max(date) from trade_date
+    </select>
+
+    <insert id="insertList" parameterType="java.util.List">
+        insert into trade_date(date) VALUES
+        <foreach collection="list" item="item" separator=",">
+         (#{item})
+        </foreach>
+    </insert>
+
+    <select id="getWantDate"  resultType="java.util.Date">
+       SELECT
+	          date
+       FROM
+	          trade_date
+      WHERE
+	       id = (
+		         SELECT
+		             	id
+	     	FROM
+			trade_date
+		   WHERE
+			date = #{date}
+	            )
+        <if test="type ==null ||type=='sub'">
+	        -#{recentDay}
+        </if>
+        <if test="type=='plus'">
+            +#{recentDay}
+        </if>
+    </select>
+</mapper>

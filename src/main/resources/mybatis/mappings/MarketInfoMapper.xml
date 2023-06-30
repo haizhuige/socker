@@ -185,4 +185,78 @@
             resultType="java.util.Date">
         select max(date) as date  from market_info t where t.share_code =#{shareCode,jdbcType=VARCHAR}
     </select>
+
+    <select id="queryRecentSerialRed" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        SELECT
+        DISTINCT  share_code as shareCode,
+        ROUND((maxHighest - lastEndValue) / lastEndValue * 100,2) AS maxRatio,
+        date as startTime,
+        last_value(sumRatio) over (PARTITION BY share_code order by date) as finalRatio,
+        ROUND((minLowest - lastEndValue) / lastEndValue * 100,2) as minRatio
+        FROM
+        (
+        SELECT DISTINCT
+        share_code,
+        MAX(highest) over (PARTITION BY share_code) AS maxHighest,
+        round(first_value (	end_value / (1 + rise_fall_ratio * 0.01)) over (	PARTITION BY share_code	ORDER BY	date),	2	) AS lastEndValue,
+        round(first_value (deal_amount) over (PARTITION BY share_code ORDER BY	date),2) AS FIRSTDealAmount,
+        round(first_value (turn_over_rate) over (	PARTITION BY share_code	ORDER BY date),	2	) AS FIRSTTurnOverRate,
+        min(date) over(	PARTITION BY share_code	ORDER BY date) as date,
+        SUM(rise_fall_ratio) over (PARTITION BY share_code ORDER BY date) as sumRatio,
+        MIN(lowest) over (PARTITION BY share_code) as minLowest
+        FROM
+        (
+        SELECT
+        share_code,
+        rise_fall_ratio,
+        highest,
+        lowest,
+        open_value,
+        end_value,
+        deal_amount,
+        turn_over_rate,
+        date
+        FROM
+        market_info_new
+        WHERE
+        share_code IN (
+        SELECT
+        share_code
+        FROM
+        market_info_new
+        WHERE
+        share_code IN (
+        SELECT
+        share_code
+        FROM
+        market_info_new
+        WHERE
+        date >= #{upStartTime}
+        AND date &lt; #{upEndTime}
+        AND rise_fall_ratio > 0
+        GROUP BY
+        share_code
+        HAVING
+        COUNT(share_code) >= #{minUpDay}
+        AND SUM(rise_fall_ratio) > #{minRate}
+        )
+        AND date >= #{downStartTime}
+        AND date &lt; #{downEndTime}
+        AND rise_fall_ratio &lt; 0
+        GROUP BY
+        share_code
+        HAVING
+        COUNT(share_code) > #{minDownDay}
+        )
+        AND date >= #{selectStartTime}
+        <if test="selectEndTime !=null">
+        AND date &lt; #{selectEndTime}
+        </if>
+        ) AS hihi
+        ) kk
+        WHERE
+        FIRSTDealAmount / FIRSTTurnOverRate > 80000000
+        ORDER BY
+        (maxHighest - lastEndValue) / lastEndValue DESC
+    </select>
 </mapper>

@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
+import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
 public interface MarketInfoMapper {
@@ -19,4 +21,6 @@ public interface MarketInfoMapper {
     void insertOrUpdateMarketInfo(List<SockerExcelEntity> list);
 
     Date queryMaxDate(String shareCode);
+
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.Map;
 
 @Controller
@@ -55,4 +56,15 @@ public class TradeInfoController {
 		return ResponseResult.done(a);
 	}
 
+	/**
+	 * 当前最大交易时间
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getMaxDate")
+	public ResponseResult getMaxDate(@RequestBody MarketDetailInputDomain input) {
+		Date date = tradeInfoService.queryMaxDate();
+		return ResponseResult.done(date);
+	}
 }
