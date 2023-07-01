@@ -9,7 +9,7 @@ import java.util.List;
 public interface TradeDateMapper {
     int insert(TradeDateInfo record);
 
-    Date queryMaxDate();
+    TradeDateInfo queryMaxDate();
 
     int insertList(List<Date> insertDateList);
 
@@ -18,4 +18,5 @@ public interface TradeDateMapper {
     List<Date> queryPeriodDateList(@Param("date") String endTime,@Param("recentDay") Integer period);
 
 
+    int insertEntityList(@Param("tradeDateInfoList")List<TradeDateInfo> tradeDateInfoList);
 }

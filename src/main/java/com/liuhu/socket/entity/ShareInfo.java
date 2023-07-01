@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.Date;
+
 @Setter
 @Getter
 public class ShareInfo implements Serializable {
@@ -16,6 +18,10 @@ public class ShareInfo implements Serializable {
     private String hushenStatus;
 
     private static final long serialVersionUID = 1L;
+
+    private String prefix ="cn_";
+
+    private Date date;
 
 
 }

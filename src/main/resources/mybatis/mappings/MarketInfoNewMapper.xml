@@ -122,7 +122,7 @@
     </insert>
     <select id="queryMaxDate"
             resultType="java.util.Date">
-        select max(date) as date  from market_info_new t where t.share_code like '%${shareCode}%'
+        select max(date) as date  from market_info_new t where t.share_code = '${shareCode}'
     </select>
 
     <select id="queryPeriodRateByShareCode" parameterType="com.liuhu.socket.domain.input.MarketInput2Domain"

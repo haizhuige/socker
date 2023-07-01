@@ -11,8 +11,8 @@
     values (#{date,jdbcType=DATE})
    </insert>
 
-    <select id="queryMaxDate" resultType="java.util.Date" >
-        select max(date) from trade_date
+    <select id="queryMaxDate" resultType="com.liuhu.socket.entity.TradeDateInfo" >
+       select * from trade_date tt where tt.date = (select max(date) from trade_date)
     </select>
 
     <insert id="insertList" parameterType="java.util.List">
@@ -59,4 +59,11 @@
         )-#{recentDay}
          and   date &lt;= #{date}
     </select>
+
+    <insert id="insertEntityList" parameterType="java.util.List">
+          insert into  trade_date(id,date) VALUES
+         <foreach collection="tradeDateInfoList" item="item" separator=",">
+            (#{item.id},#{item.date})
+         </foreach>
+    </insert>
 </mapper>

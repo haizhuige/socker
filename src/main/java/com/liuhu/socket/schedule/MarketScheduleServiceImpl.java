@@ -1,6 +1,7 @@
 package com.liuhu.socket.schedule;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
@@ -12,9 +13,11 @@ import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.entity.ShareInfo;
+import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component("scheduleTask")
+@Slf4j
 public class MarketScheduleServiceImpl implements MarketScheduleService {
     private static final Logger logger = LogManager.getLogger(SharesInfoServiceImpl.class);
     @Resource
@@ -98,7 +102,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     @Scheduled(cron = "0 0 15 1/1 * ? ")
     public void getMarketInfoBySouHu(String originShareCode) throws IOException {
         /**
-         * 查询关注的股票信息
+         * 查询关注的socker信息
          */
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
@@ -116,23 +120,39 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             newShareInfo.setShareCode(originShareCode);
             shareInfoList.add(newShareInfo);
         }
+        ShareInfo shareInfo1 = shareInfoList.get(0);
+        TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
+        Date date = marketInfoNewMapper.queryMaxDate(new StringBuffer().append(shareInfo1.getPrefix()).append(shareInfo1.getShareCode()).toString());
+        if (date.compareTo(currentMaxDateInfo.getDate())>0){
+            return;
+        }
         for (ShareInfo excelShare : shareInfoList) {
-          //  queryInsert(excelShare);
+            excelShare.setDate(date);
             PatchThread patchThread = new PatchThread(excelShare);
             executorService.execute(patchThread);
-
         }
+        //关闭线程池
+        executorService.shutdown();
         // 等待线程池中的任务执行完成
-        try {
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+       try {
+            executorService.awaitTermination(20, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             // 处理中断异常
         }
         //插入dateList到日志列表中
         List<Date> dateList = queryDistinctDate();
-        Date date = tradeDateMapper.queryMaxDate();
-        List<Date> insertDateList = dateList.stream().filter(date1 -> date1.compareTo(date) > 0).sorted(Date::compareTo).collect(Collectors.toList());
-        tradeDateMapper.insertList(insertDateList);
+        Date currentMaxDate = currentMaxDateInfo.getDate();
+        List<Date> insertDateList = dateList.stream().filter(date1 -> date1.compareTo(currentMaxDate) > 0).sorted(Date::compareTo).collect(Collectors.toList());
+        log.info("查询需要插入的日期为：{}", JSONArray.toJSONString(insertDateList));
+        List<TradeDateInfo> tradeDateInfoList = new ArrayList<>();
+        int id = currentMaxDateInfo.getId();
+        for (Date insertDate:insertDateList){
+            TradeDateInfo tradeDateInfo = new TradeDateInfo();
+            tradeDateInfo.setDate(insertDate);
+            tradeDateInfo.setId(++id);
+            tradeDateInfoList.add(tradeDateInfo);
+        }
+        tradeDateMapper.insertEntityList(tradeDateInfoList);
     }
 
     @Transactional(propagation= Propagation.REQUIRES_NEW)
@@ -141,16 +161,13 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     }
 
     private void queryInsert(ShareInfo excelShare) throws IOException {
-        String shareCode = excelShare.getShareCode();
-        Date date = marketInfoNewMapper.queryMaxDate(shareCode);
-
-
-        //   executorService.execute();
+        //获取当前已下载数据最新时间
+        Date date = excelShare.getDate();
         /**
-         * 搜狐股票下载当天的行情数据
+         * 搜沪socker下载当天的行情数据
          */
         MarketInputDomain inputDomain = new MarketInputDomain();
-        inputDomain.setShareCode(shareCode);
+        inputDomain.setShareCode(excelShare.getShareCode());
         if (date == null) {
             inputDomain.setStartTime(DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
         } else {

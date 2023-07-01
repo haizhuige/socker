@@ -3,6 +3,7 @@ package com.liuhu.socket.controller;
 import com.liuhu.socket.common.ResponseResult;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -64,7 +65,7 @@ public class TradeInfoController {
 	@ResponseBody
 	@RequestMapping("/getMaxDate")
 	public ResponseResult getMaxDate(@RequestBody MarketDetailInputDomain input) {
-		Date date = tradeInfoService.queryMaxDate();
+		TradeDateInfo date = tradeInfoService.queryMaxDate();
 		return ResponseResult.done(date);
 	}
 }

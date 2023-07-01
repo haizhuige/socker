@@ -329,7 +329,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     }
 
     @Override
-    public Date queryMaxDate() {
+    public TradeDateInfo queryMaxDate() {
         return tradeDateMapper.queryMaxDate();
     }
 

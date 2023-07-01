@@ -2,6 +2,7 @@ package com.liuhu.socket.service;
 
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.entity.TradeDateInfo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -18,7 +19,7 @@ public interface TradeInfoService {
     Map ownerLongIncome(MarketDetailInputDomain input);
 
 
-    Date queryMaxDate();
+    TradeDateInfo queryMaxDate();
 
     Date getWantDate(Integer recentDay,Date date,String type);
 
