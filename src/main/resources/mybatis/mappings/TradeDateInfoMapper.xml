@@ -55,7 +55,7 @@
         FROM
         trade_date
         WHERE
-        date > #{date}
+        date = #{date}
         )-#{recentDay}
          and   date &lt;= #{date}
     </select>

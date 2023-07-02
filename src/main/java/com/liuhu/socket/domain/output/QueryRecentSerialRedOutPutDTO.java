@@ -18,4 +18,6 @@ public class QueryRecentSerialRedOutPutDTO {
     private Double finalRatio;
     //开始买入起点日期
     private Date startTime;
+
+    private Long id;
 }

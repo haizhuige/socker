@@ -5,6 +5,7 @@ import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoMapper;
+import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.MarketInputDomain;
@@ -56,6 +57,10 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Value("${realTime.url}")
     private String realTimeUrl;
+
+
+    @Resource
+    SerialTempMapper serialTempMapper;
 
     @Override
     public List<MarketInfo> getShareInfo(MarketInputDomain input) {
@@ -239,23 +244,25 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     public List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
         QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
 
-        if (SerialRedTypeEnum.SINGLE.getCode().equals(input2Domain.getType())){
+        if (SerialRedTypeEnum.SINGLE.getCode().equals(input2Domain.getType())) {
             //获取计算结果集
             List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedOutPutDTOS = getSerialRed(input2Domain, queryRecentSerialRedConditionDO);
 
-            return   queryRecentSerialRedOutPutDTOS;
-        }else if (SerialRedTypeEnum.PERIOD.getCode().equals(input2Domain.getType())){
+            return queryRecentSerialRedOutPutDTOS;
+        } else if (SerialRedTypeEnum.PERIOD.getCode().equals(input2Domain.getType())) {
             String endTime = input2Domain.getEndTime();
-            if (Objects.isNull(endTime)){
-               throw new Exception("截至日期不能为空");
+            if (Objects.isNull(endTime)) {
+                throw new Exception("截至日期不能为空");
             }
-          List<Date> dateList =  tradeInfoService.queryPeriodDateList(endTime,input2Domain.getPeriod());
+            List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod());
             List<QueryRecentSerialRedOutPutDTO> allSerialRed = new ArrayList<>();
-            for (Date date:dateList){
-                input2Domain.setSelectStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            for (Date date : dateList) {
+                input2Domain.setSelectStartTime(DateUtils.format(date, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
                 List<QueryRecentSerialRedOutPutDTO> serialRed = getSerialRed(input2Domain, queryRecentSerialRedConditionDO);
                 allSerialRed.addAll(serialRed);
             }
+            allSerialRed = allSerialRed.stream().distinct().collect(Collectors.toList());
+            serialTempMapper.insertList(allSerialRed);
             return allSerialRed;
         }
         return null;
@@ -277,11 +284,8 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
         List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedOutPutDTOS = marketInfoMapper.queryRecentSerialRed(queryRecentSerialRedConditionDO);
         int size = queryRecentSerialRedOutPutDTOS.size();
-        log.info("单日满足条件的个股数量为：{}",size);
-        if (size>0){
-            long count = queryRecentSerialRedOutPutDTOS.stream().filter(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getMaxRatio() > 1).count();
-            log.info("增幅大于1的比例为：{}",count/size);
-        }
+        List<QueryRecentSerialRedOutPutDTO> outPutList = queryRecentSerialRedOutPutDTOS.stream().filter(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getMaxRatio() > 1).collect(Collectors.toList());
+        log.info("单日满足条件的个股数量为及其大于1的个数分别为：{},{}",size,outPutList.size());
         return queryRecentSerialRedOutPutDTOS;
     }
 

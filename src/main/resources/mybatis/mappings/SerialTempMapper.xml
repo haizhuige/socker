@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.SerialTempMapper">
+    <resultMap id="BaseResultMap" type="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        <result column="id" property="id" jdbcType="BIGINT"/>
+        <result column="share_code" property="shareCode" jdbcType="VARCHAR"/>
+        <result column="max_ratio" property="maxRatio" jdbcType="DECIMAL"/>
+        <result column="min_ratio" property="minRatio" jdbcType="DECIMAL"/>
+        <result column="final_ratio" property="finalRatio" jdbcType="DECIMAL"/>
+        <result column="start_time" property="startTime" jdbcType="DATE"/>
+    </resultMap>
+
+
+    <insert id="insertList" parameterType="java.util.List">
+        insert into serial_temp(share_code,max_ratio,min_ratio,final_ratio,start_time) VALUES
+        <foreach collection="list" item="item" separator=",">
+         (#{item.shareCode},#{item.maxRatio},#{item.minRatio},#{item.finalRatio},#{item.startTime})
+        </foreach>
+    </insert>
+
+</mapper>
