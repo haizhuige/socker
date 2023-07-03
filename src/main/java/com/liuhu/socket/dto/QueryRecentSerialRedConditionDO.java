@@ -1,11 +1,11 @@
 package com.liuhu.socket.dto;
 
+import com.liuhu.socket.entity.MarketInfoNew;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 @Setter
 @Getter
@@ -43,6 +43,8 @@ public class QueryRecentSerialRedConditionDO {
     private Date upEndTime;
     // 1:达到最小红数量，第二日作为购买日起始日的标识
     private String purchaseFlag;
+    //满足红了区间的shareCode
+    private List<MarketInfoNew> marketList;
 
 
 }

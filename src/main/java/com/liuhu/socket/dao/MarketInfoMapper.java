@@ -8,6 +8,9 @@ import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.entity.MarketInfo;
+import com.liuhu.socket.entity.MarketInfoNew;
+import org.apache.ibatis.annotations.Param;
+
 public interface MarketInfoMapper {
 	
     int insert(MarketInfo record);
@@ -24,4 +27,7 @@ public interface MarketInfoMapper {
 
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
 
+    List<MarketInfoNew> queryRecentSerialRedExact(QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
+
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedWithHavingShareCode(@Param("condition") QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
 }
