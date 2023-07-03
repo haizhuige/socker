@@ -308,7 +308,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         Date key =(Date)entry.getKey();
         BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
         List<MarketInfoNew> marketList =(List)entry.getValue();
-        queryRecentSerialRedConditionDO.setSelectStartTime(key);
+        queryRecentSerialRedConditionDO.setSelectStartTime(tradeInfoService.getWantDate(1, key,"plus"));
         queryRecentSerialRedConditionDO.setSelectEndTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), queryRecentSerialRedConditionDO.getSelectStartTime(),"plus"));
         queryRecentSerialRedConditionDO.setUpStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
         queryRecentSerialRedConditionDO.setUpEndTime(key);
