@@ -23,4 +23,5 @@ public interface MarketInfoMapper {
     Date queryMaxDate(String shareCode);
 
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
+
 }

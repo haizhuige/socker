@@ -124,12 +124,26 @@ public class MarketInfoController {
 
     /**
      * 查询连续下跌之后又连续上涨的股票及其收益率
+     * (连续下跌固定数，上涨区间固定几个，)
      */
     @ResponseBody
     @RequestMapping("/queryRecentSerialRed.do")
     public ResponseResult queryRecentSerialRed(@RequestBody QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
 
         List<QueryRecentSerialRedOutPutDTO> list = sharesInfoService.queryRecentSerialRed(input2Domain);
+        return ResponseResult.done(list);
+    }
+
+
+    /**
+     * 查询连续下跌之后又连续上涨的股票及其收益率
+     * (连续下跌固定数，上涨区间根据最小上涨数而定，比如上涨区间有三次上涨，则以下一个交易日作为起点purchase)
+     */
+    @ResponseBody
+    @RequestMapping("/queryRecentSerialMinPurchase.do")
+    public ResponseResult queryRecentSerialMinPurchase(@RequestBody QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
+
+        List<QueryRecentSerialRedOutPutDTO> list = sharesInfoService.queryRecentSerialMinPurchase(input2Domain);
         return ResponseResult.done(list);
     }
 

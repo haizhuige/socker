@@ -262,10 +262,58 @@ public class SharesInfoServiceImpl implements SharesInfoService {
                 allSerialRed.addAll(serialRed);
             }
             allSerialRed = allSerialRed.stream().distinct().collect(Collectors.toList());
-            serialTempMapper.insertList(allSerialRed);
+            serialTempMapper.insertList(allSerialRed,-1);
             return allSerialRed;
         }
         return null;
+    }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryRecentSerialMinPurchase(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
+        QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+          if (!SerialRedTypeEnum.PERIOD.getCode().equals(input2Domain.getType())){
+              throw new Exception("当前查询方法必须为区间查询");
+          }
+          String endTime = input2Domain.getEndTime();
+          if (Objects.isNull(endTime)) {
+            throw new Exception("截至日期不能为空");
+           }
+          Integer periodUpDay = input2Domain.getPeriodUpDay();
+          Integer minUpDay = input2Domain.getMinUpDay();
+          int i = periodUpDay - minUpDay;
+        /**
+         * 分别查询上涨区间内可能完成的交易日查询
+         */
+        for (int j =0;j<=i;j++){
+              //设置向上区间为最小增长数
+              input2Domain.setPeriodUpDay(input2Domain.getMinUpDay()+j);
+              //获取需要查询的日期集合
+              List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod());
+              List<QueryRecentSerialRedOutPutDTO> allSerialRed = new ArrayList<>();
+            for (Date date : dateList) {
+                input2Domain.setSelectStartTime(DateUtils.format(date, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
+                queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                queryRecentSerialRedConditionDO.setSelectEndTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input2Domain.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
+                queryRecentSerialRedConditionDO.setUpStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
+                queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
+                queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
+                queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
+                queryRecentSerialRedConditionDO.setPurchaseFlag("1");
+                List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedOutPutDTOS = marketInfoMapper.queryRecentSerialRed(queryRecentSerialRedConditionDO);
+                int size = queryRecentSerialRedOutPutDTOS.size();
+                List<QueryRecentSerialRedOutPutDTO> outPutList = queryRecentSerialRedOutPutDTOS.stream().filter(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getMaxRatio() > 1).collect(Collectors.toList());
+                log.info("单日满足条件的个股数量为及其大于1的个数分别为：{},{}",size,outPutList.size());
+                allSerialRed.addAll(queryRecentSerialRedOutPutDTOS);
+
+            }
+            allSerialRed = allSerialRed.stream().distinct().collect(Collectors.toList());
+            serialTempMapper.insertList(allSerialRed,input2Domain.getPeriodUpDay());
+
+          }
+          return null;
+
+
     }
 
     /**

@@ -120,9 +120,14 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             newShareInfo.setShareCode(originShareCode);
             shareInfoList.add(newShareInfo);
         }
-        ShareInfo shareInfo1 = shareInfoList.get(0);
+       // ShareInfo shareInfo1 = shareInfoList.get(0);
         TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
-        Date date = marketInfoNewMapper.queryMaxDate(new StringBuffer().append(shareInfo1.getPrefix()).append(shareInfo1.getShareCode()).toString());
+        Date date = marketInfoNewMapper.queryMaxDate(null);
+        if (date ==null){
+            String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat());
+            date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM);
+        }
+
         if (date.compareTo(currentMaxDateInfo.getDate())>0){
             return;
         }

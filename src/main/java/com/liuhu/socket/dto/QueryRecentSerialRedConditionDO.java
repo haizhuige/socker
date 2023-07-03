@@ -41,6 +41,8 @@ public class QueryRecentSerialRedConditionDO {
     private Date upStartTime;
     //连续上涨的结束日期
     private Date upEndTime;
+    // 1:达到最小红数量，第二日作为购买日起始日的标识
+    private String purchaseFlag;
 
 
 }

@@ -61,4 +61,10 @@ public interface SharesInfoService {
      * @return
      */
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRed(QueryRecentSerialRedConditionDTO input2Domain) throws Exception;
+    /**
+     * 查询区间向下连续，然后又区间向上连续。区间向上如果先达到最小上涨交易日，则下一个交易日作为purchase交易日起始日期
+     * @param input2Domain
+     * @return
+     */
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialMinPurchase(QueryRecentSerialRedConditionDTO input2Domain)throws Exception;
 }

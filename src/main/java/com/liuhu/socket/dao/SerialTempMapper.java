@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface SerialTempMapper {
 
-    int insertList(@Param("list") List<QueryRecentSerialRedOutPutDTO> list);
+    int insertList(@Param("list") List<QueryRecentSerialRedOutPutDTO> list,@Param("hi") Integer hi);
 
 }
