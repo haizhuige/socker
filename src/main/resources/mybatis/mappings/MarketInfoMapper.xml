@@ -366,5 +366,41 @@
         FIRSTDealAmount / FIRSTTurnOverRate > 80000000
     </select>
 
-
+    <select id="queryPrePurchaseSocker" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.MarketOutputDomain">
+        select
+         share_code as shareCode,
+         turn_over_rate as turnOverRate,
+         rise_fall_ratio as rate
+        from market_info_new  kk  where
+        kk.share_code in (SELECT
+        share_code
+        FROM
+        market_info_new
+        WHERE
+        share_code IN (
+        SELECT
+        share_code
+        FROM
+        market_info_new
+        WHERE
+        date >= #{upStartTime}
+        AND date &lt;= #{upEndTime}
+        AND rise_fall_ratio > 0
+        GROUP BY
+        share_code
+        HAVING
+        SUM(rise_fall_ratio) >= #{minRate}
+        AND COUNT(share_code) >= #{minUpDay}
+        )
+        AND date >= #{downStartTime}
+        AND date &lt; #{downEndTime}
+        AND rise_fall_ratio &lt; 0
+        GROUP BY
+        share_code
+        HAVING
+        COUNT(share_code) > 7)
+        and date =  #{upEndTime}
+        and  turn_over_rate >= #{minTurnOverRate}
+        and  deal_amount/turn_over_rate > #{minMarketValue}
+    </select>
 </mapper>

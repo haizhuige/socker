@@ -35,4 +35,6 @@ public class MarketOutputDomain implements Serializable {
     private String startTime;
 
     private String endTime;
+
+    private double turnOverRate;
 }

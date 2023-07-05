@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
@@ -30,4 +32,6 @@ public interface MarketInfoMapper {
     List<MarketInfoNew> queryRecentSerialRedExact(QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
 
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedWithHavingShareCode(@Param("condition") QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
+
+    List<MarketOutputDomain> queryPrePurchaseSocker(QueryRecentSerialRedConditionDO input);
 }

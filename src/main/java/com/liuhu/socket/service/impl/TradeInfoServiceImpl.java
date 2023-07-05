@@ -5,12 +5,16 @@ import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.*;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.entity.*;
 import com.liuhu.socket.enums.PersonalStatusEnum;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.TradeInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -341,6 +345,19 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     @Override
     public List<Date> queryPeriodDateList(String endTime, Integer period) {
         return tradeDateMapper.queryPeriodDateList(endTime,period);
+    }
+
+    @Override
+    public List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input) {
+        QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+        BeanUtils.copyProperties(input,queryRecentSerialRedConditionDO);
+        queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+        queryRecentSerialRedConditionDO.setSelectEndTime(getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
+        queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
+        queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
+        queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
+        queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
+        return marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
     }
 
     private static Date getTradeDateByMap(Map map){

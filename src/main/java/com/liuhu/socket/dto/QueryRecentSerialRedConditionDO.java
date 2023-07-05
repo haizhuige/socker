@@ -46,5 +46,8 @@ public class QueryRecentSerialRedConditionDO {
     //满足红了区间的shareCode
     private List<MarketInfoNew> marketList;
 
+    private List<String> shareCodeList;
+
+
 
 }

@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Setter
 @Getter
@@ -35,6 +36,10 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
     private Integer recentRateDay = 5;
     //最小换手率
     private Integer minTurnOverRate = 2;
+
+    private List<String> shareCodeList;
+
+    private String selectEndTime;
 
 
 

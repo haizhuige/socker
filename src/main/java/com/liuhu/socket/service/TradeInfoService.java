@@ -1,7 +1,9 @@
 package com.liuhu.socket.service;
 
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.entity.TradeDateInfo;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,5 +25,7 @@ public interface TradeInfoService {
 
     Date getWantDate(Integer recentDay,Date date,String type);
 
-    List<Date> queryPeriodDateList(@Param("date") String endTime, @Param("period") Integer period);
+    List<Date> queryPeriodDateList( String endTime, Integer period);
+
+    List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input);
 }

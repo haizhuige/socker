@@ -18,4 +18,117 @@
         </foreach>
     </insert>
 
+    <select id="getResultByCondition" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        select share_code as shareCode,
+                max_ratio as maxRatio,
+                min_ratio as minRatio,
+                final_ratio as finalRatio,
+                start_time as startTime,
+                up_period_count as upPeriodCount
+                  from serial_temp
+                  where 1=1
+                  <if test="selectStartTime !=null">
+                      and start_time >=#{selectStartTime}
+                  </if>
+                  <if test="selectEndTime !=null">
+                      and start_time &lt;=#{selectEndTime}
+                  </if>
+                  <if test="shareCodeList !=null">
+                      and share_code in
+                      <foreach collection="shareCodeList" index="i" item="item" open="(" close=")" separator=",">
+                          #{item}
+                      </foreach>
+                  </if>
+
+    </select>
+
+    <select id="getRecentFinalRatioRedThree"  resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        SELECT
+        share_code AS shareCode,
+        sumCount AS finalRatio,
+        date
+        FROM
+        (
+        SELECT
+        *, row_number () over (
+        PARTITION BY share_code
+        ORDER BY
+        firstDate
+        ) AS rowNum
+        FROM
+        (
+        SELECT
+        mfn.share_code,
+        rise_fall_ratio,
+        mfn.date,
+        first_value (mfn.date) over (
+        PARTITION BY share_code
+        ORDER BY
+        mfn.date
+        ) AS firstDate,
+        COUNT(
+        CASE
+        WHEN rise_fall_ratio > 0 THEN
+        1
+        END
+        ) OVER (
+        PARTITION BY share_code
+        ORDER BY
+        mfn.date ROWS BETWEEN 1 PRECEDING
+        AND CURRENT ROW
+        ) AS countUp,
+        sum(rise_fall_ratio) over (
+        PARTITION BY share_code
+        ORDER BY
+        mfn.date
+        ) AS sumCount,
+        row_number () over (
+        PARTITION BY share_code
+        ORDER BY
+        mfn.date
+        ) AS rowhi
+        FROM
+        market_info_new mfn,
+        (
+        SELECT
+        share_code,
+        date
+        FROM
+        market_info_new tt
+        WHERE
+        (share_code, date) IN (
+        <foreach collection="list" index="i" item="item" separator=",">
+            (
+            #{item.shareCode},
+            #{item.startTime}
+            )
+        </foreach>
+        )
+        ) sn
+        WHERE
+        mfn.share_code = sn.share_code
+        AND mfn.date >= sn.date
+        AND mfn.date &lt;= (
+        SELECT
+        date
+        FROM
+        trade_date
+        WHERE
+        id = (
+        SELECT
+        id
+        FROM
+        trade_date
+        WHERE
+        date = sn.date
+        ) + #{input.recentRateDay}-1
+        )
+        ) kk
+        WHERE
+        (kk.rowhi = #{input.minUpDay} AND kk.countUp = #{input.minUpDay})
+        OR (kk.rowhi = #{input.recentRateDay} AND kk.countUp &lt; #{input.minUpDay})
+        ) AS mf
+        WHERE
+        rowNum = 1
+    </select>
 </mapper>

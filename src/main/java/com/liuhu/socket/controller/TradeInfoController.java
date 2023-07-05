@@ -2,9 +2,13 @@ package com.liuhu.socket.controller;
 
 import com.liuhu.socket.common.ResponseResult;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
+import com.liuhu.socket.service.TradeMethodService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -22,6 +27,9 @@ public class TradeInfoController {
 	
 	@Resource
     TradeInfoService tradeInfoService;
+
+	@Resource
+	TradeMethodService tradeMethodService;
 	/**
 	 * 股票购买操作
 	 * @param input
@@ -68,4 +76,30 @@ public class TradeInfoController {
 		TradeDateInfo date = tradeInfoService.queryMaxDate();
 		return ResponseResult.done(date);
 	}
+
+    /**
+     * 获取当日待考虑socker
+     * @param input
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping("/getPrePurchaseSocker")
+    public ResponseResult getPrePurchaseSocker(@RequestBody QueryRecentSerialRedConditionDTO input) {
+        List<MarketOutputDomain> outputDomain = tradeInfoService.getPrePurchaseSocker(input);
+         return ResponseResult.done(outputDomain);
+    }
+
+
+	/**
+	 * 获取当日待考虑socker
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getSerialRedThree")
+	public ResponseResult getSerialRedThree(@RequestBody QueryRecentSerialRedConditionDTO input) {
+		List<QueryRecentSerialRedOutPutDTO> outputDomain = tradeMethodService.getRecentFinalRatioStrategy(input);
+		return ResponseResult.done(outputDomain);
+	}
+
 }
