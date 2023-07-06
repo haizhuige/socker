@@ -38,6 +38,9 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
              return null;
          }
          List<QueryRecentSerialRedOutPutDTO>  redThreeList  =  serialTempMapper.getRecentFinalRatioRedThree(outPutDTOList,queryRecentSerialRedConditionDO);
+
+         serialTempMapper.insertList(redThreeList,10);
+
          return redThreeList;
      }
 }

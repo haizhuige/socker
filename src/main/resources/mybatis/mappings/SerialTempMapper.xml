@@ -46,50 +46,31 @@
         SELECT
         share_code AS shareCode,
         sumCount AS finalRatio,
-        date
+        firstDate AS startTime
         FROM
         (
         SELECT
         *, row_number () over (
-        PARTITION BY share_code
+        PARTITION BY share_code,firstDate
         ORDER BY
         firstDate
         ) AS rowNum
         FROM
         (
+        -- 查询满足条件的购买日期开始日期到规定购买的结束日期数据 开始
         SELECT
+        mfn.id,
         mfn.share_code,
         rise_fall_ratio,
         mfn.date,
-        first_value (mfn.date) over (
-        PARTITION BY share_code
-        ORDER BY
-        mfn.date
-        ) AS firstDate,
-        COUNT(
-        CASE
-        WHEN rise_fall_ratio > 0 THEN
-        1
-        END
-        ) OVER (
-        PARTITION BY share_code
-        ORDER BY
-        mfn.date ROWS BETWEEN 1 PRECEDING
-        AND CURRENT ROW
-        ) AS countUp,
-        sum(rise_fall_ratio) over (
-        PARTITION BY share_code
-        ORDER BY
-        mfn.date
-        ) AS sumCount,
-        row_number () over (
-        PARTITION BY share_code
-        ORDER BY
-        mfn.date
-        ) AS rowhi
+        sn.date as firstDate,
+        COUNT(	CASE WHEN rise_fall_ratio > 0 THEN		1	END	) OVER (		PARTITION BY share_code,sn.date		ORDER BY			mfn.date ROWS BETWEEN 2 PRECEDING	AND CURRENT ROW		) AS countUp,
+        sum(rise_fall_ratio) over (	PARTITION BY share_code,sn.date	ORDER BY	mfn.date		) AS sumCount,
+        row_number () over (	PARTITION BY share_code,sn.date	ORDER BY		sn.date	) AS rowhi
         FROM
         market_info_new mfn,
         (
+        -- 根据传入的code 和date  作为一个查询结果集  开始
         SELECT
         share_code,
         date
@@ -97,13 +78,16 @@
         market_info_new tt
         WHERE
         (share_code, date) IN (
+
         <foreach collection="list" index="i" item="item" separator=",">
             (
             #{item.shareCode},
             #{item.startTime}
             )
         </foreach>
+
         )
+        -- 根据传入的code 和date  作为一个查询结果集  结束
         ) sn
         WHERE
         mfn.share_code = sn.share_code
@@ -114,19 +98,14 @@
         FROM
         trade_date
         WHERE
-        id = (
-        SELECT
-        id
-        FROM
-        trade_date
-        WHERE
-        date = sn.date
-        ) + #{input.recentRateDay}-1
+        id = (SELECT id	FROM	trade_date			WHERE		date = sn.date ) +  #{input.recentRateDay}- 1
         )
+        -- 查询满足条件的购买日期开始日期到规定购买的结束日期数据 结束
         ) kk
         WHERE
+        -- 条件  取连红三天的记录 或者 或者是没有三连红到最后购买截止期限的
         (kk.rowhi = #{input.minUpDay} AND kk.countUp = #{input.minUpDay})
-        OR (kk.rowhi = #{input.recentRateDay} AND kk.countUp &lt; #{input.minUpDay})
+        OR (kk.rowhi = #{input.recentRateDay} AND kk.countUp &lt;= #{input.minUpDay})
         ) AS mf
         WHERE
         rowNum = 1

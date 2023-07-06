@@ -124,8 +124,8 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
         Date date = marketInfoNewMapper.queryMaxDate(null);
         if (date ==null){
-            String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat());
-            date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM);
+            String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS.getFormat());
+            date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
         }
 
         if (date.compareTo(currentMaxDateInfo.getDate())>0){
