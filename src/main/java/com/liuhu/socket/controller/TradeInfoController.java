@@ -102,4 +102,17 @@ public class TradeInfoController {
 		return ResponseResult.done(outputDomain);
 	}
 
+
+	/**
+	 * 获取当日待考虑socker
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getFiveUpRatio")
+	public ResponseResult getFiveUpRatio(@RequestBody QueryRecentSerialRedConditionDTO input) {
+		Map<String,Object> resultMap = tradeInfoService.getPreFiveAndSubFive(input);
+		return ResponseResult.done(resultMap);
+	}
+
 }

@@ -28,4 +28,6 @@ public interface TradeInfoService {
     List<Date> queryPeriodDateList( String endTime, Integer period);
 
     List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input);
+
+    Map<String,Object> getPreFiveAndSubFive(QueryRecentSerialRedConditionDTO input);
 }

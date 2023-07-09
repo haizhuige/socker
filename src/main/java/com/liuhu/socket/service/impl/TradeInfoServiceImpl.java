@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -358,6 +359,32 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
         queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
         return marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
+    }
+
+    @Override
+    public Map<String,Object> getPreFiveAndSubFive(QueryRecentSerialRedConditionDTO input){
+        List<MarketOutputDomain> list = new ArrayList<>();
+        Date endDate;
+        for (int i = 0;i<input.getPeriod();i++){
+            endDate = getWantDate(i,DateUtils.parse(input.getEndTime(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"sub");
+            QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+            BeanUtils.copyProperties(input,queryRecentSerialRedConditionDO);
+            queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),endDate,"sub"));
+            queryRecentSerialRedConditionDO.setUpEndTime(endDate);
+            queryRecentSerialRedConditionDO.setDownEndTime(getWantDate(1,queryRecentSerialRedConditionDO.getUpStartTime(),"sub"));
+            queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
+            List<MarketOutputDomain> marketOutputDomains = marketInfoMapper.queryPreFiveAndSubFiveSocker(queryRecentSerialRedConditionDO);
+            if (!CollectionUtils.isEmpty(marketOutputDomains)){
+                list.addAll(marketOutputDomains);
+            }
+        }
+        list = list.stream().distinct().collect(Collectors.toList());
+        List<MarketOutputDomain> marketOutputDomains =  marketInfoMapper.queryFiveRatioByCodeAndDate(list);
+        double v = marketOutputDomains.stream().mapToDouble(marketOutputDomain -> marketOutputDomain.getRate()).average().orElse(0.0);
+        Map<String,Object> resultMap = new HashMap<>();
+        resultMap.put("avg",v);
+        resultMap.put("count",marketOutputDomains.size());
+        return resultMap;
     }
 
     private static Date getTradeDateByMap(Map map){

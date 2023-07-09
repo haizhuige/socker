@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import lombok.Getter;
 import lombok.Setter;
+
 @Setter
 @Getter
 public class MarketOutputDomain implements Serializable {
@@ -24,17 +25,17 @@ public class MarketOutputDomain implements Serializable {
 	/**
 	 * 每天定投单位时间内的收益率
 	 */
-    private double fixRate;
-    /**
-     * 大盘变化率
-     */
-    private String ARate;
+	private double fixRate;
+	/**
+	 * 大盘变化率
+	 */
+	private String ARate;
 
-    private String rateStr;
+	private String rateStr;
 
-    private String startTime;
+	private String startTime;
 
-    private String endTime;
+	private String endTime;
 
-    private double turnOverRate;
+	private double turnOverRate;
 }
