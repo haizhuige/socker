@@ -355,7 +355,9 @@
         GROUP BY share_code
         HAVING COUNT( share_code ) > #{condition.minDownDay} )
         AND date >= #{condition.selectStartTime}
+        <if test="condition.selectEndTime!=null">
         AND date &lt; #{condition.selectEndTime}
+        </if>
         and  turn_over_rate>#{condition.minTurnOverRate}
         ORDER BY share_code,date
         ) AS hihi

@@ -299,7 +299,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
             }
             allSerialRed = allSerialRed.stream().distinct().collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(allSerialRed)&&allSerialRed.size()>0){
-                serialTempMapper.insertList(allSerialRed,input2Domain.getPeriodUpDay());
+                serialTempMapper.insertList(allSerialRed,input2Domain.getRecentRateDay());
             }
             return allSerialRed;
           }
