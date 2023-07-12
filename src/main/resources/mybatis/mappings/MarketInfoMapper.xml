@@ -300,6 +300,12 @@
         WHERE
         date >= #{upStartTime}
         AND date &lt;#{upEndTime}
+        <if test="shareCodeList!=null">
+            and share_code in
+        <foreach collection="shareCodeList" item="item" index="index" open="(" close=")" separator=",">
+             #{item}
+        </foreach>
+        </if>
         ) AS mimi
         WHERE
         countUp = #{minUpDay} and rise_fall_ratio> 0  and sumCount>#{minRate} and firstRatio >0   order by share_code
@@ -333,6 +339,7 @@
         end_value,
         deal_amount,
         turn_over_rate,
+        first_value(turn_over_rate) over (PARTITION by share_code ORDER BY date) as firstValue,
         date,
         count(share_code) over (PARTITION by share_code) as count
         FROM
@@ -358,10 +365,10 @@
         <if test="condition.selectEndTime!=null">
         AND date &lt; #{condition.selectEndTime}
         </if>
-        and  turn_over_rate>#{condition.minTurnOverRate}
         ORDER BY share_code,date
         ) AS hihi
         where count = #{condition.recentRateDay}
+        and  turn_over_rate>#{condition.minTurnOverRate}
         order by share_code
         ) mm
         WHERE
