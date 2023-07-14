@@ -41,6 +41,8 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
 
     private String selectEndTime;
 
+    private Integer rateOrAmountDay=5;
+
 
 
 }

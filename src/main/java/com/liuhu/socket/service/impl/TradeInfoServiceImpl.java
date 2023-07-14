@@ -350,15 +350,31 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
     @Override
     public List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input) {
+
+        List<MarketOutputDomain> returnList = new ArrayList<>();
+        Integer periodUpDay = input.getPeriodUpDay();
+        for (int i =1;i<periodUpDay;i++ ){
         QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
         BeanUtils.copyProperties(input,queryRecentSerialRedConditionDO);
         queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
         queryRecentSerialRedConditionDO.setSelectEndTime(getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
-        queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodUpDay(),queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
+        queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(i,queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
         queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
         queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
         queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
-        return marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
+        List<MarketOutputDomain> marketOutputDomains = marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
+            List<String> codeList = returnList.stream().map(MarketOutputDomain::getShareCode).collect(Collectors.toList());
+            for (MarketOutputDomain mk:marketOutputDomains){
+                if (!codeList.contains(mk.getShareCode())){
+                    returnList.add(mk);
+                }
+        }
+
+        }
+        if (!CollectionUtils.isEmpty(returnList)){
+            returnList = returnList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
+        }
+        return returnList;
     }
 
     @Override

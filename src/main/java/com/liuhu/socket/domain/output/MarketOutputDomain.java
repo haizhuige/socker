@@ -38,4 +38,19 @@ public class MarketOutputDomain implements Serializable {
 	private String endTime;
 
 	private double turnOverRate;
+
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		MarketOutputDomain person = (MarketOutputDomain) o;
+		return shareCode == person.shareCode &&
+				shareCode.equals(person.shareCode);
+	}
+
+	@Override
+	public int hashCode() {
+		return shareCode.hashCode();
+	}
 }

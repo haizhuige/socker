@@ -294,7 +294,8 @@
         PARTITION BY share_code
         ORDER BY
         date
-        ) AS sumCount
+        ) AS sumCount,
+        first_value ( turn_over_rate ) over ( PARTITION BY share_code ORDER BY date desc ) AS firstValue
         FROM
         market_info_new
         WHERE
@@ -308,7 +309,11 @@
         </if>
         ) AS mimi
         WHERE
-        countUp = #{minUpDay} and rise_fall_ratio> 0  and sumCount>#{minRate} and firstRatio >0   order by share_code
+        countUp = #{minUpDay}
+        and rise_fall_ratio> 0
+        and (sumCount>#{minRate} or firstValue> #{minTurnOverRate})
+        and firstRatio >0
+        order by share_code
     </select>
 
     <select id="queryRecentSerialRedWithHavingShareCode" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
@@ -368,7 +373,6 @@
         ORDER BY share_code,date
         ) AS hihi
         where count = #{condition.recentRateDay}
-        and  turn_over_rate>#{condition.minTurnOverRate}
         order by share_code
         ) mm
         WHERE
@@ -399,7 +403,7 @@
         share_code
         HAVING
         SUM(rise_fall_ratio) >= #{minRate}
-        AND COUNT(share_code) >= #{minUpDay}
+        AND COUNT(share_code) = #{minUpDay}
         )
         AND date >= #{downStartTime}
         AND date &lt; #{downEndTime}
