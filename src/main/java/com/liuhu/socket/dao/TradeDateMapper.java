@@ -15,7 +15,7 @@ public interface TradeDateMapper {
 
     Date getWantDate(@Param("recentDay") Integer recentDay,@Param("date") Date date,@Param("type")String type);
 
-    List<Date> queryPeriodDateList(@Param("date") String endTime,@Param("recentDay") Integer period);
+    List<Date> queryPeriodDateList(@Param("date") String endTime,@Param("recentDay") Integer period,@Param("type")String type);
 
 
     int insertEntityList(@Param("tradeDateInfoList")List<TradeDateInfo> tradeDateInfoList);

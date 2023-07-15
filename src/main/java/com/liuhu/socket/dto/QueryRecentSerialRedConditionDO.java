@@ -15,6 +15,8 @@ public class QueryRecentSerialRedConditionDO {
     private Long minMarketValue =80000000L;
     //筛选连续增长期间最小值增长总收益率
     private Integer minRate =3;
+    //筛选连续下跌期间最小值增长总收益率
+    private Integer minDownRate = -5;
     //筛选连续增长期间最小值增长天数
     private Integer minUpDay =3;
     //筛选连续下跌期间设置的最小下跌天数

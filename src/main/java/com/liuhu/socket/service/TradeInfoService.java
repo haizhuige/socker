@@ -25,7 +25,7 @@ public interface TradeInfoService {
 
     Date getWantDate(Integer recentDay,Date date,String type);
 
-    List<Date> queryPeriodDateList( String endTime, Integer period);
+    List<Date> queryPeriodDateList( String endTime, Integer period,String flag);
 
     List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input);
 

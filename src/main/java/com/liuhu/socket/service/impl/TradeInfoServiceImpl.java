@@ -344,8 +344,8 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     }
 
     @Override
-    public List<Date> queryPeriodDateList(String endTime, Integer period) {
-        return tradeDateMapper.queryPeriodDateList(endTime,period);
+    public List<Date> queryPeriodDateList(String time, Integer period,String flag) {
+        return tradeDateMapper.queryPeriodDateList(time,period,flag);
     }
 
     @Override

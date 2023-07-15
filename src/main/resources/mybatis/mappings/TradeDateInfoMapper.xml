@@ -49,14 +49,20 @@
         FROM
             trade_date
         WHERE
-        id > (
+        id >= (
         SELECT
         id
         FROM
         trade_date
         WHERE
         date = #{date}
-        )-#{recentDay}
+        )
+        <if test="type ==null ||type=='sub'">
+        -#{recentDay}
+        </if>
+        <if test="type=='plus'">
+        +#{recentDay}
+        </if>
          and   date &lt;= #{date}
     </select>
 

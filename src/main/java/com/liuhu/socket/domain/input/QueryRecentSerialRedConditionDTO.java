@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 @Setter
@@ -16,12 +15,18 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
     private String type ="1";
     //查询区间 查询多少天的增长值
     private Integer period =20;
-    //查询区间 开始时间
+    //查询区间 结束时间
     private String endTime;
+
+    //查询区间 开始时间
+    private String startTime;
+
     //筛选条件最小市值
     private Long minMarketValue =80000000L;
     //筛选连续增长期间最小值增长总收益率
     private Integer minRate =3;
+    //筛选连续down期间最小值增长总收益率
+    private Integer minDownRate = -5;
     //筛选连续增长期间最小值增长天数
     private Integer minUpDay =3;
     //筛选连续下跌期间设置的最小下跌天数

@@ -187,4 +187,108 @@ WHERE
 AND deal_amount / turn_over_rate > 80000000
     </select>
 
+    <select id="queryVRatioFromDownStartPoint" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+
+         SELECT
+        share_code AS shareCode,
+        sumCount AS finalRatio,
+        firstDate AS startTime
+        FROM
+        (
+        SELECT
+        mfn.id,
+        mfn.share_code,
+        rise_fall_ratio,
+        mfn.date,
+        sn.date as firstDate,
+        COUNT(	CASE WHEN rise_fall_ratio > 0 THEN		1	END	) OVER (		PARTITION BY share_code,sn.date		              ORDER BY	mfn.date ROWS BETWEEN  4 PRECEDING	AND CURRENT ROW		) AS countUp,
+        sum(rise_fall_ratio) over (	PARTITION BY share_code,sn.date	ORDER BY	mfn.date		) AS sumCount,
+        row_number () over (	PARTITION BY share_code,sn.date	ORDER BY		sn.date	) AS rowhi
+        FROM
+        market_info_new mfn,
+        (
+        SELECT
+        share_code,
+        date
+        FROM
+        market_info_new tt
+        WHERE
+        (share_code, date) IN (
+
+        SELECT DISTINCT
+        share_code AS shareCode,
+        (SELECT 	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = kk.date) + 1) as date
+        from
+        (
+        SELECT
+        share_code,
+        rise_fall_ratio,
+        FIRST_value (rise_fall_ratio) over (
+        PARTITION BY share_code
+        ORDER BY
+        date
+        ) AS firstRatio,
+        date,
+        COUNT(
+        CASE
+        WHEN rise_fall_ratio > 0 THEN
+        1
+        END
+        ) OVER (
+        PARTITION BY share_code
+        ORDER BY
+        date ROWS BETWEEN 4 PRECEDING
+        AND CURRENT ROW
+        ) AS countUp,
+        sum(rise_fall_ratio) over (
+        PARTITION BY share_code
+        ORDER BY
+        date
+        ) AS sumCount,
+        FIRST_value(deal_amount/turn_over_rate) over(PARTITION by share_code ORDER BY date ) as amount,
+        FIRST_value(turn_over_rate) over(PARTITION by share_code ORDER BY date desc) as lastTurnOverRate
+        from market_info_new tt
+        where tt.share_code in (
+        SELECT
+        share_code
+        FROM
+        market_info_new t2
+        WHERE
+        t2.date >= #{downStartTime,jdbcType=TIMESTAMP}
+        AND t2.date &lt; (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER})
+        and t2.rise_fall_ratio &lt; 0
+        GROUP BY share_code
+        having count(share_code) > #{minDownDay}
+        and  SUM(rise_fall_ratio)&lt;#{minDownRate}
+        )
+        and tt.date >= (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER})
+        and tt.date &lt; (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER}+#{periodUpDay,jdbcType=INTEGER})
+        ) as kk
+        WHERE
+        countUp = #{minUpDay,jdbcType=INTEGER}
+        AND rise_fall_ratio > 0
+        AND sumCount > #{minRate,jdbcType=INTEGER}
+        AND firstRatio > 0
+        AND amount > #{minMarketValue}
+        and lastTurnOverRate > #{minTurnOverRate,jdbcType=INTEGER}
+        ORDER BY
+        share_code
+        )
+        ) sn
+        WHERE
+        mfn.share_code = sn.share_code
+        AND mfn.date >= sn.date
+        AND mfn.date &lt;= (
+        SELECT
+        date
+        FROM
+        trade_date
+        WHERE
+        id = (SELECT id	 FROM	trade_date	WHERE		date = sn.date ) +  #{recentRateDay}-1
+        )
+        ) kk
+        WHERE
+        kk.rowhi = #{recentRateDay}
+    </select>
+
 </mapper>

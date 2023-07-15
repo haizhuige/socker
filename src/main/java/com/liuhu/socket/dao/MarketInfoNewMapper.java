@@ -2,6 +2,9 @@ package com.liuhu.socket.dao;
 
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInput2Domain;
+import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
+import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.entity.ShareInfo;
 import org.apache.ibatis.annotations.Param;
@@ -26,4 +29,11 @@ public interface MarketInfoNewMapper {
     List<Date> queryDistinctDate();
 
     List<String> queryMaxAmount();
+
+    /**
+     * 从下跌起始点开始输出计算v型结构后syl
+     * @param input
+     * @return
+     */
+    List<QueryRecentSerialRedOutPutDTO> queryVRatioFromDownStartPoint(QueryRecentSerialRedConditionDO input);
 }

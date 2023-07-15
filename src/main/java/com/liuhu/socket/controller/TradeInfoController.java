@@ -115,4 +115,16 @@ public class TradeInfoController {
 		return ResponseResult.done(resultMap);
 	}
 
+    /**
+     * 查询v型反转shouyi
+     * @param input
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping("/queryVRatioFromDownStartPoint")
+    public ResponseResult queryVRatioFromDownStartPoint(@RequestBody QueryRecentSerialRedConditionDTO input) throws Exception {
+        List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryVRatioFromDownStartPoint(input);
+        return ResponseResult.done(outPutDTOList);
+    }
+
 }

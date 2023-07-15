@@ -255,7 +255,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
             if (Objects.isNull(endTime)) {
                 throw new Exception("截至日期不能为空");
             }
-            List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod());
+            List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod(),"sub");
             List<QueryRecentSerialRedOutPutDTO> allSerialRed = new ArrayList<>();
             for (Date date : dateList) {
                 input2Domain.setSelectStartTime(DateUtils.format(date, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
@@ -283,7 +283,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
          * 分别查询上涨区间内可能完成的交易日查询
          */
               //获取需要查询的日期集合
-              List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod());
+              List<Date> dateList = tradeInfoService.queryPeriodDateList(endTime, input2Domain.getPeriod(),"sub");
               List<QueryRecentSerialRedOutPutDTO> allSerialRed = new ArrayList<>();
             for (Date date : dateList) {
                 // 获取上涨区间内的日期和shareCode
