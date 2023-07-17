@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Service
 public class TradeMethodServiceImpl  implements TradeMethodService {
@@ -61,6 +63,7 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
     @Override
     public List<QueryRecentSerialRedOutPutDTO> queryVRatioFromDownStartPoint(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
 
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         String startTime = input2Domain.getStartTime();
         if (Objects.isNull(startTime)) {
             throw new Exception("截至日期不能为空");
@@ -72,21 +75,42 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
         //获取需要查询的日期集合
         List<Date> dateList = tradeInfoService.queryPeriodDateList(startTime, input2Domain.getPeriod(),"sub");
         int totalSize = dateList.size();
-        int partSize = (int) Math.ceil((double) totalSize / 5);
+        int partSize = (int) Math.ceil((double) totalSize / 10);
 
-        List<List<Date>> result = new ArrayList<>();
 
+
+        List<Future<List<QueryRecentSerialRedOutPutDTO>>> list = new ArrayList<>();
         for (int i = 0; i < totalSize; i += partSize) {
             int endIndex = Math.min(i + partSize, totalSize);
             List<Date> sublist = dateList.subList(i, endIndex);
-            result.add(sublist);
+            MyTask myTask = new MyTask(sublist,input2Domain);
+            Future<List<QueryRecentSerialRedOutPutDTO>> submit = executorService.submit(myTask);
+            list.add(submit);
+            // result.add(sublist);
         }
-        insertSerialTemp(input2Domain, allInfoList, dateList);
+
+        for (Future<List<QueryRecentSerialRedOutPutDTO>> future : list) {
+            try {
+                // 调用get方法获取任务结果，如果任务还未完成，get方法会阻塞直到任务完成
+                List<QueryRecentSerialRedOutPutDTO> subList= future.get();
+                allInfoList.addAll(subList);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        executorService.shutdown();
+
+        if (allInfoList.size()>0){
+            serialTempMapper.insertList(allInfoList,input2Domain.getRateOrAmountDay());
+        }
 
         return allInfoList;
     }
 
-    private void insertSerialTemp(QueryRecentSerialRedConditionDTO input2Domain, List<QueryRecentSerialRedOutPutDTO> allInfoList, List<Date> dateList) {
+      List<QueryRecentSerialRedOutPutDTO> insertSerialTemp(QueryRecentSerialRedConditionDTO input2Domain, List<Date> dateList) {
+
+        List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
         for (Date date : dateList) {
             QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
             BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
@@ -94,8 +118,35 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
             List<QueryRecentSerialRedOutPutDTO> marketOutputDomains = marketInfoNewMapper.queryVRatioFromDownStartPoint(queryRecentSerialRedConditionDO);
             allInfoList.addAll(marketOutputDomains);
         }
-        if (allInfoList.size()>0){
-            serialTempMapper.insertList(allInfoList,input2Domain.getRateOrAmountDay());
+
+        return allInfoList;
+
+    }
+
+
+
+
+
+
+    class MyTask implements Callable<List<QueryRecentSerialRedOutPutDTO>> {
+        private List<Date> dateList;
+
+        private QueryRecentSerialRedConditionDTO input2Domain;
+
+        public MyTask(List<Date> dateList,QueryRecentSerialRedConditionDTO input2Domain) {
+            this.dateList = dateList;
+            this.input2Domain = input2Domain;
+        }
+
+        @Override
+        public List<QueryRecentSerialRedOutPutDTO> call() throws Exception {
+            // 模拟耗时操作
+            List<QueryRecentSerialRedOutPutDTO> allInfoList  = insertSerialTemp(input2Domain,dateList);
+            return allInfoList;
         }
     }
+
+
 }
+
+

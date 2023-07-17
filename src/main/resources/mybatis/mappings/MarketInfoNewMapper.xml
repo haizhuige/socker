@@ -246,20 +246,31 @@ AND deal_amount / turn_over_rate > 80000000
         date
         ) AS sumCount,
         FIRST_value(deal_amount/turn_over_rate) over(PARTITION by share_code ORDER BY date ) as amount,
-        FIRST_value(turn_over_rate) over(PARTITION by share_code ORDER BY date desc) as lastTurnOverRate
+        turn_over_rate
         from market_info_new tt
         where tt.share_code in (
         SELECT
         share_code
         FROM
-        market_info_new t2
+        (select
+        share_code,
+        date,
+        rise_fall_ratio,
+        first_value(deal_amount)over(PARTITION by share_code ORDER BY date desc) as deal_amount,
+        first_value(turn_over_rate)over(PARTITION by share_code ORDER BY date desc) as turn_over_rate
+        from
+        market_info_new
+        where
+        date >=  #{downStartTime,jdbcType=TIMESTAMP}
+        AND date &lt; ( SELECT date FROM trade_date WHERE id = ( SELECT id FROM trade_date WHERE date =  #{downStartTime,jdbcType=TIMESTAMP}) + 10 )
+        ) t2
         WHERE
-        t2.date >= #{downStartTime,jdbcType=TIMESTAMP}
-        AND t2.date &lt; (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER})
-        and t2.rise_fall_ratio &lt; 0
+         deal_amount /turn_over_rate >72000000
+        and turn_over_rate >= 2
         GROUP BY share_code
-        having count(share_code) > #{minDownDay}
+        having count(CASE WHEN rise_fall_ratio &lt; 0  THEN 1 END) > #{minDownDay}
         and  SUM(rise_fall_ratio)&lt;#{minDownRate}
+        and max(CASE WHEN t2.date BETWEEN #{downStartTime,jdbcType=TIMESTAMP} and ( SELECT date FROM trade_date WHERE id = ( SELECT id FROM trade_date WHERE date = #{downStartTime,jdbcType=TIMESTAMP} ) + 7 )   THEN rise_fall_ratio END) &lt;5
         )
         and tt.date >= (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER})
         and tt.date &lt; (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER}+#{periodUpDay,jdbcType=INTEGER})
@@ -270,7 +281,8 @@ AND deal_amount / turn_over_rate > 80000000
         AND sumCount > #{minRate,jdbcType=INTEGER}
         AND firstRatio > 0
         AND amount > #{minMarketValue}
-        and lastTurnOverRate > #{minTurnOverRate,jdbcType=INTEGER}
+        and sumCount &lt;12
+        and turn_over_rate >= #{minTurnOverRate,jdbcType=INTEGER}
         ORDER BY
         share_code
         )
