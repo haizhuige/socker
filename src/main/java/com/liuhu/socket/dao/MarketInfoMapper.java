@@ -33,6 +33,9 @@ public interface MarketInfoMapper {
 
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialRedWithHavingShareCode(@Param("condition") QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
 
+    List<QueryRecentSerialRedOutPutDTO> queryRecentSerialGreen(@Param("condition") QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO);
+
+
     List<MarketOutputDomain> queryPrePurchaseSocker(QueryRecentSerialRedConditionDO input);
 
     List<MarketOutputDomain> queryPreFiveAndSubFiveSocker(QueryRecentSerialRedConditionDO input);

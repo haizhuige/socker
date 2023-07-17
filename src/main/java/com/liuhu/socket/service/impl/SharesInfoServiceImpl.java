@@ -315,6 +315,13 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         queryRecentSerialRedConditionDO.setDownEndTime(upStartTime);
         queryRecentSerialRedConditionDO.setDownStartTime(tradeInfoService.getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
         queryRecentSerialRedConditionDO.setMarketList(marketList);
+        //查询连续下跌区间过滤出来的代码
+        List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoMapper.queryRecentSerialGreen(queryRecentSerialRedConditionDO);
+        if (outPutDTOList.size()==0){
+            return new ArrayList<>();
+        }
+        List<String> codeList = outPutDTOList.stream().map(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getShareCode()).collect(Collectors.toList());
+        queryRecentSerialRedConditionDO.setShareCodeList(codeList);
         return marketInfoMapper.queryRecentSerialRedWithHavingShareCode(queryRecentSerialRedConditionDO);
     }
 

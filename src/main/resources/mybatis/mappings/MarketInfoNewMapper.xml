@@ -266,22 +266,18 @@ AND deal_amount / turn_over_rate > 80000000
         ) t2
         WHERE
          deal_amount /turn_over_rate >72000000
-        and turn_over_rate >= 2
         GROUP BY share_code
         having count(CASE WHEN rise_fall_ratio &lt; 0  THEN 1 END) > #{minDownDay}
         and  SUM(rise_fall_ratio)&lt;#{minDownRate}
-        and max(CASE WHEN t2.date BETWEEN #{downStartTime,jdbcType=TIMESTAMP} and ( SELECT date FROM trade_date WHERE id = ( SELECT id FROM trade_date WHERE date = #{downStartTime,jdbcType=TIMESTAMP} ) + 7 )   THEN rise_fall_ratio END) &lt;5
-        )
+         )
         and tt.date >= (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER})
         and tt.date &lt; (SELECT	date	FROM	trade_date	WHERE		id = (	SELECT	id	FROM		trade_date	WHERE	date = #{downStartTime,jdbcType=TIMESTAMP}) + #{periodDownDay,jdbcType=INTEGER}+#{periodUpDay,jdbcType=INTEGER})
         ) as kk
         WHERE
         countUp = #{minUpDay,jdbcType=INTEGER}
         AND rise_fall_ratio > 0
-        AND sumCount > #{minRate,jdbcType=INTEGER}
         AND firstRatio > 0
         AND amount > #{minMarketValue}
-        and sumCount &lt;12
         and turn_over_rate >= #{minTurnOverRate,jdbcType=INTEGER}
         ORDER BY
         share_code

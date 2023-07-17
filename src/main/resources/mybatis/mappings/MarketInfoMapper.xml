@@ -295,7 +295,9 @@
         ORDER BY
         date
         ) AS sumCount,
-        first_value ( turn_over_rate ) over ( PARTITION BY share_code ORDER BY date desc ) AS firstValue
+        turn_over_rate,
+        FIRST_value(deal_amount)over(PARTITION by share_code order by date ) as firstDealAmount,
+        FIRST_value(turn_over_rate)over(PARTITION by share_code order by date ) as firstTurnOverRate
         FROM
         market_info_new
         WHERE
@@ -311,72 +313,69 @@
         WHERE
         countUp = #{minUpDay}
         and rise_fall_ratio> 0
-        and (sumCount>#{minRate} or firstValue> #{minTurnOverRate})
+        and  turn_over_rate> #{minTurnOverRate}
         and firstRatio >0
+        and firstDealAmount/firstTurnOverRate > #{minMarketValue}
         order by share_code
     </select>
 
-    <select id="queryRecentSerialRedWithHavingShareCode" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
-        SELECT DISTINCT
-        first_value(share_code) over(PARTITION by share_code ) as shareCode,
-        ROUND( (first_value(maxHighest)over(PARTITION BY share_code) - first_value(lastEndValue)over(PARTITION BY share_code) ) / first_value(lastEndValue)over(PARTITION BY share_code) * 100, 2 ) AS maxRatio,
-        min(date) over(PARTITION by share_code ) AS startTime,
-        first_value ( sumRatio ) over ( PARTITION BY share_code ORDER BY date desc) AS finalRatio,
-        ROUND((first_value(minLowest)over(PARTITION BY share_code) - first_value(lastEndValue)over(PARTITION BY share_code) ) / first_value(lastEndValue)over(PARTITION BY share_code) * 100, 2 ) AS minRatio
-        from
-        (SELECT DISTINCT
-        share_code,
-        MAX( highest ) over ( PARTITION BY share_code ) AS maxHighest,
-        round( first_value ( end_value / ( 1 + rise_fall_ratio * 0.01 ) ) over ( PARTITION BY share_code ORDER BY date ), 2 ) AS lastEndValue,
-        round( first_value ( deal_amount ) over ( PARTITION BY share_code ORDER BY date ), 2 ) AS FIRSTDealAmount,
-        round( first_value ( turn_over_rate ) over ( PARTITION BY share_code ORDER BY date ), 2 ) AS FIRSTTurnOverRate,
-        date,
-        SUM( rise_fall_ratio ) over ( PARTITION BY share_code ORDER BY date ) AS sumRatio,
-        MIN( lowest ) over ( PARTITION BY share_code ) AS minLowest
-        FROM
-        (
+    <select id="queryRecentSerialGreen" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
         SELECT
-        share_code,
-        rise_fall_ratio,
-        highest,
-        lowest,
-        open_value,
-        end_value,
-        deal_amount,
-        turn_over_rate,
-        first_value(turn_over_rate) over (PARTITION by share_code ORDER BY date) as firstValue,
-        date,
-        count(share_code) over (PARTITION by share_code) as count
-        FROM
-        market_info_new
-        WHERE
-        share_code IN (
-
-        SELECT
-        share_code
+        share_code as shareCode
         FROM
         market_info_new
         WHERE
         share_code IN
         <foreach collection="condition.marketList" item="it" separator="," open="(" close=")">
-           #{it.shareCode}
+            #{it.shareCode}
         </foreach>
         AND date >= #{condition.downStartTime}
         AND date &lt; #{condition.downEndTime}
-        AND rise_fall_ratio &lt; 0
         GROUP BY share_code
-        HAVING COUNT( share_code ) > #{condition.minDownDay} )
+        HAVING COUNT( CASE WHEN rise_fall_ratio &lt; 0  THEN 1 END ) > #{condition.minDownDay}
+        and  SUM(rise_fall_ratio)&lt;#{condition.minDownRate}
+    </select>
+    <select id="queryRecentSerialRedWithHavingShareCode" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        select
+        share_code as shareCode,
+        ROUND((maxHighest - lastEndValue)/lastEndValue*100,2) as maxRatio,
+        ROUND((minLowest - lastEndValue)/lastEndValue*100,2) as minRatio,
+        sumRatio as finalRatio,
+        minDate as startTime from
+        (
+        select share_code,
+        MAX(highest) over (PARTITION BY share_code) AS maxHighest,
+        round(
+        first_value (
+        end_value / (1 + rise_fall_ratio * 0.01)
+        ) over (
+        PARTITION BY share_code
+        ORDER BY
+        date
+        ),
+        2
+        ) AS lastEndValue,
+        MIN(date) over (PARTITION BY share_code) AS minDate,
+        date,
+        SUM(rise_fall_ratio) over (
+        PARTITION BY share_code
+        ORDER BY
+        date
+        ) AS sumRatio,
+        MIN(lowest) over (PARTITION BY share_code) AS minLowest,
+        row_number()over(PARTITION BY share_code order by date) as rowKey
+        from market_info_new
+        where
+        share_code in
+        <foreach collection="condition.shareCodeList" item="it" separator="," open="(" close=")">
+            #{it}
+        </foreach>
         AND date >= #{condition.selectStartTime}
         <if test="condition.selectEndTime!=null">
-        AND date &lt; #{condition.selectEndTime}
+            AND date &lt; #{condition.selectEndTime}
         </if>
-        ORDER BY share_code,date
-        ) AS hihi
-        where count = #{condition.recentRateDay}
-        order by share_code
-        ) mm
-        WHERE
-        FIRSTDealAmount / FIRSTTurnOverRate > 80000000
+        ) final
+        where rowKey = #{condition.recentRateDay}
     </select>
 
     <select id="queryPrePurchaseSocker" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.MarketOutputDomain">
