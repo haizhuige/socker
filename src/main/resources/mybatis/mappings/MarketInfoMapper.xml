@@ -264,10 +264,17 @@
         FIRSTDealAmount / FIRSTTurnOverRate > 80000000
     </select>
     <select id="queryRecentSerialRedExact" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.entity.MarketInfoNew">
+
         SELECT DISTINCT
         share_code as shareCode,
-        date
+        date,
+        sumCount as   dealAmount,
+        secondAmount
         FROM
+        (
+        select *,
+        case when countUp=2 and rise_fall_ratio>0  then sumCount end as secondAmount
+        from
         (
         SELECT
         share_code,
@@ -303,25 +310,25 @@
         WHERE
         date >= #{upStartTime}
         AND date &lt;#{upEndTime}
-        <if test="shareCodeList!=null">
-            and share_code in
-        <foreach collection="shareCodeList" item="item" index="index" open="(" close=")" separator=",">
-             #{item}
-        </foreach>
-        </if>
+        ) as nini
+        order by share_code,date
         ) AS mimi
         WHERE
-        countUp = #{minUpDay}
+        sumCount>0
+        and sumCount&lt;20
         and rise_fall_ratio> 0
         and  turn_over_rate> #{minTurnOverRate}
         and firstRatio >0
-        and firstDealAmount/firstTurnOverRate > #{minMarketValue}
+        and firstDealAmount/firstTurnOverRate >#{minMarketValue}
+        and (countUp = #{minUpDay} OR secondAmount>0)
         order by share_code
+
     </select>
 
     <select id="queryRecentSerialGreen" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
         SELECT
-        share_code as shareCode
+        share_code as shareCode,
+        SUM(rise_fall_ratio) as downSumRatio
         FROM
         market_info_new
         WHERE

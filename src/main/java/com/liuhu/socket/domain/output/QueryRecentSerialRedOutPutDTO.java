@@ -23,4 +23,6 @@ public class QueryRecentSerialRedOutPutDTO {
 
     //上涨区间 达到最小红的数量
     private Integer upPeriodCount;
+
+    private Double downSumRatio;
 }

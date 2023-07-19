@@ -320,7 +320,24 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         if (outPutDTOList.size()==0){
             return new ArrayList<>();
         }
-        List<String> codeList = outPutDTOList.stream().map(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getShareCode()).collect(Collectors.toList());
+        List<QueryRecentSerialRedOutPutDTO> exDTOList = new ArrayList<>();
+        for (QueryRecentSerialRedOutPutDTO out:outPutDTOList){
+            String shareCode = out.getShareCode();
+            List<MarketInfoNew> filterMarketList = marketList.stream().filter(marketInfoNew -> marketInfoNew.getShareCode().equals(shareCode)).collect(Collectors.toList());
+            if (filterMarketList.size()==0){
+                continue;
+            }
+            //判断上升区间是否小于下跌区间，如果是 就忽略操作
+            Double dealAmount = filterMarketList.get(0).getDealAmount();
+            if (dealAmount+out.getDownSumRatio()>0){
+                continue;
+            }
+            exDTOList.add(out);
+        }
+        if (exDTOList.size()==0){
+            return new ArrayList<>();
+        }
+        List<String> codeList = exDTOList.stream().map(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getShareCode()).collect(Collectors.toList());
         queryRecentSerialRedConditionDO.setShareCodeList(codeList);
         return marketInfoMapper.queryRecentSerialRedWithHavingShareCode(queryRecentSerialRedConditionDO);
     }
@@ -338,7 +355,28 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         queryRecentSerialRedConditionDO.setUpStartTime(upStartTime);
         queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
         List<MarketInfoNew> marketInfoNewList =   marketInfoMapper.queryRecentSerialRedExact(queryRecentSerialRedConditionDO);
-        return marketInfoNewList.stream().collect(Collectors.groupingBy(marketInfoNew -> marketInfoNew.getDate()));
+        if (marketInfoNewList.size()==0){
+            return new HashMap<>();
+        }
+        Map<String, List<MarketInfoNew>> filterMap = marketInfoNewList.stream().collect(Collectors.groupingBy(marketInfoNew -> marketInfoNew.getShareCode()));
+        List<MarketInfoNew> resList = new ArrayList<>();
+        for (Map.Entry entry:filterMap.entrySet()){
+            List<MarketInfoNew>  newMarketInfoList = (List<MarketInfoNew>)entry.getValue();
+            //如果当前分组数不等于2,说明没有连续三天红
+            if (newMarketInfoList.size()!=2){
+                continue;
+            }
+            newMarketInfoList =  newMarketInfoList.stream().sorted(Comparator.comparing(marketInfoNew -> marketInfoNew.getDate())).collect(Collectors.toList());
+            Double secondAmount = newMarketInfoList.get(0).getSecondAmount();
+            MarketInfoNew newMarketInfo = newMarketInfoList.get(1);
+            newMarketInfo.setSecondAmount(secondAmount);
+            //如果第三次红小于第二次红到2% 则不加入
+            if (secondAmount-newMarketInfo.getDealAmount()>2){
+                continue;
+            }
+            resList.add(newMarketInfo);
+        }
+        return resList.stream().collect(Collectors.groupingBy(marketInfoNew -> marketInfoNew.getDate()));
     }
 
 

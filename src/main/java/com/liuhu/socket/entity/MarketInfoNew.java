@@ -31,7 +31,19 @@ public class MarketInfoNew implements Serializable {
     private String riseFallRatioStr;
 
     private String shareName;
+
+    private Double secondAmount;
+
+
     private static final long serialVersionUID = 1L;
+
+    public void setSecondAmount(Double secondAmount) {
+        this.secondAmount = secondAmount;
+    }
+
+    public Double getSecondAmount() {
+        return secondAmount;
+    }
 
     public Integer getId() {
         return id;

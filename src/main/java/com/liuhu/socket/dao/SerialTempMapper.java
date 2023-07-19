@@ -1,7 +1,5 @@
 package com.liuhu.socket.dao;
 
-import com.liuhu.socket.domain.input.MarketInput2Domain;
-import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import org.apache.ibatis.annotations.Param;
