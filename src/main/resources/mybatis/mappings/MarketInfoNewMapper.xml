@@ -279,6 +279,9 @@ AND deal_amount / turn_over_rate > 80000000
         AND firstRatio > 0
         AND amount > #{minMarketValue}
         and turn_over_rate >= #{minTurnOverRate,jdbcType=INTEGER}
+        AND sumCount > #{minRate,jdbcType=INTEGER}
+        and sumCount &lt;12
+
         ORDER BY
         share_code
         )
@@ -297,6 +300,50 @@ AND deal_amount / turn_over_rate > 80000000
         ) kk
         WHERE
         kk.rowhi = #{recentRateDay}
+    </select>
+
+    <select id="queryMarketInfoByDate" resultType="com.liuhu.socket.entity.MarketInfoNew">
+        SELECT
+        share_code as shareCode,
+        (select date from trade_date where id=(select id from trade_date where date= max(mm.date))+1) as date
+        FROM
+        (
+        SELECT
+        share_code,
+        ROUND( end_value / ( 1+ rise_fall_ratio * 0.01 ), 2 ) AS preendvalue,
+        highest,
+        open_value,
+        rise_fall_ratio,
+        date
+        FROM
+        market_info_new
+        WHERE
+        date >= #{date}
+        AND date &lt;= (select date from trade_date where id=(select id from trade_date where date= #{date})+2)
+        and deal_amount/turn_over_rate > 100000000
+        ) mm
+        WHERE
+        highest - preendvalue &lt; 0
+        GROUP BY
+        share_code
+        HAVING
+        count( share_code ) = 3
+    </select>
+    <select id="queryThreeDownThen" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+
+        select
+           tt.share_code as shareCode,
+           tt.rise_fall_ratio as finalRatio,
+           round((highest - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as maxRatio,
+           round((lowest - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as minRatio,
+           round((open_value - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as openRatio,
+           tt.date as startTime
+      from market_info_new tt
+    where date = #{date}
+        and share_code in
+        <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
+            #{shareCode}
+        </foreach>
     </select>
 
 </mapper>

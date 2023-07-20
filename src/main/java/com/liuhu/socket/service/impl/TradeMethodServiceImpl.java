@@ -6,6 +6,7 @@ import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
+import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
 import org.springframework.beans.BeanUtils;
@@ -21,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 @Service
 public class TradeMethodServiceImpl  implements TradeMethodService {
@@ -108,7 +110,42 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
         return allInfoList;
     }
 
-      List<QueryRecentSerialRedOutPutDTO> insertSerialTemp(QueryRecentSerialRedConditionDTO input2Domain, List<Date> dateList) {
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
+
+        String startTime = input2Domain.getStartTime();
+        if (Objects.isNull(startTime)) {
+            throw new Exception("截至日期不能为空");
+        }
+        List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
+        /**
+         * 分别查询上涨区间内可能完成的交易日查询
+         */
+        //获取需要查询的日期集合
+        List<Date> dateList = tradeInfoService.queryPeriodDateList(startTime, input2Domain.getPeriod(),"sub");
+       // List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
+
+        for (Date date:dateList){
+
+            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
+
+            if (marketInfoNewList.size()==0){
+                continue;
+            }
+            List<Date> selectDateList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getDate()).collect(Collectors.toList());
+            Date newDate = selectDateList.get(0);
+            List<String> shareCodeList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getShareCode()).collect(Collectors.toList());
+            List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList);
+            allInfoList.addAll(outPutDTOList);
+        }
+        if (allInfoList.size()>0){
+            serialTempMapper.insertList(allInfoList,input2Domain.getRateOrAmountDay());
+        }
+
+        return null;
+    }
+
+    List<QueryRecentSerialRedOutPutDTO> insertSerialTemp(QueryRecentSerialRedConditionDTO input2Domain, List<Date> dateList) {
 
         List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
         for (Date date : dateList) {

@@ -127,4 +127,19 @@ public class TradeInfoController {
         return ResponseResult.done(outPutDTOList);
     }
 
+	/**
+	 *
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/queryThreeDownThen")
+	public ResponseResult queryThreeDownThen(@RequestBody QueryRecentSerialRedConditionDTO input) throws Exception {
+		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryThreeDownRatioByDate(input);
+		return ResponseResult.done(outPutDTOList);
+	}
+
+
+
+
 }

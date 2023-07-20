@@ -36,4 +36,15 @@ public interface MarketInfoNewMapper {
      * @return
      */
     List<QueryRecentSerialRedOutPutDTO> queryVRatioFromDownStartPoint(QueryRecentSerialRedConditionDO input);
+
+    /**
+     * 查询 日期
+     *
+     */
+    List<MarketInfoNew> queryMarketInfoByDate(@Param("date") Date newDate);
+    /**
+     * 查询 三连down之后一天的收益
+     *
+     */
+    List<QueryRecentSerialRedOutPutDTO> queryThreeDownThen(@Param("date")Date newDate, @Param("shareCodeList") List<String> shareCodeList);
 }
