@@ -110,4 +110,24 @@
         WHERE
         rowNum = 1
     </select>
+    <select id="getMinRateThree" resultMap="BaseResultMap">
+        select share_code,
+                max_ratio,
+               min_ratio,
+              final_ratio,
+              start_time
+        from
+        (SELECT                	*,
+          row_number()over(PARTITION BY start_time order by SHARE_CODE) AS rownum
+         FROM
+	      serial_temp
+        WHERE
+	      up_period_count = - 6
+        ORDER BY
+	      start_time
+      )kk where rownum = 1
+
+    </select>
+
+
 </mapper>

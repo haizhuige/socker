@@ -4,6 +4,7 @@ import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,7 +28,11 @@ public interface TradeInfoService {
 
     List<Date> queryPeriodDateList( String endTime, Integer period,String flag);
 
+    MarketRateTheeOutPutDTO getRateThreeIncome(Integer type);
+
     List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input);
 
     Map<String,Object> getPreFiveAndSubFive(QueryRecentSerialRedConditionDTO input);
+
+
 }
