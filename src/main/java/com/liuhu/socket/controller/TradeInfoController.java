@@ -5,6 +5,7 @@ import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -64,6 +66,19 @@ public class TradeInfoController {
 		Map a =	tradeInfoService.ownerLongIncome(input);
 		return ResponseResult.done(a);
 	}
+
+    /**
+     * 获取换手率为3的收益率
+     * @param type
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping("/getRateThreeIncome")
+    public ResponseResult getRateThreeIncome(@RequestParam Integer type) {
+        MarketRateTheeOutPutDTO marketRateTheeOutPutDTO =	tradeInfoService.getRateThreeIncome(type);
+        return ResponseResult.done(marketRateTheeOutPutDTO);
+    }
+
 
 	/**
 	 * 当前最大交易时间

@@ -13,4 +13,6 @@ public interface SerialTempMapper {
     List<QueryRecentSerialRedOutPutDTO> getResultByCondition(QueryRecentSerialRedConditionDO marketInput2Domain);
 
     List<QueryRecentSerialRedOutPutDTO> getRecentFinalRatioRedThree(@Param("list") List<QueryRecentSerialRedOutPutDTO> outPutDTOList,@Param("input")QueryRecentSerialRedConditionDO marketInput2Domain);
+
+    List<QueryRecentSerialRedOutPutDTO> getMinRateThree(@Param("upPeriodCount") Integer upPeriodCount);
 }

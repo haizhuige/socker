@@ -8,6 +8,8 @@ import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
+import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.entity.*;
 import com.liuhu.socket.enums.PersonalStatusEnum;
@@ -51,6 +53,94 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
     @Resource
     TradeDateMapper tradeDateMapper;
+
+    @Resource
+    SerialTempMapper serialTempMapper;
+
+
+
+    @Override
+    public MarketRateTheeOutPutDTO getRateThreeIncome(Integer type){
+        MarketRateTheeOutPutDTO returnRateDTO = new MarketRateTheeOutPutDTO();
+        List<QueryRecentSerialRedOutPutDTO> minRateThreeList = serialTempMapper.getMinRateThree(type);
+        if (minRateThreeList.size()==0){
+            return returnRateDTO;
+        }
+        Double income = 0.0;
+        Double currentDayIncome = 0.0;
+        List<MarketRateTheeOutPutDTO> marketList = new ArrayList<>();
+        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO:minRateThreeList){
+            MarketRateTheeOutPutDTO subTable = new MarketRateTheeOutPutDTO();
+            Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
+            subTable.setStartTime(queryRecentSerialRedOutPutDTO.getStartTime());
+            if(maxRatio>=4){
+                subTable.setCurrentAmount(4D);
+
+            }else {
+                subTable.setCurrentAmount(queryRecentSerialRedOutPutDTO.getFinalRatio());
+            }
+            marketList.add(subTable);
+        }
+        minRateThreeList = minRateThreeList.stream().sorted(Comparator.comparing(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getStartTime())).collect(Collectors.toList());
+        //过滤出已经收益后的,留下那些不满足条件的
+        List<MarketRateTheeOutPutDTO> marketOutPutList = marketList.stream().filter(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount() >= 4).collect(Collectors.toList());
+        List<Double> amountList = marketOutPutList.stream().map(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount()).collect(Collectors.toList());
+        if (amountList.size()>0){
+            income = Double.parseDouble(String.valueOf(amountList.size() * 4));
+        }
+             boolean b = marketList.removeAll(marketOutPutList);
+              if (!b){
+                    return returnRateDTO;
+                }
+            for (MarketRateTheeOutPutDTO marketRateTheeOutPutDTO:marketList){
+                Double currentAmount = marketRateTheeOutPutDTO.getCurrentAmount();
+                if (currentAmount>0){
+                    income =income+currentAmount;
+                    continue;
+                }
+                Boolean flag = true;
+                for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO:minRateThreeList){
+                    Date startTime = marketRateTheeOutPutDTO.getStartTime();
+                    Date compareTime = queryRecentSerialRedOutPutDTO.getStartTime();
+                    //如果待遍历的时间过滤大于当前要交易的时间,则走对应的业务逻辑
+                    if (compareTime.compareTo(startTime)<0){
+                        flag =false;
+                        break;
+                    }
+                    //如果有接下来有最大值可弥补亏损且赚1个点的则跳出当前循环
+                    Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
+                    if (currentAmount>-20){
+                        if (maxRatio+currentAmount>1){
+                            income =income+1;
+                            flag =false;
+                            break;
+                        }
+                        currentAmount = currentAmount + queryRecentSerialRedOutPutDTO.getFinalRatio();
+                    }else if (currentAmount<=-20 && currentAmount >=-40){
+                       if (2*maxRatio+currentAmount>2){
+                           flag =false;
+                           income =income+2;
+                           break;
+                       }
+                        currentAmount = currentAmount + 2*queryRecentSerialRedOutPutDTO.getFinalRatio();
+                    }else {
+                        if (3*maxRatio+currentAmount>3){
+                            flag =false;
+                            income =income+3;
+                            break;
+                        }
+                        currentAmount = currentAmount + 3*queryRecentSerialRedOutPutDTO.getFinalRatio();
+                    }
+
+                }
+                if (flag){
+                    income = income + currentAmount;
+                }
+            }
+         returnRateDTO.setAmount(income);
+         return returnRateDTO;
+
+    }
 
     @Override
     @Transactional
