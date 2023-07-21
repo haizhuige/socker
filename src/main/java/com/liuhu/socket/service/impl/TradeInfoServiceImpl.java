@@ -11,6 +11,7 @@ import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
+import com.liuhu.socket.dto.Xia2Shang1InnerDTO;
 import com.liuhu.socket.entity.*;
 import com.liuhu.socket.enums.PersonalStatusEnum;
 import com.liuhu.socket.enums.TradeStatusEnum;
@@ -69,7 +70,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         Double income = 0.0;
         Double currentDayIncome = 0.0;
         List<MarketRateTheeOutPutDTO> marketList = new ArrayList<>();
-        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
+      /*  for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
             MarketRateTheeOutPutDTO subTable = new MarketRateTheeOutPutDTO();
             Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
             subTable.setStartTime(queryRecentSerialRedOutPutDTO.getStartTime());
@@ -92,9 +93,73 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         if (!b) {
             return returnRateDTO;
         }
-        Map<Date,Integer> countCodeMap = new HashMap<>();
+        */
+        Map<Date,List<Xia2Shang1InnerDTO>> innerMap = new HashMap<>();
+        List<Xia2Shang1InnerDTO> innerDTOList = new ArrayList<>();
+        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
+            Date startTime = queryRecentSerialRedOutPutDTO.getStartTime();
+            Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
+            Double finalRatio = queryRecentSerialRedOutPutDTO.getFinalRatio();
+            String shareCode = queryRecentSerialRedOutPutDTO.getShareCode();
 
-        for (MarketRateTheeOutPutDTO marketRateTheeOutPutDTO : marketList) {
+            Xia2Shang1InnerDTO xia2Shang1InnerDTO = new Xia2Shang1InnerDTO();
+            xia2Shang1InnerDTO.setStartTime(startTime);
+            xia2Shang1InnerDTO.setShareCode(queryRecentSerialRedOutPutDTO.getShareCode());
+            xia2Shang1InnerDTO.setPurchaseUnitCount(1);
+            if (maxRatio>4){
+                income = income +4;
+                xia2Shang1InnerDTO.setEndTime(startTime);
+                xia2Shang1InnerDTO.setIncome(4D);
+            }else if (finalRatio>0){
+                income = income +finalRatio;
+                xia2Shang1InnerDTO.setEndTime(startTime);
+                xia2Shang1InnerDTO.setIncome(finalRatio);
+            }else if (finalRatio<0){
+                //当天收益计入总收益
+                income = income +finalRatio;
+                xia2Shang1InnerDTO.setIncome(finalRatio);
+            }
+            innerDTOList.add(xia2Shang1InnerDTO);
+            //过滤出之前还没有回本得geGu,且endTime为空得。(如果未回本  endTime 为空)
+            List<Xia2Shang1InnerDTO> filterList = innerDTOList.stream().filter(xia2Shang1InnerDTO1 -> startTime.compareTo(xia2Shang1InnerDTO1.getStartTime())>0&&xia2Shang1InnerDTO1.getEndTime()==null).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(filterList)){
+                continue;
+            }
+            innerDTOList.removeAll(filterList);
+            //遍历那些未回本得geGu集合
+            for (Xia2Shang1InnerDTO xia2Shang1InnerDTO2:filterList){
+                //获取还没有回本得geGu收益
+                Double personalIncome = xia2Shang1InnerDTO2.getIncome();
+                //设置购买数量,当日结束计入当天购买数量
+                //如果赚到1%的相应的倍数则设置endTime;终止参与循环
+                int i = Math.abs((int)(xia2Shang1InnerDTO2.getIncome() / 20))+1;
+                xia2Shang1InnerDTO2.setPurchaseUnitCount(i);
+                if (i*maxRatio+personalIncome>i){
+                    xia2Shang1InnerDTO2.setEndTime(startTime);
+                    xia2Shang1InnerDTO2.setIncome((double) i);
+                    income = income - personalIncome+i;
+                }else {
+                    xia2Shang1InnerDTO2.setIncome(xia2Shang1InnerDTO2.getIncome()+finalRatio);
+                    income = income +i*finalRatio;
+                }
+            }
+            innerDTOList.addAll(filterList);
+            List<Xia2Shang1InnerDTO> list = new ArrayList<>(filterList);
+            innerMap.put(startTime,list);
+        }
+        int maxCount = -1;
+        for (Map.Entry<Date,List<Xia2Shang1InnerDTO>> entry:innerMap.entrySet()){
+            List<Xia2Shang1InnerDTO> value = entry.getValue();
+            List<Integer> unitCountList = value.stream().map(xia2Shang1InnerDTO -> xia2Shang1InnerDTO.getPurchaseUnitCount()).collect(Collectors.toList());
+            Integer sumCount = unitCountList.stream().reduce(0, Integer::sum);
+            if (sumCount>maxCount){
+                maxCount =sumCount;
+            }
+        }
+        returnRateDTO.setIncome(income);
+        returnRateDTO.setMaxCount(maxCount);
+
+      /*  for (MarketRateTheeOutPutDTO marketRateTheeOutPutDTO : marketList) {
             Double currentAmount = marketRateTheeOutPutDTO.getCurrentAmount();
             if (currentAmount > 0) {
                 income = income + currentAmount;
@@ -167,9 +232,8 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                 income = income + currentAmount;
             }
         }
-        returnRateDTO.setAmount(income);
+        returnRateDTO.setAmount(income);*/
         return returnRateDTO;
-
     }
 
     @Override

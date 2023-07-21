@@ -21,6 +21,9 @@ public class MarketRateTheeOutPutDTO {
     //计算天数
     private Integer days;
 
+    //最大仓位数
+    private Integer maxCount;
+
     private Date startTime;
 
 
