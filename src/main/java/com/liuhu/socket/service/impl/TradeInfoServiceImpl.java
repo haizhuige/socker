@@ -60,85 +60,115 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
 
     @Override
-    public MarketRateTheeOutPutDTO getRateThreeIncome(Integer type){
+    public MarketRateTheeOutPutDTO getRateThreeIncome(Integer type) {
         MarketRateTheeOutPutDTO returnRateDTO = new MarketRateTheeOutPutDTO();
         List<QueryRecentSerialRedOutPutDTO> minRateThreeList = serialTempMapper.getMinRateThree(type);
-        if (minRateThreeList.size()==0){
+        if (minRateThreeList.size() == 0) {
             return returnRateDTO;
         }
         Double income = 0.0;
         Double currentDayIncome = 0.0;
         List<MarketRateTheeOutPutDTO> marketList = new ArrayList<>();
-        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO:minRateThreeList){
+        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
             MarketRateTheeOutPutDTO subTable = new MarketRateTheeOutPutDTO();
             Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
             subTable.setStartTime(queryRecentSerialRedOutPutDTO.getStartTime());
-            if(maxRatio>=4){
+            if (maxRatio >=4) {
                 subTable.setCurrentAmount(4D);
-
-            }else {
+            } else {
                 subTable.setCurrentAmount(queryRecentSerialRedOutPutDTO.getFinalRatio());
             }
             marketList.add(subTable);
         }
         minRateThreeList = minRateThreeList.stream().sorted(Comparator.comparing(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getStartTime())).collect(Collectors.toList());
         //过滤出已经收益后的,留下那些不满足条件的
-        List<MarketRateTheeOutPutDTO> marketOutPutList = marketList.stream().filter(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount() >= 4).collect(Collectors.toList());
-        List<Double> amountList = marketOutPutList.stream().map(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount()).collect(Collectors.toList());
-        if (amountList.size()>0){
-            income = Double.parseDouble(String.valueOf(amountList.size() * 4));
+        List<MarketRateTheeOutPutDTO> marketOutPutList = marketList.stream().filter(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount() >= 0).collect(Collectors.toList());
+        if (marketOutPutList.size()>0){
+            income = marketOutPutList.stream().map(marketRateTheeOutPutDTO -> marketRateTheeOutPutDTO.getCurrentAmount()).reduce(0D,Double::sum);
+
         }
-             boolean b = marketList.removeAll(marketOutPutList);
-              if (!b){
-                    return returnRateDTO;
+
+        boolean b = marketList.removeAll(marketOutPutList);
+        if (!b) {
+            return returnRateDTO;
+        }
+        Map<Date,Integer> countCodeMap = new HashMap<>();
+
+        for (MarketRateTheeOutPutDTO marketRateTheeOutPutDTO : marketList) {
+            Double currentAmount = marketRateTheeOutPutDTO.getCurrentAmount();
+            if (currentAmount > 0) {
+                income = income + currentAmount;
+                continue;
+            }
+            Boolean flag = true;
+            //当前日实时数据
+            int realTimeCount = 1;
+            //前一日实时数据
+            int lastDayCount =1;
+            for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
+                Date date = queryRecentSerialRedOutPutDTO.getStartTime();
+                //每个满足条件的交易日都要去赋值(过滤掉满足条件的压底)
+                if (countCodeMap.get(date)==null){
+                    countCodeMap.put(date,1);
                 }
-            for (MarketRateTheeOutPutDTO marketRateTheeOutPutDTO:marketList){
-                Double currentAmount = marketRateTheeOutPutDTO.getCurrentAmount();
-                if (currentAmount>0){
-                    income =income+currentAmount;
+                //获取当日基本操作的数量
+                Integer everyDayShareCodeCount = countCodeMap.get(date);
+                Date startTime = marketRateTheeOutPutDTO.getStartTime();
+                Date compareTime = queryRecentSerialRedOutPutDTO.getStartTime();
+                //如果待遍历的时间过滤大于当前要交易的时间,则走对应的业务逻辑
+                if (compareTime.compareTo(startTime) < 0) {
+                    flag = false;
                     continue;
                 }
-                Boolean flag = true;
-                for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO:minRateThreeList){
-                    Date startTime = marketRateTheeOutPutDTO.getStartTime();
-                    Date compareTime = queryRecentSerialRedOutPutDTO.getStartTime();
-                    //如果待遍历的时间过滤大于当前要交易的时间,则走对应的业务逻辑
-                    if (compareTime.compareTo(startTime)<0){
-                        flag =false;
+                //如果日期相同看是否满足条件供下一日做操作
+                if (compareTime.compareTo(startTime)==0){
+                    if (queryRecentSerialRedOutPutDTO.getMaxRatio()>=4||queryRecentSerialRedOutPutDTO.getFinalRatio()>0){
+                        realTimeCount = realTimeCount -1;
+                    }
+                    flag = false;
+                    continue;
+                }
+
+                //当日记录日
+                everyDayShareCodeCount = everyDayShareCodeCount +1;
+                //如果有接下来有最大值可弥补亏损且赚1个点的则跳出当前循环
+                Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
+                if (currentAmount > -20) {
+                    if (maxRatio + currentAmount > 1) {
+                        income = income + 1;
+                        flag = false;
+                        //如果当前日数据量满足条件，则减掉倍数
+                        everyDayShareCodeCount = everyDayShareCodeCount - 1;
                         break;
                     }
-                    //如果有接下来有最大值可弥补亏损且赚1个点的则跳出当前循环
-                    Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
-                    if (currentAmount>-20){
-                        if (maxRatio+currentAmount>1){
-                            income =income+1;
-                            flag =false;
-                            break;
-                        }
-                        currentAmount = currentAmount + queryRecentSerialRedOutPutDTO.getFinalRatio();
-                    }else if (currentAmount<=-20 && currentAmount >=-40){
-                       if (2*maxRatio+currentAmount>2){
-                           flag =false;
-                           income =income+2;
-                           break;
-                       }
-                        currentAmount = currentAmount + 2*queryRecentSerialRedOutPutDTO.getFinalRatio();
-                    }else {
-                        if (3*maxRatio+currentAmount>3){
-                            flag =false;
-                            income =income+3;
-                            break;
-                        }
-                        currentAmount = currentAmount + 3*queryRecentSerialRedOutPutDTO.getFinalRatio();
+                    currentAmount = currentAmount + queryRecentSerialRedOutPutDTO.getFinalRatio();
+                } else if (currentAmount <= -20 && currentAmount >= -40) {
+                    if (2 * maxRatio + currentAmount > 2) {
+                        flag = false;
+                        income = income + 2;
+                        realTimeCount = realTimeCount - 2;
+                        break;
                     }
+                    realTimeCount = realTimeCount + 1;
+                    currentAmount = currentAmount + 2 * queryRecentSerialRedOutPutDTO.getFinalRatio();
+                } else {
+                    if (3 * maxRatio + currentAmount > 3) {
+                        flag = false;
+                        income = income + 3;
+                        realTimeCount = realTimeCount - 3;
+                        break;
+                    }
+                    realTimeCount = realTimeCount + 2;
+                    currentAmount = currentAmount + 3 * queryRecentSerialRedOutPutDTO.getFinalRatio();
+                }
 
-                }
-                if (flag){
-                    income = income + currentAmount;
-                }
             }
-         returnRateDTO.setAmount(income);
-         return returnRateDTO;
+            if (flag) {
+                income = income + currentAmount;
+            }
+        }
+        returnRateDTO.setAmount(income);
+        return returnRateDTO;
 
     }
 
