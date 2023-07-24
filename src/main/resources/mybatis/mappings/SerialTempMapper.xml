@@ -122,7 +122,7 @@
          FROM
 	      serial_temp
         WHERE
-	      up_period_count = - 6
+	      up_period_count = - 15 and year(start_time) = '2020'
         ORDER BY
 	      start_time
       )kk where rownum = 1

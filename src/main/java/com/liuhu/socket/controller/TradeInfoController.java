@@ -10,7 +10,10 @@ import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
+import com.liuhu.socket.service.TradeMethodStrategyConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,8 +33,13 @@ public class TradeInfoController {
 	@Resource
     TradeInfoService tradeInfoService;
 
-	@Resource
+	@Autowired
+	@Qualifier("moRen")
 	TradeMethodService tradeMethodService;
+
+
+	@Resource
+	TradeMethodStrategyConfig tradeMethodStrategyConfig;
 	/**
 	 * 股票购买操作
 	 * @param input
@@ -74,8 +82,10 @@ public class TradeInfoController {
      */
     @ResponseBody
     @RequestMapping("/getRateThreeIncome")
-    public ResponseResult getRateThreeIncome(@RequestParam Integer type) {
-        MarketRateTheeOutPutDTO marketRateTheeOutPutDTO =	tradeInfoService.getRateThreeIncome(type);
+    public ResponseResult getRateThreeIncome(@RequestParam Integer type,@RequestParam String methodType) {
+		Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+		TradeMethodService tradeMethodService = tradeImpl.get(methodType);
+		MarketRateTheeOutPutDTO marketRateTheeOutPutDTO =	tradeMethodService.getRateThreeIncome(type);
         return ResponseResult.done(marketRateTheeOutPutDTO);
     }
 

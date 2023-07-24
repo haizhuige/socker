@@ -28,7 +28,7 @@ public interface TradeInfoService {
 
     List<Date> queryPeriodDateList( String endTime, Integer period,String flag);
 
-    MarketRateTheeOutPutDTO getRateThreeIncome(Integer type);
+
 
     List<MarketOutputDomain> getPrePurchaseSocker(QueryRecentSerialRedConditionDTO input);
 

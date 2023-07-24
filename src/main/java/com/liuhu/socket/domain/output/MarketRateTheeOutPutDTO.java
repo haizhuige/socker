@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.Map;
 
 @Setter
 @Getter
@@ -25,6 +26,8 @@ public class MarketRateTheeOutPutDTO {
     private Integer maxCount;
 
     private Date startTime;
+
+    private Map<Integer,Double> allIncomeMap;
 
 
 }
