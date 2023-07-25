@@ -3,6 +3,7 @@ package com.liuhu.socket.service.impl;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.SerialTempMapper;
+import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
@@ -144,9 +145,9 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
     }
 
     @Override
-    public MarketRateTheeOutPutDTO getRateThreeIncome(Integer type) {
+    public MarketRateTheeOutPutDTO getRateThreeIncome(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
         MarketRateTheeOutPutDTO returnRateDTO = new MarketRateTheeOutPutDTO();
-        List<QueryRecentSerialRedOutPutDTO> minRateThreeList = serialTempMapper.getMinRateThree(type);
+        List<QueryRecentSerialRedOutPutDTO> minRateThreeList = serialTempMapper.getMinRateThree(getRateThreeIncomeInputDTO);
         if (minRateThreeList.size() == 0) {
             return returnRateDTO;
         }

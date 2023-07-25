@@ -118,11 +118,14 @@
               start_time
         from
         (SELECT                	*,
-          row_number()over(PARTITION BY start_time order by SHARE_CODE) AS rownum
+          row_number()over(PARTITION BY start_time order by start_time) AS rownum
          FROM
 	      serial_temp
         WHERE
-	      up_period_count = - 15 and year(start_time) = '2020'
+	         up_period_count = #{domain.type}
+	     <if test="domain.queryYear!=null">
+	        and year(start_time) = #{domain.queryYear}
+         </if>
         ORDER BY
 	      start_time
       )kk where rownum = 1

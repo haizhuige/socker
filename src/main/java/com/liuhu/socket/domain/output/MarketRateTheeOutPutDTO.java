@@ -19,6 +19,9 @@ public class MarketRateTheeOutPutDTO {
     //当前收益最大金额
     private Double currentAmount;
 
+    //从购买当日到结束按照finalRatio的总收益率
+    private Double handleFinalRatio;
+
     //计算天数
     private Integer days;
 

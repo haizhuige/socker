@@ -1,6 +1,7 @@
 package com.liuhu.socket.controller;
 
 import com.liuhu.socket.common.ResponseResult;
+import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.input.TradeInputDomain;
@@ -82,10 +83,11 @@ public class TradeInfoController {
      */
     @ResponseBody
     @RequestMapping("/getRateThreeIncome")
-    public ResponseResult getRateThreeIncome(@RequestParam Integer type,@RequestParam String methodType) {
+    public ResponseResult getRateThreeIncome(@RequestBody GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
 		Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+		String methodType = getRateThreeIncomeInputDTO.getMethodType();
 		TradeMethodService tradeMethodService = tradeImpl.get(methodType);
-		MarketRateTheeOutPutDTO marketRateTheeOutPutDTO =	tradeMethodService.getRateThreeIncome(type);
+		MarketRateTheeOutPutDTO marketRateTheeOutPutDTO =	tradeMethodService.getRateThreeIncome(getRateThreeIncomeInputDTO);
         return ResponseResult.done(marketRateTheeOutPutDTO);
     }
 
