@@ -111,19 +111,19 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
                }
                if (m*maxRatio+income>=4){
                    allIncomeMap.remove(key);
-                   runDoubleUnit = runDoubleUnit -baseDouble;
+                   runDoubleUnit = runDoubleUnit - baseDouble;
                    tIncome = tIncome +4;
                    continue;
                }
                income = income + finalRatio;
-               allIncomeMap.put(key,income);
+               allIncomeMap.put(key,MathConstants.Pointkeep(income,2));
            }
            if (runDoubleUnit>maxDouble){
                for (int i = runDoubleUnit;i>maxDouble;i--){
                    if (finalRatio>0){
                        tIncome = tIncome +finalRatio;
                    }else {
-                       allIncomeMap.put(i,finalRatio);
+                       allIncomeMap.put(i,MathConstants.Pointkeep(finalRatio,2));
                    }
 
                }

@@ -125,8 +125,8 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
        // List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
 
         for (Date date:dateList){
-
-            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
+            input2Domain.setStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(input2Domain);
 
             if (marketInfoNewList.size()==0){
                 continue;

@@ -318,16 +318,16 @@ AND deal_amount / turn_over_rate > 80000000
         FROM
         market_info_new
         WHERE
-        date >= #{date}
-        AND date &lt;= (select date from trade_date where id=(select id from trade_date where date= #{date})+2)
-        and deal_amount/turn_over_rate > 100000000
+        date >= #{condition.startTime}
+        AND date &lt;= (select date from trade_date where id=(select id from trade_date where date= #{condition.startTime})+2)
+        and deal_amount/turn_over_rate > #{condition.minMarketValue}
         ) mm
         WHERE
         highest - preendvalue &lt; 0
         GROUP BY
         share_code
         HAVING
-        count( share_code ) = 3
+        count( share_code ) = #{condition.minDownDay}
     </select>
     <select id="queryThreeDownThen" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
 
