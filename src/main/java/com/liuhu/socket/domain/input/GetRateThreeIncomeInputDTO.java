@@ -21,10 +21,16 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
 
     private Double minTurnRate;
 
-    private Integer doubleSize;
+    private Integer doubleSize=4;
 
 
     private Integer cycleProfit;
 
+    private Double  fee=0.2;
+
+
+    private Double profit=1.2;
+
+    private Double doubleProfit=1.5;
 
 }

@@ -63,15 +63,15 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
             passAllIncome = finalRatio + passAllIncome;
           
             if (allIncomeMap.isEmpty()){
-                if (maxRatio>4){
-                    tIncome = tIncome+4;
+                if (maxRatio>getRateThreeIncomeInputDTO.getProfit()){
+                    tIncome = tIncome+getRateThreeIncomeInputDTO.getProfit()-getRateThreeIncomeInputDTO.getFee();
                     continue;
                 }else if (finalRatio>0){
-                    tIncome = tIncome+finalRatio;
+                    tIncome = tIncome+finalRatio-getRateThreeIncomeInputDTO.getFee();
                     continue;
                 }
-                allIncomeMap.put(1,finalRatio);
-                floorMap.put(1,1);
+                allIncomeMap.put(1,finalRatio-getRateThreeIncomeInputDTO.getFee());
+              //  floorMap.put(1,getRateThreeIncomeInputDTO.getProfit()-getRateThreeIncomeInputDTO.getFee());
                 continue;
             }
             /*if (cycleSumAmount+tIncome>100){
@@ -93,7 +93,7 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
             Double  firstValue = sortedMap.get(1);
 
             //当次运行的层级数
-            Integer    runDoubleUnit =Math.abs((int) (firstValue/ 10))+1;
+            Integer    runDoubleUnit =Math.abs((int) (firstValue/ getRateThreeIncomeInputDTO.getDoubleSize()))+1;
             log.info("第一层ks的收益率:{}，最大值:{}，最后值为：{},当次层级：{}，每次收益率预览：{}", MathConstants.Pointkeep(firstValue,2),MathConstants.Pointkeep(maxRatio,2), MathConstants.Pointkeep(finalRatio,2),runDoubleUnit, JSONObject.toJSONString(allIncomeMap));
             //设置每次遍历的下标
             int k = 0;
@@ -104,27 +104,29 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
                int baseDouble = runDoubleUnit - maxDouble + 1;
                int m;
                k = k+1;
-               if (k==1&&income<-10){
+               if (k==1&&income<-1*getRateThreeIncomeInputDTO.getDoubleSize()){
                    m = baseDouble;
                }else{
                    m = 1;
                }
-               if (m*maxRatio+income>=4){
+               if (m*maxRatio+income>=getRateThreeIncomeInputDTO.getDoubleProfit()){
                    allIncomeMap.remove(key);
 
                    runDoubleUnit = runDoubleUnit - baseDouble;
-                   tIncome = tIncome +4;
+                   tIncome = tIncome +getRateThreeIncomeInputDTO.getDoubleProfit()-getRateThreeIncomeInputDTO.getFee();
                    continue;
                }
                income = income + finalRatio;
+               tIncome = tIncome-getRateThreeIncomeInputDTO.getFee();
                allIncomeMap.put(key,MathConstants.Pointkeep(income,2));
            }
            if (runDoubleUnit>maxDouble){
                for (int i = runDoubleUnit;i>maxDouble;i--){
                    allIncomeMap.put(i,finalRatio);
                    if (finalRatio>0){
-                       tIncome = tIncome +finalRatio;
+                       tIncome = tIncome +finalRatio-getRateThreeIncomeInputDTO.getFee();
                    }else {
+                       tIncome = tIncome -getRateThreeIncomeInputDTO.getFee();
                        allIncomeMap.put(i,MathConstants.Pointkeep(finalRatio,2));
                    }
 

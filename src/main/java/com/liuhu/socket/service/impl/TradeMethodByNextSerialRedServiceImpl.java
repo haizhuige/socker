@@ -57,7 +57,7 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
                Double minRatio = queryRecentSerialRedOutPutDTO.getMinRatio();
             //获取当前总收益
             int i = Math.abs((int) (runRatio /getRateThreeIncomeInputDTO.getDoubleSize())) + 1;
-            log.info("doubleSize：{},date：{},tfinal：{},runRatio：{},finalRatio:{}",i,queryRecentSerialRedOutPutDTO.getStartTime(), MathConstants.Pointkeep(tFinalRatio,2),MathConstants.Pointkeep(runRatio,2),MathConstants.Pointkeep(finalRatio,2));
+            log.info("doubleSize：{},date：{},tfinal：{},runRatio：{},finalRatio:{},maxRatio:{}",i,queryRecentSerialRedOutPutDTO.getStartTime(), MathConstants.Pointkeep(tFinalRatio,2),MathConstants.Pointkeep(runRatio,2),MathConstants.Pointkeep(finalRatio,2),MathConstants.Pointkeep(maxRatio,2));
             doubleSize = i;
                if (doubleSize==1){
                    if (minRatio+runRatio>1.2){
