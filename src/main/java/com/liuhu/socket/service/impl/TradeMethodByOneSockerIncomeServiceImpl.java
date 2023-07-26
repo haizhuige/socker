@@ -73,7 +73,7 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
             Collection<Double> values = allIncomeMap.values();
             Double allSubIncome = values.stream().reduce(0.0, Double::sum);
             //获取当前运行的成本翻倍数
-            runDoubleUnit =Math.abs( (int)(Math.abs((int) (allSubIncome / maxDouble)))/10)+1;
+            runDoubleUnit =Math.abs((int) (allSubIncome/10))+1;
             //最大翻倍 对应的收益
             Map<Integer, Double> sortedMap = new TreeMap<>(Collections.reverseOrder());
             sortedMap.putAll(allIncomeMap);
@@ -85,6 +85,7 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
                int baseDouble = runDoubleUnit - maxDouble + 1;
                if (baseDouble*maxRatio+income>=4){
                    allIncomeMap.remove(key);
+                   runDoubleUnit--;
                    tIncome = tIncome +4;
                    continue;
                }
@@ -93,7 +94,7 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
            }
            if (runDoubleUnit>maxDouble){
                for (int i = runDoubleUnit;i>maxDouble;i--){
-                   allIncomeMap.put(runDoubleUnit,finalRatio);
+                   allIncomeMap.put(i,finalRatio);
                }
            }
 

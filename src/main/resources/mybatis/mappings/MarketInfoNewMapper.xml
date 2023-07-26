@@ -345,5 +345,22 @@ AND deal_amount / turn_over_rate > 80000000
             #{shareCode}
         </foreach>
     </select>
+    <select id="querySerialRedFiveInfoByDate" resultType="com.liuhu.socket.entity.MarketInfoNew">
+        SELECT
+        share_code as shareCode,
+	   max(date) as date
+        FROM
+        market_info_new
+        WHERE
+        deal_amount / turn_over_rate > 80000000
+        and
+        turn_over_rate &lt;= 1
+        and date >= #{date}
+        and date &lt;= (select date from trade_date where id =(select id from trade_date where date = #{date})+4)
+        and rise_fall_ratio >0
+        GROUP BY
+        share_code
+        HAVING count(share_code) = #{num}
+    </select>
 
 </mapper>

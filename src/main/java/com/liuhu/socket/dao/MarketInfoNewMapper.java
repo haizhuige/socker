@@ -42,6 +42,12 @@ public interface MarketInfoNewMapper {
      *
      */
     List<MarketInfoNew> queryMarketInfoByDate(@Param("date") Date newDate);
+
+    /**
+     * 查询满足连续n天上涨的代码
+     *
+     */
+    List<MarketInfoNew> querySerialRedFiveInfoByDate(@Param("date") Date newDate,@Param("num")Integer num);
     /**
      * 查询 三连down之后一天的收益
      *

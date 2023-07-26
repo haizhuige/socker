@@ -125,13 +125,15 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
 
         for (Date date:dateList){
 
-            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
+          //  List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
+            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.querySerialRedFiveInfoByDate(date,input2Domain.getMinUpDay());
 
             if (marketInfoNewList.size()==0){
                 continue;
             }
             List<Date> selectDateList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getDate()).collect(Collectors.toList());
             Date newDate = selectDateList.get(0);
+             newDate = tradeInfoService.getWantDate(1, newDate, "plus");
             List<String> shareCodeList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getShareCode()).collect(Collectors.toList());
             List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList);
             allInfoList.addAll(outPutDTOList);
