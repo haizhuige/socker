@@ -38,21 +38,15 @@ public interface MarketInfoNewMapper {
      */
     List<QueryRecentSerialRedOutPutDTO> queryVRatioFromDownStartPoint(QueryRecentSerialRedConditionDO input);
 
-    /**
-     * 查询 日期
-     *
-     */
-<<<<<<< .merge_file_jKOYeo
-    List<MarketInfoNew> queryMarketInfoByDate(@Param("date") Date newDate);
 
     /**
      * 查询满足连续n天上涨的代码
      *
      */
-    List<MarketInfoNew> querySerialRedFiveInfoByDate(@Param("date") Date newDate,@Param("num")Integer num);
-=======
+    List<MarketInfoNew> querySerialRedFiveInfoByDate(@Param("condition")QueryRecentSerialRedConditionDTO queryRecentSerialRedConditionDTO);
+
     List<MarketInfoNew> queryMarketInfoByDate(@Param("condition") QueryRecentSerialRedConditionDTO condition);
->>>>>>> .merge_file_xUzqFY
+
     /**
      * 查询 三连down之后一天的收益
      *

@@ -319,7 +319,7 @@ AND deal_amount / turn_over_rate > 80000000
         market_info_new
         WHERE
         date >= #{condition.startTime}
-        AND date &lt;= (select date from trade_date where id=(select id from trade_date where date= #{condition.startTime})+2)
+        AND date &lt;= (select date from trade_date where id=(select id from trade_date where date= #{condition.startTime})+1)
         and deal_amount/turn_over_rate > #{condition.minMarketValue}
         ) mm
         WHERE
@@ -329,6 +329,26 @@ AND deal_amount / turn_over_rate > 80000000
         HAVING
         count( share_code ) = #{condition.minDownDay}
     </select>
+    <select id="querySerialRedFiveInfoByDate" resultType="com.liuhu.socket.entity.MarketInfoNew">
+       select share_code as shareCode,t.date as date,turn_over_rate as turnOverRate from  market_info_new t,
+        (SELECT
+        share_code as shareCode,
+	   max(date) as date
+        FROM
+        market_info_new
+        WHERE
+        deal_amount / turn_over_rate > #{condition.minMarketValue}
+        and
+        turn_over_rate &lt;= #{condition.minTurnOverRate}
+        and date >= #{condition.startTime}
+        and date &lt;= (select date from trade_date where id =(select id from trade_date where date = #{condition.startTime})+#{condition.minUpDay}-1)
+        and rise_fall_ratio >0
+        GROUP BY
+        share_code
+        HAVING count(share_code) = #{condition.minUpDay}) t2
+        where t.share_code = t2.shareCode
+          and t.date =t2.date
+    </select>
     <select id="queryThreeDownThen" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
 
         select
@@ -337,6 +357,7 @@ AND deal_amount / turn_over_rate > 80000000
            round((highest - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as maxRatio,
            round((lowest - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as minRatio,
            round((open_value - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as openRatio,
+           round(deal_amount/(turn_over_rate*10000000),2) as marketValue,
            tt.date as startTime
       from market_info_new tt
     where date = #{date}
@@ -344,23 +365,6 @@ AND deal_amount / turn_over_rate > 80000000
         <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
             #{shareCode}
         </foreach>
-    </select>
-    <select id="querySerialRedFiveInfoByDate" resultType="com.liuhu.socket.entity.MarketInfoNew">
-        SELECT
-        share_code as shareCode,
-	   max(date) as date
-        FROM
-        market_info_new
-        WHERE
-        deal_amount / turn_over_rate > 80000000
-        and
-        turn_over_rate &lt;= 1
-        and date >= #{date}
-        and date &lt;= (select date from trade_date where id =(select id from trade_date where date = #{date})+4)
-        and rise_fall_ratio >0
-        GROUP BY
-        share_code
-        HAVING count(share_code) = #{num}
     </select>
 
 </mapper>

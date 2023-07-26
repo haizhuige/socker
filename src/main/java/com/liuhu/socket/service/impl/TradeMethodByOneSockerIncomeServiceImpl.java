@@ -39,7 +39,7 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
     }
 
     /**
-     * 根据单倍收益阶梯式的翻倍操作
+     * 根据单倍收益阶梯式的翻倍操作 每个阶梯 回本且盈利4%则回撤当前阶梯
      * @param getRateThreeIncomeInputDTO
      * @return
      */

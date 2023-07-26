@@ -25,4 +25,9 @@ public class QueryRecentSerialRedOutPutDTO {
     private Integer upPeriodCount;
 
     private Double downSumRatio;
+
+
+    private String marketValue;
+
+    private Double turnOverRate;
 }

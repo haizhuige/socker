@@ -125,14 +125,11 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
        // List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
 
         for (Date date:dateList){
-<<<<<<< HEAD
 
-          //  List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
-            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.querySerialRedFiveInfoByDate(date,input2Domain.getMinUpDay());
-=======
             input2Domain.setStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(input2Domain);
->>>>>>> ff97b54086fafb12515bab23441496b27da349f0
+          //  List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
+            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.querySerialRedFiveInfoByDate(input2Domain);
+       //     List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(input2Domain);
 
             if (marketInfoNewList.size()==0){
                 continue;
@@ -142,6 +139,14 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
              newDate = tradeInfoService.getWantDate(1, newDate, "plus");
             List<String> shareCodeList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getShareCode()).collect(Collectors.toList());
             List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList);
+             for (MarketInfoNew marketInfoNew:marketInfoNewList){
+                 for (QueryRecentSerialRedOutPutDTO outPutDTO:outPutDTOList){
+                     if (marketInfoNew.getShareCode().equals(outPutDTO.getShareCode())){
+                         outPutDTO.setTurnOverRate(marketInfoNew.getTurnOverRate());
+                         break;
+                     }
+                 }
+             }
             allInfoList.addAll(outPutDTOList);
         }
         if (allInfoList.size()>0){

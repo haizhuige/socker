@@ -12,9 +12,9 @@
 
 
     <insert id="insertList" parameterType="java.util.List">
-        insert into serial_temp(share_code,max_ratio,min_ratio,final_ratio,start_time,up_period_count) VALUES
+        insert into serial_temp(share_code,max_ratio,min_ratio,final_ratio,start_time,up_period_count,market_value,turn_over_rate) VALUES
         <foreach collection="list" item="item" separator=",">
-         (#{item.shareCode},#{item.maxRatio},#{item.minRatio},#{item.finalRatio},#{item.startTime},#{hi})
+         (#{item.shareCode},#{item.maxRatio},#{item.minRatio},#{item.finalRatio},#{item.startTime},#{hi},#{item.marketValue},#{item.turnOverRate})
         </foreach>
     </insert>
 
@@ -126,6 +126,12 @@
 	     <if test="domain.queryYear!=null">
 	        and year(start_time) = #{domain.queryYear}
          </if>
+        <if test="domain.minMarketValue!=null and domain.maxMarketValue !=null">
+        and market_value BETWEEN #{domain.minMarketValue} and #{domain.maxMarketValue}
+        </if>
+        <if test="domain.minTurnRate!=null">
+        and turn_over_rate &lt;#{domain.minTurnRate}
+        </if>
         ORDER BY
 	      start_time
       )kk where rownum = 1

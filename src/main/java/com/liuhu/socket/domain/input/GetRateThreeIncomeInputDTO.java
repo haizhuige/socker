@@ -15,4 +15,11 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
 
     private String queryYear;
 
+    private Double minMarketValue;
+
+    private Double maxMarketValue;
+
+    private Double minTurnRate;
+
+
 }
