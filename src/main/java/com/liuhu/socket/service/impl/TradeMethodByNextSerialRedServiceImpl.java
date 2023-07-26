@@ -49,14 +49,14 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
         //实时收益率
         Double runRatio = 0.0;
         for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
-              /*  if (runRatio>0){
-                    continue;
-                }*/
+                if (tFinalRatio>getRateThreeIncomeInputDTO.getCycleProfit()){
+                    runRatio =0.0;
+                }
               Double finalRatio = queryRecentSerialRedOutPutDTO.getFinalRatio();
                 Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
                Double minRatio = queryRecentSerialRedOutPutDTO.getMinRatio();
             //获取当前总收益
-            int i = Math.abs((int) (runRatio / 5)) + 1;
+            int i = Math.abs((int) (runRatio /getRateThreeIncomeInputDTO.getDoubleSize())) + 1;
             log.info("doubleSize：{},date：{},tfinal：{},runRatio：{},finalRatio:{}",i,queryRecentSerialRedOutPutDTO.getStartTime(), MathConstants.Pointkeep(tFinalRatio,2),MathConstants.Pointkeep(runRatio,2),MathConstants.Pointkeep(finalRatio,2));
             doubleSize = i;
                if (doubleSize==1){
@@ -89,8 +89,10 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
                        break;
                    case 4:
                        regularProfit = 1.1;
+                       break;
                    case 5:
                        regularProfit = 1.0;
+                       break;
                        default:regularProfit= 0.8;
                }
 
