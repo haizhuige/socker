@@ -1,5 +1,6 @@
 package com.liuhu.socket.service;
 
+import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
@@ -14,5 +15,5 @@ public interface TradeMethodService {
 
     List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain)throws Exception;
 
-    MarketRateTheeOutPutDTO getRateThreeIncome(Integer type);
+    MarketRateTheeOutPutDTO getRateThreeIncome(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO);
 }

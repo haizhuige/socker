@@ -2,6 +2,7 @@ package com.liuhu.socket.dao;
 
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInput2Domain;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
@@ -41,6 +42,7 @@ public interface MarketInfoNewMapper {
      * 查询 日期
      *
      */
+<<<<<<< .merge_file_jKOYeo
     List<MarketInfoNew> queryMarketInfoByDate(@Param("date") Date newDate);
 
     /**
@@ -48,6 +50,9 @@ public interface MarketInfoNewMapper {
      *
      */
     List<MarketInfoNew> querySerialRedFiveInfoByDate(@Param("date") Date newDate,@Param("num")Integer num);
+=======
+    List<MarketInfoNew> queryMarketInfoByDate(@Param("condition") QueryRecentSerialRedConditionDTO condition);
+>>>>>>> .merge_file_xUzqFY
     /**
      * 查询 三连down之后一天的收益
      *
