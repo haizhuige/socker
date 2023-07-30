@@ -140,4 +140,9 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
         returnRateDTO.setAllIncomeMap(allIncomeMap);
         return returnRateDTO;
     }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryThreeUpThenAndPreDownRegular(QueryRecentSerialRedConditionDTO input) {
+        return null;
+    }
 }

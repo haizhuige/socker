@@ -78,7 +78,7 @@ public class TradeInfoController {
 
     /**
      * 获取换手率为3的收益率
-     * @param type
+     * @param getRateThreeIncomeInputDTO
      * @return
      */
     @ResponseBody
@@ -162,7 +162,26 @@ public class TradeInfoController {
 	@ResponseBody
 	@RequestMapping("/queryThreeDownThen")
 	public ResponseResult queryThreeDownThen(@RequestBody QueryRecentSerialRedConditionDTO input) throws Exception {
+        Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+        String methodType = input.getMethodType();
+        TradeMethodService tradeMethodService = tradeImpl.get(methodType);
 		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryThreeDownRatioByDate(input);
+		return ResponseResult.done(outPutDTOList);
+	}
+
+
+	/**
+	 *  前两周跌,三连涨之后行情走势
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/queryThreeUpThenAndPreDownRegular")
+	public ResponseResult queryThreeUpThenAndPreDownRegular(@RequestBody QueryRecentSerialRedConditionDTO input) throws Exception {
+		Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+		String methodType = input.getMethodType();
+		TradeMethodService tradeMethodService = tradeImpl.get(methodType);
+		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryThreeUpThenAndPreDownRegular(input);
 		return ResponseResult.done(outPutDTOList);
 	}
 

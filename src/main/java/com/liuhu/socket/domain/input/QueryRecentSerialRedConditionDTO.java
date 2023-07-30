@@ -47,6 +47,13 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
     private String selectEndTime;
 
     private Integer rateOrAmountDay=5;
+    /**
+     * 查询单个代码
+     */
+    private String shareCode;
+
+
+    private String methodType;
 
 
 

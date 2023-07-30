@@ -55,7 +55,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
 
 
 
-    ExecutorService executorService = Executors.newFixedThreadPool(10);
+
 
     @Resource
     MarketInfoNewMapper marketInfoNewMapper;
@@ -101,6 +101,8 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
 
     @Scheduled(cron = "0 0 15 1/1 * ? ")
     public void getMarketInfoBySouHu(String originShareCode) throws IOException {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
         /**
          * 查询关注的socker信息
          */
@@ -120,9 +122,13 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             newShareInfo.setShareCode(originShareCode);
             shareInfoList.add(newShareInfo);
         }
-       // ShareInfo shareInfo1 = shareInfoList.get(0);
+
         TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
-        Date date = marketInfoNewMapper.queryMaxDate(null);
+
+        if (Objects.nonNull(originShareCode)){
+            originShareCode = "cn_"+originShareCode;
+        }
+        Date   date = marketInfoNewMapper.queryMaxDate(originShareCode);
         if (date ==null){
             String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS.getFormat());
             date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);

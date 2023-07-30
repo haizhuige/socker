@@ -1,6 +1,7 @@
 package com.liuhu.socket.service.impl;
 
 import com.liuhu.socket.common.DateUtils;
+import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
@@ -12,6 +13,7 @@ import com.liuhu.socket.dto.Xia2Shang1InnerDTO;
 import com.liuhu.socket.entity.MarketInfoNew;
 import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service("moRen")
+@Slf4j
 public class TradeMethodServiceImpl  implements TradeMethodService {
 
     @Resource
@@ -37,6 +40,9 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
 
     @Resource
     MarketInfoNewMapper marketInfoNewMapper;
+
+    @Resource
+    MarketInfoMapper marketInfoMapper;
 
 
     /**
@@ -109,6 +115,12 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
         return allInfoList;
     }
 
+    /**
+     * 连续三次跳空低开之后一天的行情
+     * @param input2Domain
+     * @return
+     * @throws Exception
+     */
     @Override
     public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
 
@@ -138,7 +150,7 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
             Date newDate = selectDateList.get(0);
              newDate = tradeInfoService.getWantDate(1, newDate, "plus");
             List<String> shareCodeList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getShareCode()).collect(Collectors.toList());
-            List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList);
+            List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList,null);
              for (MarketInfoNew marketInfoNew:marketInfoNewList){
                  for (QueryRecentSerialRedOutPutDTO outPutDTO:outPutDTOList){
                      if (marketInfoNew.getShareCode().equals(outPutDTO.getShareCode())){
@@ -230,6 +242,51 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
         returnRateDTO.setMaxCount(maxCount);
 
         return returnRateDTO;
+    }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryThreeUpThenAndPreDownRegular(QueryRecentSerialRedConditionDTO input) {
+        String startTime = input.getStartTime();
+        if (Objects.isNull(startTime)) {
+           log.info("开始日期为空");
+           return null;
+        }
+        List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
+        /**
+         * 分别查询上涨区间内可能完成的交易日查询
+         */
+        //获取需要查询的日期集合
+        List<Date> dateList = tradeInfoService.queryPeriodDateList(startTime, input.getPeriod(),"sub");
+        // List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
+
+        for (Date date:dateList){
+            input.setStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.querySerialRedFiveInfoByDate(input);
+            if (marketInfoNewList.size()==0){
+                continue;
+            }
+            QueryRecentSerialRedConditionDO    queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+            Date    downStartTime = tradeInfoService.getWantDate(11, date, "sub");
+            Date    downEndTime = tradeInfoService.getWantDate(1, date, "sub");
+            queryRecentSerialRedConditionDO.setDownStartTime(downStartTime);
+            queryRecentSerialRedConditionDO.setDownEndTime(downEndTime);
+            queryRecentSerialRedConditionDO.setMarketList(marketInfoNewList);
+            queryRecentSerialRedConditionDO.setMinDownRate(input.getMinDownRate());
+            queryRecentSerialRedConditionDO.setMinDownDay(input.getMinDownDay());
+            List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoMapper.queryRecentSerialGreen(queryRecentSerialRedConditionDO);
+
+            Date    handleDate = tradeInfoService.getWantDate(1, marketInfoNewList.get(0).getDate(), "plus");
+            if (outPutDTOList.size()>0){
+                List<String> shareCodeList = outPutDTOList.stream().map(queryRecentSerialRedOutPutDTO -> queryRecentSerialRedOutPutDTO.getShareCode()).collect(Collectors.toList());
+                List<QueryRecentSerialRedOutPutDTO> outPutDTOList1 = marketInfoNewMapper.queryThreeDownThen(handleDate, shareCodeList, null);
+                allInfoList.addAll(outPutDTOList1);
+            }
+
+        }
+        if (allInfoList.size()>0){
+            serialTempMapper.insertList(allInfoList,input.getRateOrAmountDay());
+        }
+        return null;
     }
 
 

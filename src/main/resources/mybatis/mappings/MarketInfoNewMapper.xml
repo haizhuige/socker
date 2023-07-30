@@ -360,11 +360,21 @@ AND deal_amount / turn_over_rate > 80000000
            round(deal_amount/(turn_over_rate*10000000),2) as marketValue,
            tt.date as startTime
       from market_info_new tt
-    where date = #{date}
+    where 1=1
+      <if test="date!=null">
+       and  date = #{date}
+      </if>
         and share_code in
         <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
             #{shareCode}
         </foreach>
+        <if test="input2Domain !=null and input2Domain.startTime!=null">
+            and date>=#{input2Domain.startTime}
+        </if>
+        <if test="input2Domain !=null and input2Domain.endTime!=null">
+            and date&lt;=#{input2Domain.endTime}
+        </if>
+
     </select>
 
 </mapper>

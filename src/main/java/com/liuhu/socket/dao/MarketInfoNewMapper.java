@@ -51,5 +51,5 @@ public interface MarketInfoNewMapper {
      * 查询 三连down之后一天的收益
      *
      */
-    List<QueryRecentSerialRedOutPutDTO> queryThreeDownThen(@Param("date")Date newDate, @Param("shareCodeList") List<String> shareCodeList);
+    List<QueryRecentSerialRedOutPutDTO> queryThreeDownThen(@Param("date")Date newDate, @Param("shareCodeList") List<String> shareCodeList, @Param("input2Domain")QueryRecentSerialRedConditionDTO input2Domain);
 }
