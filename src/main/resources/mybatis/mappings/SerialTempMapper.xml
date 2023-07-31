@@ -135,6 +135,12 @@
         ORDER BY
 	      start_time
       )kk where rownum = 1
+        <if test="domain.queryStartTime!=null">
+            and start_time >= #{domain.queryStartTime}
+        </if>
+        <if test="domain.queryEndTime!=null">
+            and start_time &lt;= #{domain.queryStartTime}
+        </if>
 
     </select>
 

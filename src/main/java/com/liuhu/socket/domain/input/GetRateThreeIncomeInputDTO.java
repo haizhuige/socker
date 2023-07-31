@@ -36,4 +36,8 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
     //当前运行负利率
     private Integer runRatio=-10;
 
+    private String queryStartTime;
+
+    private String queryEndTime;
+
 }

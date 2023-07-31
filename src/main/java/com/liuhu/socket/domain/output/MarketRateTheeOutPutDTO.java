@@ -10,7 +10,7 @@ import java.util.Map;
 @Getter
 public class MarketRateTheeOutPutDTO {
 
-    //花费总额
+    //收益金额
     private Double amount;
 
     //收益
@@ -31,6 +31,8 @@ public class MarketRateTheeOutPutDTO {
     private Date startTime;
 
     private Map<Integer,Double> allIncomeMap;
+
+    private  Double periodRatio;
 
 
 }

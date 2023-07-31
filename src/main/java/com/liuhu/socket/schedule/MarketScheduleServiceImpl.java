@@ -8,6 +8,7 @@ import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.dao.TradeDateMapper;
+import com.liuhu.socket.domain.input.DownloadMarketInputDTO;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
@@ -100,22 +101,20 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     }
 
     @Scheduled(cron = "0 0 15 1/1 * ? ")
-    public void getMarketInfoBySouHu(String originShareCode) throws IOException {
+    public void getMarketInfoBySouHu(DownloadMarketInputDTO downloadMarketInputDTO) throws IOException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
+        String originShareCode = downloadMarketInputDTO.getOriginalShareCode();
         /**
          * 查询关注的socker信息
          */
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        if (Objects.nonNull(downloadMarketInputDTO.getShareCodeType())){
+            shareInfo.setHushenStatus(downloadMarketInputDTO.getShareCodeType());
+        }
         List<ShareInfo> shareInfoList = new ArrayList<>();
         if (StringUtils.isEmpty(originShareCode)){
-       /*   List<String>  shareCodeList =    marketInfoNewMapper.queryMaxAmount();
-          for (String str:shareCodeList){
-              ShareInfo sh = new ShareInfo();
-              sh.setShareCode(str.replace("cn_",""));
-              shareInfoList.add(sh);
-          }*/
            shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
         }else {
             ShareInfo newShareInfo = new ShareInfo();
