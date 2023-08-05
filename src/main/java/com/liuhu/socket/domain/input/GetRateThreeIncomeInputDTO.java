@@ -40,4 +40,20 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
 
     private String queryEndTime;
 
+    private String hushenStatus;
+    //查询下跌区间时间
+    private Integer recentDay=10;
+
+    private Integer minDownRate= 2;
+
+    private Integer minDownDay = 6;
+
+    private Integer rowNum;
+
+    private Integer queryPeriod=10;
+
+    private Double dealAmount= 5000000.0;
+
+    private String shareCode;
+
 }

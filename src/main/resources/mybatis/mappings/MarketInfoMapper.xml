@@ -333,9 +333,16 @@
         market_info_new
         WHERE
         share_code IN
+        <if test="condition.marketList !=null">
         <foreach collection="condition.marketList" item="it" separator="," open="(" close=")">
             #{it.shareCode}
         </foreach>
+        </if>
+        <if test="condition.shareCodeList !=null">
+            <foreach collection="condition.shareCodeList" item="it" separator="," open="(" close=")">
+                #{it}
+            </foreach>
+        </if>
         AND date >= #{condition.downStartTime}
         AND date &lt; #{condition.downEndTime}
         GROUP BY share_code
@@ -345,10 +352,11 @@
     <select id="queryRecentSerialRedWithHavingShareCode" parameterType="com.liuhu.socket.dto.QueryRecentSerialRedConditionDO" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
         select
         share_code as shareCode,
-        ROUND((maxHighest - lastEndValue)/lastEndValue*100,2) as maxRatio,
-        ROUND((minLowest - lastEndValue)/lastEndValue*100,2) as minRatio,
+        ROUND((maxHighest - lastEndValue)/lastEndValue*100,3) as maxRatio,
+        ROUND((minLowest - lastEndValue)/lastEndValue*100,3) as minRatio,
         sumRatio as finalRatio,
-        minDate as startTime from
+        minDate as startTime,
+        deal_amount as dealAmount from
         (
         select share_code,
         MAX(highest) over (PARTITION BY share_code) AS maxHighest,
@@ -360,7 +368,7 @@
         ORDER BY
         date
         ),
-        2
+        3
         ) AS lastEndValue,
         MIN(date) over (PARTITION BY share_code) AS minDate,
         date,
@@ -370,7 +378,8 @@
         date
         ) AS sumRatio,
         MIN(lowest) over (PARTITION BY share_code) AS minLowest,
-        row_number()over(PARTITION BY share_code order by date) as rowKey
+        row_number()over(PARTITION BY share_code order by date) as rowKey,
+        min(deal_amount)over(PARTITION BY  share_code) as deal_amount
         from market_info_new
         where
         share_code in
@@ -379,7 +388,7 @@
         </foreach>
         AND date >= #{condition.selectStartTime}
         <if test="condition.selectEndTime!=null">
-            AND date &lt; #{condition.selectEndTime}
+            AND date &lt;= #{condition.selectEndTime}
         </if>
         ) final
         where rowKey = #{condition.recentRateDay}

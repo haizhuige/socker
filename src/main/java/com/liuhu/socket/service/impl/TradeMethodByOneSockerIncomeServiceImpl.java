@@ -145,4 +145,9 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
     public List<QueryRecentSerialRedOutPutDTO> queryThreeUpThenAndPreDownRegular(QueryRecentSerialRedConditionDTO input) {
         return null;
     }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryFirstBuyMoreThenMarketRatio(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
+        return null;
+    }
 }

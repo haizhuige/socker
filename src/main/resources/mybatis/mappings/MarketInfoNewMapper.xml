@@ -358,6 +358,7 @@ AND deal_amount / turn_over_rate > 80000000
            round((lowest - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as minRatio,
            round((open_value - ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))/(ROUND(tt.end_value/(1+tt.rise_fall_ratio*0.01),3))*100,2) as openRatio,
            round(deal_amount/(turn_over_rate*10000000),2) as marketValue,
+           deal_amount  as dealAmount,
            tt.date as startTime
       from market_info_new tt
     where 1=1
@@ -366,7 +367,7 @@ AND deal_amount / turn_over_rate > 80000000
       </if>
         and share_code in
         <foreach index="index" item="shareCode" collection="shareCodeList" open="(" close=")" separator=",">
-            #{shareCode}
+          #{shareCode}
         </foreach>
         <if test="input2Domain !=null and input2Domain.startTime!=null">
             and date>=#{input2Domain.startTime}
@@ -375,6 +376,55 @@ AND deal_amount / turn_over_rate > 80000000
             and date&lt;=#{input2Domain.endTime}
         </if>
 
+    </select>
+    <select id="queryHeadRatioShareInfo"
+            resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        SELECT
+	share_code as shareCode,
+	rise_fall_ratio as maxRatio,
+	turn_over_rate as turnOverRate
+FROM
+	market_info_new
+WHERE
+	date = #{inputDTO.queryStartTime}
+    <if test="inputDTO.dealAmount!=null">
+        and  deal_amount > #{inputDTO.dealAmount}
+    </if>
+
+and rise_fall_ratio >= #{inputDTO.minDownRate}
+AND share_code IN (
+	SELECT
+		CONCAT('cn_', share_code) AS share_code
+	FROM
+		share_info
+	WHERE
+		hushen_status = #{inputDTO.hushenStatus}
+) ORDER BY rise_fall_ratio desc
+
+    </select>
+
+    <select id ="querySerialDownNext" resultType="com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO">
+        select open_ratio as openRatio,
+                max_ratio as maxRatio,
+                min_ratio as minRatio,
+                share_code as shareCode,
+                final_ratio as finalRatio,
+                start_time as startTime,
+                market_value as marketValue,
+                deal_amount as dealAmount
+          from serial_temp where up_period_count in
+        (select SUBSTR(share_code,4) as shareCode from
+        (SELECT
+        *, round(end_value / (1 + rise_fall_ratio * 0.01),2) AS lastEndValue,
+        COUNT(	CASE WHEN round(end_value / (1 + rise_fall_ratio * 0.01),2) > highest THEN		1	END	) OVER (		PARTITION BY share_code	ORDER BY			date ROWS BETWEEN 2 PRECEDING	AND CURRENT ROW		) AS countUp
+        FROM
+        market_info_new tt
+        WHERE
+        date &lt;= #{date}
+        and SUBSTR(tt.share_code,4) in (select share_code from share_info where hushen_status = 'B')
+        AND date > (select date from trade_date tt where tt.id = (select id from trade_date where date = #{date})-2)
+        and round(end_value / (1 + rise_fall_ratio * 0.01),2)>highest) kk where kk.countUp = 2 )
+        and start_time = (select date from trade_date tt where tt.id = (select id from trade_date where date =#{date})+1)    ORDER BY share_code,start_time desc
     </select>
 
 </mapper>

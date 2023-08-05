@@ -289,6 +289,11 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
         return null;
     }
 
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> queryFirstBuyMoreThenMarketRatio(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
+        return null;
+    }
+
 
     List<QueryRecentSerialRedOutPutDTO> insertSerialTemp(QueryRecentSerialRedConditionDTO input2Domain, List<Date> dateList) {
 

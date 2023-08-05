@@ -185,7 +185,20 @@ public class TradeInfoController {
 		return ResponseResult.done(outPutDTOList);
 	}
 
-
+	/**
+	 *  查询前一段时间跌,首次大涨之后五天的行情
+	 * @param input
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/queryPreDownAndFirstUpThenFiveMarket")
+	public ResponseResult queryPreDownAndFirstUpThenFiveMarket(@RequestBody GetRateThreeIncomeInputDTO input) throws Exception {
+		Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+		String methodType = input.getMethodType();
+		TradeMethodService tradeMethodService = tradeImpl.get(methodType);
+		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryFirstBuyMoreThenMarketRatio(input);
+		return ResponseResult.done(outPutDTOList);
+	}
 
 
 }

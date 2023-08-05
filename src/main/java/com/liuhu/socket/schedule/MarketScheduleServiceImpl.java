@@ -126,6 +126,8 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
 
         if (Objects.nonNull(originShareCode)){
             originShareCode = "cn_"+originShareCode;
+        }else{
+            originShareCode = "cn_"+shareInfoList.get(0).getShareCode();
         }
         Date   date = marketInfoNewMapper.queryMaxDate(originShareCode);
         if (date ==null){
@@ -277,15 +279,15 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             MarketInfoNew socker = new MarketInfoNew();
             socker.setDate(DateUtils.parse(list.get(0), DateUtils.DateFormat.YYYY_MM_DD));
             socker.setShareCode(code);
-            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 2));
-            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 2));
-            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 2));
+            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 4));
+            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 4));
+            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 4));
             if (list.get(4).contains("%")) {
                 socker.setRiseFallRatio(MathConstants.ParseStrPointKeep(list.get(4).replace("%", ""), 4));
             }
             socker.setRiseFallRatioStr(list.get(4));
-            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 2));
-            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 2));
+            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
+            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
             socker.setDealCount(Long.parseLong(list.get(7)));
             socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
             if (list.get(9).contains("%")) {

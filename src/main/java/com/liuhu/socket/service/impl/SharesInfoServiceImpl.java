@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
 import com.liuhu.socket.common.MathConstants;
-import com.liuhu.socket.dao.MarketInfoMapper;
-import com.liuhu.socket.dao.SerialTempMapper;
-import com.liuhu.socket.dao.ShareInfoMapper;
-import com.liuhu.socket.dao.TradeDateMapper;
+import com.liuhu.socket.dao.*;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
@@ -46,6 +43,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Resource
     MarketInfoMapper marketInfoMapper;
+
+    @Resource
+    MarketInfoNewMapper marketInfoNewMapper;
 
     @Resource
     MarketScheduleService scheduleTask;
@@ -303,6 +303,22 @@ public class SharesInfoServiceImpl implements SharesInfoService {
             }
             return allSerialRed;
           }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> getSerialDownAndThenMarket() {
+        String date = "2023-08-03 00:00:00";
+        List<Date> dateList = tradeInfoService.queryPeriodDateList(date, 2000, null);
+        List<QueryRecentSerialRedOutPutDTO> list = new ArrayList<>();
+        for (Date unitDate:dateList){
+            List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.querySerialDownNext(unitDate);
+            if (outPutDTOList.size()>0){
+                list.addAll(outPutDTOList);
+            }
+        }
+        serialTempMapper.insertList(list,50);
+
+        return null;
+    }
 
     private List<QueryRecentSerialRedOutPutDTO> getExactSerialRedCondition(QueryRecentSerialRedConditionDTO input2Domain, QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO, Entry entry,Date upStartTime) {
         Date key =(Date)entry.getKey();

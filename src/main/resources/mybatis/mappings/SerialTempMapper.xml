@@ -12,9 +12,9 @@
 
 
     <insert id="insertList" parameterType="java.util.List">
-        insert into serial_temp(share_code,max_ratio,min_ratio,final_ratio,start_time,up_period_count,market_value,turn_over_rate) VALUES
+        insert into serial_temp(share_code,open_ratio,max_ratio,min_ratio,final_ratio,start_time,up_period_count,market_value,turn_over_rate,deal_amount) VALUES
         <foreach collection="list" item="item" separator=",">
-         (#{item.shareCode},#{item.maxRatio},#{item.minRatio},#{item.finalRatio},#{item.startTime},#{hi},#{item.marketValue},#{item.turnOverRate})
+         (#{item.shareCode},#{item.openRatio},#{item.maxRatio},#{item.minRatio},#{item.finalRatio},#{item.startTime},#{hi},#{item.marketValue},#{item.turnOverRate},#{item.dealAmount})
         </foreach>
     </insert>
 

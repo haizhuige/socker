@@ -1,5 +1,6 @@
 package com.liuhu.socket.dao;
 
+import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.MarketDetailInputDomain;
 import com.liuhu.socket.domain.input.MarketInput2Domain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
@@ -52,4 +53,11 @@ public interface MarketInfoNewMapper {
      *
      */
     List<QueryRecentSerialRedOutPutDTO> queryThreeDownThen(@Param("date")Date newDate, @Param("shareCodeList") List<String> shareCodeList, @Param("input2Domain")QueryRecentSerialRedConditionDTO input2Domain);
+    /**
+     * 查询某日收益率大于n的，换手率大于m  市值大于 k的 shareCode及其相关
+     *
+     */
+    List<QueryRecentSerialRedOutPutDTO> queryHeadRatioShareInfo(@Param("inputDTO") GetRateThreeIncomeInputDTO inputDTO);
+
+    List<QueryRecentSerialRedOutPutDTO> querySerialDownNext(@Param("date")Date date);
 }

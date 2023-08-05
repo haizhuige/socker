@@ -18,6 +18,8 @@ public class QueryRecentSerialRedOutPutDTO {
     private Double finalRatio;
     //开始买入起点日期
     private Date startTime;
+    //开始收益
+    private Double openRatio;
 
     private Long id;
 
@@ -30,4 +32,7 @@ public class QueryRecentSerialRedOutPutDTO {
     private String marketValue;
 
     private Double turnOverRate;
+
+
+    private Double dealAmount;
 }

@@ -55,6 +55,9 @@
         <if test="shareCode != null">
             and t.share_code = #{shareCode,jdbcType=VARCHAR}
         </if>
+        <if test="hushenStatus != null">
+            and t.hushen_status = #{hushenStatus,jdbcType=VARCHAR}
+        </if>
     </select>
     <select id="getShareInfoWithoutASocker"
             parameterType="com.liuhu.socket.entity.ShareInfo"

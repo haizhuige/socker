@@ -67,4 +67,6 @@ public interface SharesInfoService {
      * @return
      */
     List<QueryRecentSerialRedOutPutDTO> queryRecentSerialMinPurchase(QueryRecentSerialRedConditionDTO input2Domain)throws Exception;
+
+    List<QueryRecentSerialRedOutPutDTO> getSerialDownAndThenMarket();
 }

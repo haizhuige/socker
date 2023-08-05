@@ -55,6 +55,8 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
 
     private String methodType;
 
+    private Boolean allFlag=false;
+
 
 
 }

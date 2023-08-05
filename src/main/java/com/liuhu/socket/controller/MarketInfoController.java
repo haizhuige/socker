@@ -148,4 +148,11 @@ public class MarketInfoController {
     }
 
 
+    @ResponseBody
+    @RequestMapping("/getSerialDownAndThenMarket")
+    public ResponseResult getSerialDownAndThenMarket() {
+        List<QueryRecentSerialRedOutPutDTO> rateList = sharesInfoService.getSerialDownAndThenMarket();
+        return ResponseResult.done(rateList);
+    }
+
 }
