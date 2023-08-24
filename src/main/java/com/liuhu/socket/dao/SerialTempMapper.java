@@ -5,6 +5,7 @@ import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 public interface SerialTempMapper {
@@ -16,4 +17,6 @@ public interface SerialTempMapper {
     List<QueryRecentSerialRedOutPutDTO> getRecentFinalRatioRedThree(@Param("list") List<QueryRecentSerialRedOutPutDTO> outPutDTOList,@Param("input")QueryRecentSerialRedConditionDO marketInput2Domain);
 
     List<QueryRecentSerialRedOutPutDTO> getMinRateThree(@Param("domain") GetRateThreeIncomeInputDTO rateThreeIncomeInputDTO);
+    //从处理过的数据获取最大日期
+    Date selectMaxDateFromHandleData(@Param("shareCode")String newShareCode);
 }

@@ -415,8 +415,8 @@ AND share_code IN (
           from serial_temp where up_period_count in
         (select SUBSTR(share_code,4) as shareCode from
         (SELECT
-        *, round(end_value / (1 + rise_fall_ratio * 0.01),2) AS lastEndValue,
-        COUNT(	CASE WHEN round(end_value / (1 + rise_fall_ratio * 0.01),2) > highest THEN		1	END	) OVER (		PARTITION BY share_code	ORDER BY			date ROWS BETWEEN 2 PRECEDING	AND CURRENT ROW		) AS countUp
+        *, round(end_value / (1 + rise_fall_ratio * 0.01),3) AS lastEndValue,
+        COUNT(	CASE WHEN round(end_value / (1 + rise_fall_ratio * 0.01),3) > highest THEN		1	END	) OVER (		PARTITION BY share_code	ORDER BY			date ROWS BETWEEN 2 PRECEDING	AND CURRENT ROW) AS countUp
         FROM
         market_info_new tt
         WHERE

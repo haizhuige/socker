@@ -307,9 +307,10 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     @Override
     public List<QueryRecentSerialRedOutPutDTO> getSerialDownAndThenMarket() {
         String date = "2023-08-03 00:00:00";
-        List<Date> dateList = tradeInfoService.queryPeriodDateList(date, 2000, null);
+        List<Date> dateList = tradeInfoService.queryPeriodDateList(date, 600, null);
         List<QueryRecentSerialRedOutPutDTO> list = new ArrayList<>();
         for (Date unitDate:dateList){
+            //连续两次水下下一日的操作
             List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.querySerialDownNext(unitDate);
             if (outPutDTOList.size()>0){
                 list.addAll(outPutDTOList);

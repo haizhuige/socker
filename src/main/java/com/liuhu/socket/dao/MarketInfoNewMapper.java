@@ -49,7 +49,7 @@ public interface MarketInfoNewMapper {
     List<MarketInfoNew> queryMarketInfoByDate(@Param("condition") QueryRecentSerialRedConditionDTO condition);
 
     /**
-     * 查询 三连down之后一天的收益
+     * 查询某一时间区间的收益率
      *
      */
     List<QueryRecentSerialRedOutPutDTO> queryThreeDownThen(@Param("date")Date newDate, @Param("shareCodeList") List<String> shareCodeList, @Param("input2Domain")QueryRecentSerialRedConditionDTO input2Domain);

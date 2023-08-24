@@ -72,4 +72,15 @@
             (#{item.id},#{item.date})
          </foreach>
     </insert>
+
+    <select id="queryCloserDate" resultMap="BaseResultMap">
+            select id,date from trade_date where
+             <if test="type==null || type =='start'">
+             date >= #{handleTime} limit 1
+            </if>
+           <if test="type =='end'">
+            date &lt;= #{handleTime} limit 1
+           </if>
+    </select>
+
 </mapper>

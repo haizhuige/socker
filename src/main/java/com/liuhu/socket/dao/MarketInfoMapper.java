@@ -4,8 +4,11 @@ import java.util.Date;
 import java.util.List;
 
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryFixSerialDownInDTO;
+import com.liuhu.socket.domain.input.QueryProfitByComProgram;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
@@ -41,4 +44,6 @@ public interface MarketInfoMapper {
     List<MarketOutputDomain> queryPreFiveAndSubFiveSocker(QueryRecentSerialRedConditionDO input);
 
     List<MarketOutputDomain> queryFiveRatioByCodeAndDate(@Param("list") List<MarketOutputDomain> list);
+
+    List<QueryFixSerialDownOutDTO> queryFixSerialDown(@Param("condition") QueryFixSerialDownInDTO queryProfitByComProgram);
 }

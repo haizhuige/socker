@@ -3,12 +3,10 @@ package com.liuhu.socket.service.impl;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.*;
-import com.liuhu.socket.domain.input.MarketDetailInputDomain;
-import com.liuhu.socket.domain.input.MarketInputDomain;
-import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
-import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.domain.input.*;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
+import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.Xia2Shang1InnerDTO;
@@ -407,6 +405,66 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         resultMap.put("avg",v);
         resultMap.put("count",marketOutputDomains.size());
         return resultMap;
+    }
+
+    @Override
+    public void getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+        String startTime = queryProfitByComProgram.getStartTime();
+        String endTime = queryProfitByComProgram.getEndTime();
+        //计算开始结束的准确工作日
+        TradeDateInfo startTradeDateInfo =  tradeDateMapper.queryCloserDate(startTime,"start");
+        Date startDate = startTradeDateInfo.getDate();
+        TradeDateInfo endTradeDateInfo = tradeDateMapper.queryCloserDate(endTime,"end");
+        //计算总数量吧
+        int periodDayCount = endTradeDateInfo.getId() - startTradeDateInfo.getId()+1;
+        QueryFixSerialDownInDTO conditionDTO = new QueryFixSerialDownInDTO();
+        Map<Date,List<String>> resultMap = queryProfitByComProgram.getResultMap();
+        for (int i=0;i<periodDayCount;i++){
+            Date handleDate = tradeDateMapper.getWantDate(i, startDate, "plus");
+            conditionDTO.setStartDate(handleDate);
+            //获取某一天满足条件的fund信息
+            List<QueryFixSerialDownOutDTO> fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
+            if (fixSerialDownOutDTOList.size()==0){
+                continue;
+            }
+            List<String> shareCodeList = fixSerialDownOutDTOList.stream().map(QueryFixSerialDownOutDTO::getShareCode).collect(Collectors.toList());
+            //开始计算收益信息
+            Date profitDate = tradeDateMapper.getWantDate(1, handleDate, "plus");
+            if (Objects.isNull(resultMap.get(profitDate))){
+                resultMap.put(profitDate,shareCodeList);
+            }else {
+                List<String> list = resultMap.get(profitDate);
+                list.addAll(shareCodeList);
+                resultMap.put(profitDate,list);
+            }
+        
+
+        }
+
+    }
+
+    private List<QueryFixSerialDownOutDTO> getFixSerialDownOutDTOList(QueryFixSerialDownInDTO conditionDTO) {
+        List<QueryFixSerialDownOutDTO> list = new ArrayList<>();
+        for (int i = 2;i<=7;i++) {
+            conditionDTO.setSerialDownCount(i);
+            List<QueryFixSerialDownOutDTO> queryFixSerialDownList = marketInfoMapper.queryFixSerialDown(conditionDTO);
+            //根据类型分组
+            Map<String, List<QueryFixSerialDownOutDTO>> typeMap = queryFixSerialDownList.stream().collect(Collectors.groupingBy(QueryFixSerialDownOutDTO::getType));
+            for (Map.Entry entry : typeMap.entrySet()) {
+                List<QueryFixSerialDownOutDTO> serialDownOutDTOList = (List<QueryFixSerialDownOutDTO>) entry.getValue();
+                //获取分组中亏损最小的那支
+                QueryFixSerialDownOutDTO queryFixSerialDownOutDTO = serialDownOutDTOList.stream().sorted(Comparator.comparing(QueryFixSerialDownOutDTO::getSumRatio)).findFirst().get();
+                if (list.size() > 0) {
+                    List<String> typeList = list.stream().map(QueryFixSerialDownOutDTO::getType).collect(Collectors.toList());
+                    if (!typeList.contains(queryFixSerialDownOutDTO.getType())) {
+                        list.add(queryFixSerialDownOutDTO);
+                    }
+                } else {
+                    list.add(queryFixSerialDownOutDTO);
+                }
+            }
+        }
+        return list;
     }
 
     private static Date getTradeDateByMap(Map map){

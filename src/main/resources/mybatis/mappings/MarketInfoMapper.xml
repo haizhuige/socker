@@ -623,4 +623,34 @@
         -- 条件  取连红三天的记录 或者 或者是没有三连红到最后购买截止期限的
         kk.rowhi = 5
     </select>
+
+    <select id="queryFixSerialDown" resultType="com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO">
+        select SUBSTR(tt.share_code,4)as shareCode,
+        sinf.share_name as shareName,
+        sumRatio,sinf.type as type
+        from (
+        SELECT
+        share_code,share_name,
+        sum(rise_fall_ratio) as sumRatio
+        FROM
+        market_info_new
+        WHERE
+        date >= (select date from trade_date where id = (select id from trade_date where date =  #{condition.startDate})-#{condition.serialDownCount})
+        AND date &lt;= #{condition.startDate}
+        and deal_amount > 8000000
+        AND SUBSTR(share_code, 4) IN (
+        SELECT
+        share_code
+        FROM
+        share_info
+        WHERE
+        hushen_status = 'B'
+        )
+        GROUP BY share_code
+        HAVING count(case when rise_fall_ratio&lt;0 then 1 end)=#{condition.serialDownCount}+1
+        ) tt ,share_info sinf
+        where SUBSTR(tt.share_code,4) = sinf.share_code
+        and tt.sumRatio&lt;-5
+        ORDER BY sinf.type
+    </select>
 </mapper>

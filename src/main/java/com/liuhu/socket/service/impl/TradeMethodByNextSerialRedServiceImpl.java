@@ -66,7 +66,11 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
         for (String shareCode : shareCodeList) {
             input2Domain.setRateOrAmountDay(Integer.valueOf(shareCode));
             List<String> newShareCodeList = new ArrayList<>();
-            newShareCodeList.add("cn_" + shareCode);
+            String newShareCode = "cn_" + shareCode;
+            newShareCodeList.add(newShareCode);
+            Date date =  serialTempMapper.selectMaxDateFromHandleData(shareCode);
+            input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1,date,"plus"),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            //查询某一时间区间的个股收益率
             List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(null, newShareCodeList, input2Domain);
             if (outPutDTOList.size() > 0) {
                 serialTempMapper.insertList(outPutDTOList, input2Domain.getRateOrAmountDay());

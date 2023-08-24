@@ -38,6 +38,11 @@ public class MarketOutputDomain implements Serializable {
 	private String endTime;
 
 	private double turnOverRate;
+    //花费
+	private Double cost;
+    //收益
+	private Double profit;
+
 
 
 	@Override

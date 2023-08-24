@@ -143,6 +143,9 @@
         </if>
 
     </select>
+    <select id="selectMaxDateFromHandleData" resultType="java.util.Date">
+        select max(start_time) as startTime from  serial_temp where  up_period_count = #{shareCode}
+    </select>
 
 
 </mapper>
