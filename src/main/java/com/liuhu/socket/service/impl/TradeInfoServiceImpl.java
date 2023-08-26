@@ -443,6 +443,16 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
     }
 
+    @Override
+    public List<MarketOutputDomain> getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+        //每个交易日对应的可操作数
+        Map<Date, List<String>> resultMap = queryProfitByComProgram.getResultMap();
+        TradeDateInfo tradeDateInfo = tradeDateMapper.queryCloserDate(queryProfitByComProgram.getStartTime(), "start");
+        List<String> list = resultMap.get(tradeDateInfo.getDate());
+       // for ()
+        return null;
+    }
+
     private List<QueryFixSerialDownOutDTO> getFixSerialDownOutDTOList(QueryFixSerialDownInDTO conditionDTO) {
         List<QueryFixSerialDownOutDTO> list = new ArrayList<>();
         for (int i = 2;i<=7;i++) {

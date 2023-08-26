@@ -37,5 +37,7 @@ public interface TradeInfoService {
 
     void getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 
+    List<MarketOutputDomain> getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram);
+
 
 }
