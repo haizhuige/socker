@@ -8,6 +8,7 @@
         <result column="min_ratio" property="minRatio" jdbcType="DECIMAL"/>
         <result column="final_ratio" property="finalRatio" jdbcType="DECIMAL"/>
         <result column="start_time" property="startTime" jdbcType="DATE"/>
+        <result column="open_ratio" property="openRatio" jdbcType="DECIMAL"/>
     </resultMap>
 
 
@@ -113,9 +114,10 @@
     <select id="getMinRateThree" resultMap="BaseResultMap">
         select share_code,
                 max_ratio,
-               min_ratio,
-              final_ratio,
-              start_time
+                min_ratio,
+               final_ratio,
+                open_ratio,
+                start_time
         from
         (SELECT                	*,
           row_number()over(PARTITION BY start_time order by start_time) AS rownum
@@ -139,12 +141,26 @@
             and start_time >= #{domain.queryStartTime}
         </if>
         <if test="domain.queryEndTime!=null">
-            and start_time &lt;= #{domain.queryStartTime}
+            and start_time &lt;= #{domain.queryEndTime}
         </if>
 
     </select>
     <select id="selectMaxDateFromHandleData" resultType="java.util.Date">
         select max(start_time) as startTime from  serial_temp where  up_period_count = #{shareCode}
+    </select>
+    <select id="queryShareInfoByCondition"
+            resultType="com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO">
+            SELECT
+	              sinf.share_code as shareCode,
+                  sinf.share_name as shareName,
+                  sinf.type as type,
+                  stp.deal_amount as sumRatio
+              FROM
+	              serial_temp stp,share_info sinf
+              WHERE
+	              up_period_count = '41'
+             AND start_time = #{condition.startDate}
+             and sinf.share_code = SUBSTR(stp.share_code,4,6)
     </select>
 
 

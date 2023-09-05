@@ -46,4 +46,6 @@ public interface MarketInfoMapper {
     List<MarketOutputDomain> queryFiveRatioByCodeAndDate(@Param("list") List<MarketOutputDomain> list);
 
     List<QueryFixSerialDownOutDTO> queryFixSerialDown(@Param("condition") QueryFixSerialDownInDTO queryProfitByComProgram);
+
+    List<QueryFixSerialDownOutDTO> getSerialDownOfRiver(@Param("condition")QueryFixSerialDownInDTO conditionDTO);
 }

@@ -4,10 +4,7 @@ import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.*;
 import com.liuhu.socket.domain.input.*;
-import com.liuhu.socket.domain.output.MarketOutputDomain;
-import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
-import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
-import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
+import com.liuhu.socket.domain.output.*;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.Xia2Shang1InnerDTO;
 import com.liuhu.socket.entity.*;
@@ -52,6 +49,16 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
     @Resource
     TradeDateMapper tradeDateMapper;
+
+
+    @Resource
+    ConditionShareInfoMapper conditionShareInfoMapper;
+
+    @Resource
+    SerialTempMapper serialTempMapper;
+
+
+    public static Integer maxSockerCount = 5;
 
 
 
@@ -408,7 +415,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     }
 
     @Override
-    public void getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+    public Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
         String startTime = queryProfitByComProgram.getStartTime();
         String endTime = queryProfitByComProgram.getEndTime();
         //计算开始结束的准确工作日
@@ -422,14 +429,33 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         for (int i=0;i<periodDayCount;i++){
             Date handleDate = tradeDateMapper.getWantDate(i, startDate, "plus");
             conditionDTO.setStartDate(handleDate);
+
+            List<QueryFixSerialDownOutDTO> fixSerialDownOutDTOList = null;
             //获取某一天满足条件的fund信息
-            List<QueryFixSerialDownOutDTO> fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
+            switch (queryProfitByComProgram.getPlan()){
+                case "1"://连续down five percent
+                    fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
+                    break;
+                case "2"://两连水下
+                    fixSerialDownOutDTOList = getSerialDownOfRiver(conditionDTO);
+                    break;
+                case "3":
+                    fixSerialDownOutDTOList = getFirstUpPreDown(conditionDTO);
+                    break;
+                    default:
+                        fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
+                        break;
+            }
+
             if (fixSerialDownOutDTOList.size()==0){
                 continue;
             }
             List<String> shareCodeList = fixSerialDownOutDTOList.stream().map(QueryFixSerialDownOutDTO::getShareCode).collect(Collectors.toList());
-            //开始计算收益信息
+            //开始计算profit信息
             Date profitDate = tradeDateMapper.getWantDate(1, handleDate, "plus");
+            if (Objects.isNull(resultMap)){
+                resultMap = new HashMap<>();
+            }
             if (Objects.isNull(resultMap.get(profitDate))){
                 resultMap.put(profitDate,shareCodeList);
             }else {
@@ -440,17 +466,94 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         
 
         }
+        for (Map.Entry entry:resultMap.entrySet()){
 
+            Date date =(Date)entry.getKey();
+            List<String> shareCodeList = (List)entry.getValue();
+            List<ConditionShareCodeInfo> list = new ArrayList<>();
+            for (String str:shareCodeList){
+                ConditionShareCodeInfo conditionShareCodeInfo = new ConditionShareCodeInfo();
+                conditionShareCodeInfo.setDate(date);
+                conditionShareCodeInfo.setShareCode(str);
+                conditionShareCodeInfo.setType(queryProfitByComProgram.getPlan());
+                list.add(conditionShareCodeInfo);
+            }
+            conditionShareInfoMapper.insertList(list);
+        }
+        return resultMap;
+    }
+
+    private List<QueryFixSerialDownOutDTO> getFirstUpPreDown(QueryFixSerialDownInDTO conditionDTO) {
+        List<QueryFixSerialDownOutDTO> respList = new ArrayList<>();
+        Date startDate = conditionDTO.getStartDate();
+        conditionDTO.setStartDate(getWantDate(1, startDate, "sub"));
+        List<QueryFixSerialDownOutDTO> serialDownOutDTOList = serialTempMapper.queryShareInfoByCondition(conditionDTO);
+        Map<String, List<QueryFixSerialDownOutDTO>> queryList = serialDownOutDTOList.stream().collect(Collectors.groupingBy(queryFixSerialDownOutDTO -> queryFixSerialDownOutDTO.getType()));
+        for (Map.Entry entry:queryList.entrySet()){
+            List<QueryFixSerialDownOutDTO> serialList = (List<QueryFixSerialDownOutDTO>)entry.getValue();
+            QueryFixSerialDownOutDTO queryFixSerialDownOutDTO = serialList.stream().sorted(Comparator.comparing(QueryFixSerialDownOutDTO::getShareCode)).findFirst().get();
+            respList.add(queryFixSerialDownOutDTO);
+        }
+        return respList;
     }
 
     @Override
-    public List<MarketOutputDomain> getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+    public MarketOutputDomain getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+        MarketOutputDomain marketOutputDomain = new MarketOutputDomain();
+        TradeDateInfo startTradeDateInfo =  tradeDateMapper.queryCloserDate(queryProfitByComProgram.getStartTime(),"start");
+        Date startDate = startTradeDateInfo.getDate();
+        TradeDateInfo endTradeDateInfo = tradeDateMapper.queryCloserDate(queryProfitByComProgram.getEndTime(),"end");
+        //计算总数量吧
+        int periodDayCount = endTradeDateInfo.getId() - startTradeDateInfo.getId()+1;
         //每个交易日对应的可操作数
-        Map<Date, List<String>> resultMap = queryProfitByComProgram.getResultMap();
-        TradeDateInfo tradeDateInfo = tradeDateMapper.queryCloserDate(queryProfitByComProgram.getStartTime(), "start");
-        List<String> list = resultMap.get(tradeDateInfo.getDate());
-       // for ()
-        return null;
+        List<ConditionShareCodeInfo> shareCodeInfoList = conditionShareInfoMapper.queryShareCodeByCondition(queryProfitByComProgram,"1");
+        Map<Date, List<ConditionShareCodeInfo>> collect = shareCodeInfoList.stream().collect(Collectors.groupingBy(conditionShareCodeInfo -> conditionShareCodeInfo.getDate()));
+        Map<Date,List<ConditionShareCodeInfo>> sortMap = new TreeMap<>(collect);
+        List<ConditionShareCodeInfo> needBuyList = new ArrayList<>();
+        Double finalProfit = 0.0;
+        //第一层遍历，遍历每个交易日
+        for (int i = 0; i < periodDayCount; i++) {
+            Date handleDate = tradeDateMapper.getWantDate(i, startDate, "plus");
+            int holdCount = needBuyList.size();
+            log.info("currentDate:{},count is:{}",handleDate,holdCount);
+            //同时拥有socker数,不超过5
+            if (holdCount < maxSockerCount) {
+                //如果遍历的当前日期小于满足条件的日期则跳出循环
+                List<ConditionShareCodeInfo> conditionList = sortMap.get(handleDate);
+                if (Objects.nonNull(conditionList)&&conditionList.size() > 0) {
+                    int currentShareCodeSize = conditionList.size();
+                    int preBuySize = maxSockerCount - holdCount;
+                    if (preBuySize > currentShareCodeSize) {
+                        needBuyList.addAll(conditionList);
+                    } else {
+                        needBuyList.addAll(conditionList.subList(0, preBuySize));
+                    }
+                }
+            }
+            List<ConditionShareCodeInfo> tempNeedBuyList = new ArrayList(needBuyList);
+            if (tempNeedBuyList.size()>0){
+                for (ConditionShareCodeInfo conditionShareCodeInfo:tempNeedBuyList){
+                    GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO = new GetRateThreeIncomeInputDTO();
+                    getRateThreeIncomeInputDTO.setType(conditionShareCodeInfo.getShareCode());
+                    getRateThreeIncomeInputDTO.setShareCode(conditionShareCodeInfo.getShareCode());
+                    getRateThreeIncomeInputDTO.setQueryStartTime(DateUtils.format(conditionShareCodeInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                    getRateThreeIncomeInputDTO.setQueryEndTime(DateUtils.format(handleDate,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                    MarketRateTheeOutPutDTO outPutDTO = getRateThreeIncome(getRateThreeIncomeInputDTO);
+                    Boolean isFinish = outPutDTO.getIsFinish();
+                    if (isFinish){
+                        needBuyList.remove(conditionShareCodeInfo);
+                        finalProfit = finalProfit + outPutDTO.getAmount();
+                    }
+                    if (handleDate.compareTo(endTradeDateInfo.getDate())==0&&!isFinish){
+                        finalProfit = finalProfit + outPutDTO.getAmount();
+                    }
+
+                }
+
+            }
+        }
+        marketOutputDomain.setProfit(finalProfit);
+        return marketOutputDomain;
     }
 
     private List<QueryFixSerialDownOutDTO> getFixSerialDownOutDTOList(QueryFixSerialDownInDTO conditionDTO) {
@@ -473,6 +576,23 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     list.add(queryFixSerialDownOutDTO);
                 }
             }
+        }
+        return list;
+    }
+
+    /**
+     * 两连水下的记录
+     * @param conditionDTO
+     * @return
+     */
+    private List<QueryFixSerialDownOutDTO> getSerialDownOfRiver(QueryFixSerialDownInDTO conditionDTO){
+        List<QueryFixSerialDownOutDTO> list = new ArrayList<>();
+        List<QueryFixSerialDownOutDTO> queryFixSerialDownList = marketInfoMapper.getSerialDownOfRiver(conditionDTO);
+        Map<String, List<QueryFixSerialDownOutDTO>> typeMap = queryFixSerialDownList.stream().collect(Collectors.groupingBy(QueryFixSerialDownOutDTO::getType));
+        for (Map.Entry entry : typeMap.entrySet()) {
+            List<QueryFixSerialDownOutDTO> serialDownOutDTOList = (List<QueryFixSerialDownOutDTO>) entry.getValue();
+            QueryFixSerialDownOutDTO queryFixSerialDownOutDTO = serialDownOutDTOList.stream().findFirst().get();
+            list.add(queryFixSerialDownOutDTO);
         }
         return list;
     }
@@ -552,4 +672,134 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         }
         return 0;
     }
+
+    public MarketRateTheeOutPutDTO getRateThreeIncome(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
+        MarketRateTheeOutPutDTO returnRateDTO = new MarketRateTheeOutPutDTO();
+        String shareCode = getRateThreeIncomeInputDTO.getShareCode();
+        returnRateDTO.setMaxShareCode(shareCode);
+        Integer maxDoubleSize = 1;
+        getRateThreeIncomeInputDTO.setType(getRateThreeIncomeInputDTO.getShareCode());
+        List<QueryRecentSerialRedOutPutDTO> minRateThreeList = serialTempMapper.getMinRateThree(getRateThreeIncomeInputDTO);
+        if (minRateThreeList.size() == 0) {
+            return returnRateDTO;
+        }
+        //最终收益率
+        Double tFinalRatio = 0.0;
+        //翻倍次数
+        Integer doubleSize = 1;
+        //实时收益率
+        Double runRatio = 0.0;
+        //基金净值 开始计算设置为1
+        Double unitPrice = 1.0;
+        //购买单元
+        int unitAmount;
+        Double allProfit = 0.0;
+
+        //使用的最大倍数
+        int useMaxSize = 0;
+
+        Boolean firstFlag = true;
+        for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
+            shareCode = queryRecentSerialRedOutPutDTO.getShareCode();
+            Integer cycleProfit = getRateThreeIncomeInputDTO.getCycleProfit();
+            //设定目标收益率不为空 且 总收益率 大于总收益率 且1个单位收益小于刚买入时跌固定目标负收益率
+            if (Objects.nonNull(cycleProfit) && tFinalRatio > cycleProfit && runRatio < getRateThreeIncomeInputDTO.getRunRatio())           {
+                runRatio = 0.0;
+                tFinalRatio = 0.0;
+                unitPrice = 1.0;
+            }
+            Double unitProfit = 0.0;//当天的收益
+            Double finalRatio = queryRecentSerialRedOutPutDTO.getFinalRatio();
+            Double maxRatio = queryRecentSerialRedOutPutDTO.getMaxRatio();
+            Double minRatio = queryRecentSerialRedOutPutDTO.getMinRatio();
+            Double openRatio = queryRecentSerialRedOutPutDTO.getOpenRatio();
+            Double fee = getRateThreeIncomeInputDTO.getFee();
+            Double fundProfit = getRateThreeIncomeInputDTO.getFundProfit();
+            unitPrice = unitPrice * (1 + finalRatio * 0.01);
+            //获取doubleSize
+            int i = Math.abs((int) (runRatio / getRateThreeIncomeInputDTO.getDoubleSize())) + 1;
+            doubleSize = i;
+            if (useMaxSize<doubleSize){
+                useMaxSize = doubleSize;
+            }
+            if (i>1){
+                firstFlag = false;
+            }
+            unitAmount = 10000 * doubleSize;
+            if (firstFlag) {
+                if (openRatio + runRatio > fundProfit){
+                    unitProfit = openRatio * unitAmount * 0.01 - unitAmount * fee * 0.01;
+                }else if (minRatio + runRatio > fundProfit) {
+                    unitProfit = minRatio * unitAmount * 0.01 - unitAmount * fee * 0.01;
+                } else if (maxRatio + runRatio > fundProfit) {
+                    unitProfit = (fundProfit - runRatio) * unitAmount * 0.01 - unitAmount * fee * 0.01;
+                } else {
+                    tFinalRatio = tFinalRatio + finalRatio;//减掉0.2 的sxf
+                    runRatio = runRatio + finalRatio;
+                    unitProfit =  finalRatio * unitAmount * 0.01;
+                    allProfit = allProfit +unitProfit;
+                    continue;
+                }
+                returnRateDTO.setAmount(unitProfit);
+                returnRateDTO.setMaxShareCode(shareCode);
+                returnRateDTO.setEndTime(queryRecentSerialRedOutPutDTO.getStartTime());
+                returnRateDTO.setIsFinish(true);
+             //   log.info("QueryStartTime is:{},QueryEndTime is:{},currentTime is:{},shareCode is:{},amount is:{},doubleSize:{}",getRateThreeIncomeInputDTO.getQueryStartTime(),getRateThreeIncomeInputDTO.getQueryEndTime(),queryRecentSerialRedOutPutDTO.getStartTime(),shareCode,returnRateDTO.getAmount(),doubleSize);
+                return returnRateDTO;
+            }
+
+            double regularProfit= MathConstants.getPeriodProfit(getRateThreeIncomeInputDTO.getQueryStartTime(),getRateThreeIncomeInputDTO.getQueryEndTime());
+            switch (doubleSize) {
+                case 1:
+                    break;
+                case 2:
+                    fee = fee * 0.6;
+                    break;
+                case 3:
+                    fee = fee * 0.5;
+                    break;
+                case 4:
+               //     regularProfit = regularProfit - 1;
+                    fee = fee * 0.4;
+                    break;
+                case 5:
+              //      regularProfit = regularProfit - 2;
+                    fee = fee * 0.3;
+                    break;
+                default:
+               //     regularProfit = regularProfit - 3;
+                    fee = fee * 0.3;
+            }
+
+            if (openRatio*doubleSize +tFinalRatio >regularProfit*doubleSize){//如果开盘收益率*单位购买数-总亏损数 大于 常规收益
+                returnRateDTO.setAmount(MathConstants.Pointkeep((openRatio*doubleSize+tFinalRatio-fee*doubleSize)*unitAmount*0.01,2));
+                returnRateDTO.setMaxShareCode(shareCode);
+                returnRateDTO.setEndTime(queryRecentSerialRedOutPutDTO.getStartTime());
+                returnRateDTO.setIsFinish(true);
+           //     log.info("QueryStartTime is:{},QueryEndTime is:{},currentTime is:{},shareCode is:{},amount is:{},doubleSize:{}",getRateThreeIncomeInputDTO.getQueryStartTime(),getRateThreeIncomeInputDTO.getQueryEndTime(),queryRecentSerialRedOutPutDTO.getStartTime(),shareCode,returnRateDTO.getAmount(),doubleSize);
+                return returnRateDTO;
+            } else if (maxRatio *doubleSize +tFinalRatio >regularProfit*doubleSize) {
+                returnRateDTO.setAmount(MathConstants.Pointkeep((regularProfit*doubleSize -fee*doubleSize)*unitAmount*0.01,2));
+                returnRateDTO.setMaxShareCode(shareCode);
+                returnRateDTO.setEndTime(queryRecentSerialRedOutPutDTO.getStartTime());
+                returnRateDTO.setIsFinish(true);
+            //    log.info("QueryStartTime is:{},QueryEndTime is:{},currentTime is:{},shareCode is:{},amount is:{},doubleSize:{}",getRateThreeIncomeInputDTO.getQueryStartTime(),getRateThreeIncomeInputDTO.getQueryEndTime(),queryRecentSerialRedOutPutDTO.getStartTime(),shareCode,returnRateDTO.getAmount(),doubleSize);
+                return returnRateDTO;
+            } else {
+                tFinalRatio = tFinalRatio + finalRatio * doubleSize;
+                runRatio = runRatio + finalRatio;
+                unitProfit = finalRatio * unitAmount * 0.01;
+                allProfit = allProfit + unitProfit;
+                continue;
+            }
+
+        }
+
+        returnRateDTO.setAmount(tFinalRatio*100);
+        returnRateDTO.setMaxDoubleSize(maxDoubleSize);
+        returnRateDTO.setIsFinish(false);
+        return returnRateDTO;
+    }
+
+
 }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.liuhu.socket.dao.ConditionShareInfoMapper">
+    <resultMap id="BaseResultMap" type="com.liuhu.socket.entity.ConditionShareCodeInfo">
+        <result column="id" property="id" jdbcType="INTEGER"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="share_code" property="shareCode" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+
+    <insert id="insertList" parameterType="java.util.List">
+        insert into condition_share_info(share_code,type,date) VALUES
+        <foreach collection="list" item="item" separator=",">
+         (#{item.shareCode},#{item.type},#{item.date})
+        </foreach>
+    </insert>
+
+    <select id="queryShareCodeByCondition" resultMap="BaseResultMap">
+         select * from condition_share_info where 1=1
+         <if test="condition.startTime!=null">
+             and date >=#{condition.startTime}
+         </if>
+        <if test="condition.endTime!=null">
+            and date &lt;=#{condition.endTime}
+        </if>
+        order by date
+    </select>
+
+
+</mapper>

@@ -1,6 +1,8 @@
 package com.liuhu.socket.dao;
 
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
+import com.liuhu.socket.domain.input.QueryFixSerialDownInDTO;
+import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import org.apache.ibatis.annotations.Param;
@@ -19,4 +21,6 @@ public interface SerialTempMapper {
     List<QueryRecentSerialRedOutPutDTO> getMinRateThree(@Param("domain") GetRateThreeIncomeInputDTO rateThreeIncomeInputDTO);
     //从处理过的数据获取最大日期
     Date selectMaxDateFromHandleData(@Param("shareCode")String newShareCode);
+
+    List<QueryFixSerialDownOutDTO> queryShareInfoByCondition(@Param("condition")QueryFixSerialDownInDTO conditionDTO);
 }

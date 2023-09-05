@@ -21,5 +21,11 @@ public class QueryProfitByComProgram {
     private Map<Date,List<String>> resultMap;
 
 
+    private Integer  holdCount=0;
+
+    private String plan;
+
+
+
 
 }

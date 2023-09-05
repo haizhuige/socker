@@ -12,7 +12,7 @@ import java.util.Map;
 public class MarketRateTheeOutPutDTO {
 
     //收益金额
-    private Double amount;
+    private Double amount=0.0;
 
     //收益
     private Double income;
@@ -40,6 +40,10 @@ public class MarketRateTheeOutPutDTO {
     private String maxShareCode;
 
     private List<RecentDownOrderOutPutDTO> orderOutPutDTOList;
+
+    private Date endTime;
+
+    private Boolean isFinish=false;
 
 
 }

@@ -76,10 +76,10 @@
     <select id="queryCloserDate" resultMap="BaseResultMap">
             select id,date from trade_date where
              <if test="type==null || type =='start'">
-             date >= #{handleTime} limit 1
+             date >= #{handleTime} order by date  limit 1
             </if>
            <if test="type =='end'">
-            date &lt;= #{handleTime} limit 1
+            date &lt;= #{handleTime}  order by date desc limit 1
            </if>
     </select>
 

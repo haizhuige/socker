@@ -35,9 +35,9 @@ public interface TradeInfoService {
 
     Map<String,Object> getPreFiveAndSubFive(QueryRecentSerialRedConditionDTO input);
 
-    void getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
+    Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 
-    List<MarketOutputDomain> getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram);
+    MarketOutputDomain getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 
 
 }

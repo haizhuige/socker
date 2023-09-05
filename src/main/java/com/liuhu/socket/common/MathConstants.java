@@ -78,4 +78,19 @@ public class MathConstants {
        }
         return 0.0;
     }
+    /**
+     * 计算时间范围内的需要回本的年化收益率
+     */
+    public static Double getPeriodProfit(String startTime,String endTime){
+        Date startDate = DateUtils.parse(startTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+        Date  endDate= DateUtils.parse(endTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+        int countDay = DateUtils.getIntervalDaysForDay(startDate,endDate);
+        //1年12个点计算收益
+        double basicProfit = Pointkeep(0.12 / 365 * countDay * 100, 2);
+        if (countDay<30){
+            basicProfit = basicProfit + 0.2;
+        }
+        return basicProfit;
+    }
+
 }

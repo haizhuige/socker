@@ -26,10 +26,12 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
 
     private Integer cycleProfit;
 
-    private Double  fee=0.2;
+    private Double  fee=0.1;
 
 
     private Double profit=1.2;
+
+    private Double fundProfit = 0.45;
 
     private Double doubleProfit=1.5;
 
