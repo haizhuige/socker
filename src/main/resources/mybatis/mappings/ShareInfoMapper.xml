@@ -6,6 +6,7 @@
         <result column="share_name" property="shareName" jdbcType="VARCHAR"/>
         <result column="status" property="status" jdbcType="CHAR"/>
         <result column="hushen_status" property="hushenStatus" jdbcType="CHAR"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
     </resultMap>
     <insert id="insert" parameterType="com.liuhu.socket.entity.ShareInfo">
     insert into share_info (share_code, share_name, status,hushen_status
@@ -47,7 +48,7 @@
     <select id="getShareInfo"
             parameterType="com.liuhu.socket.entity.ShareInfo"
             resultMap="BaseResultMap">
-        select share_code,share_name,status,hushen_status from share_info t
+        select share_code,share_name,status,hushen_status,type from share_info t
         where 1=1
         <if test="status != null">
             and t.status = #{status,jdbcType=CHAR}
@@ -74,6 +75,9 @@
         select  GROUP_CONCAT(hushen_status,share_code) as shareCode from share_info t
         where
            status = #{status,jdbcType=CHAR}
+           <if test="shareCode!=null">
+               and share_code = #{shareCode}
+           </if>
           and t.share_code != 'A00001'
     </select>
 

@@ -25,7 +25,13 @@
         <if test="condition.endTime!=null">
             and date &lt;=#{condition.endTime}
         </if>
-        order by date
+        <if test="condition.planList!=null">
+            and type in
+            <foreach collection="condition.planList" item="item" separator="," open="(" close=")" >
+               #{item}
+            </foreach>
+        </if>
+        order by type
     </select>
 
 

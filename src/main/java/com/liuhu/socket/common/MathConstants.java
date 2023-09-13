@@ -85,12 +85,24 @@ public class MathConstants {
         Date startDate = DateUtils.parse(startTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
         Date  endDate= DateUtils.parse(endTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
         int countDay = DateUtils.getIntervalDaysForDay(startDate,endDate);
+
         //1年12个点计算收益
-        double basicProfit = Pointkeep(0.12 / 365 * countDay * 100, 2);
-        if (countDay<30){
-            basicProfit = basicProfit + 0.2;
-        }
-        return basicProfit;
+       // Pointkeep(0.12/365*1*100*13,3)=0.427 所以以 13作为计算周期
+
+      //  double basicProfit = Pointkeep(0.12 / 365 * countDay * 100, 2);
+     //   if (countDay<30){
+     //       basicProfit = basicProfit + 0.2;
+     //   }
+     //   return basicProfit;
+
+        int i = countDay / 13+1;
+
+        return i*0.4;
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(Pointkeep(0.12/365*1*100*13,3));
     }
 
 }

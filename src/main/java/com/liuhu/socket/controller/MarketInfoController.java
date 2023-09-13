@@ -10,6 +10,7 @@ import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.input.NetIncomeInputDomain;
+import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.MarketInfo;
 import com.liuhu.socket.enums.TradeStatusEnum;
@@ -65,6 +66,17 @@ public class MarketInfoController {
     @RequestMapping("/getRealTimeRateByWangyi.do")
     public ResponseResult getRealTimeRateByWangyi() {
         List<MarketOutputDomain> rateList = sharesInfoService.getRealTimeRateByWangyi();
+        return ResponseResult.done(rateList);
+    }
+
+
+    /**
+     * 查询实时股票增长率
+     */
+    @ResponseBody
+    @RequestMapping("/getRealTimeRateByXueQiu.do")
+    public ResponseResult getRealTimeRateByXueQiu(@RequestBody MarketInputDomain marketInputDomain) {
+        List<MarketRealTimeOutputDomain> rateList = sharesInfoService.getRealTimeRateByXueQiu(marketInputDomain);
         return ResponseResult.done(rateList);
     }
 

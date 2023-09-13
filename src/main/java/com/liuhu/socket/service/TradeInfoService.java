@@ -1,11 +1,9 @@
 package com.liuhu.socket.service;
 
-import com.liuhu.socket.domain.input.MarketDetailInputDomain;
-import com.liuhu.socket.domain.input.QueryProfitByComProgram;
-import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
-import com.liuhu.socket.domain.input.TradeInputDomain;
+import com.liuhu.socket.domain.input.*;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
+import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import org.apache.ibatis.annotations.Param;
 
@@ -38,6 +36,11 @@ public interface TradeInfoService {
     Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 
     MarketOutputDomain getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram);
+
+    List<QueryFixSerialDownOutDTO> getPreSelectionSerialDownDTOList(QueryFixSerialDownInDTO conditionDTO);
+
+
+    List<QueryFixSerialDownOutDTO> preSelectionGetSerialDownOfRiver(QueryFixSerialDownInDTO conditionDTO);
 
 
 }

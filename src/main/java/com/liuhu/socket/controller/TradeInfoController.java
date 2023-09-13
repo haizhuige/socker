@@ -4,6 +4,7 @@ import com.liuhu.socket.common.ResponseResult;
 import com.liuhu.socket.domain.input.*;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
+import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
@@ -218,6 +219,28 @@ public class TradeInfoController {
 
 		MarketOutputDomain profitFromSerialDown = tradeInfoService.getProfitFromSerialDown(queryProfitByComProgram);
 		return ResponseResult.done(profitFromSerialDown);
+	}
+
+	/**
+	 * 查询一段时间内连续down超过5%的
+	 */
+	@ResponseBody
+	@RequestMapping("/getPreSelectionShareInfo")
+	public ResponseResult getPreSelectionShareInfo(@RequestBody QueryFixSerialDownInDTO queryProfitByComProgram) throws Exception {
+
+		List<QueryFixSerialDownOutDTO> preSelectionSerialDownDTOList = tradeInfoService.getPreSelectionSerialDownDTOList(queryProfitByComProgram);
+		return ResponseResult.done(preSelectionSerialDownDTOList);
+	}
+
+	/**
+	 * 查询一段时间内连续水下的
+	 */
+	@ResponseBody
+	@RequestMapping("/preSelectionGetSerialDownOfRiver")
+	public ResponseResult preSelectionGetSerialDownOfRiver(@RequestBody QueryFixSerialDownInDTO queryProfitByComProgram) throws Exception {
+
+		List<QueryFixSerialDownOutDTO> preSelectionSerialDownDTOList = tradeInfoService.preSelectionGetSerialDownOfRiver(queryProfitByComProgram);
+		return ResponseResult.done(preSelectionSerialDownDTOList);
 	}
 
 }

@@ -1,10 +1,13 @@
 package com.liuhu.socket.domain.input;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 @Setter
 @Getter
 public class MarketInputDomain implements Serializable {
@@ -24,5 +27,7 @@ public class MarketInputDomain implements Serializable {
     private String shareName;
 
     private String period;
+
+    private List<String> shareCodeList = new ArrayList<>();
 
 }

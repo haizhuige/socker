@@ -34,7 +34,8 @@
 	     	FROM
 			trade_date
 		   WHERE
-			date = #{date}
+			date &lt;= #{date}
+            order by date desc limit 1
 	            )
         <if test="type ==null ||type=='sub'">
 	        -#{recentDay}

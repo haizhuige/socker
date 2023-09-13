@@ -23,5 +23,7 @@ public class ShareInfo implements Serializable {
 
     private Date date;
 
+    private String type;
+
 
 }

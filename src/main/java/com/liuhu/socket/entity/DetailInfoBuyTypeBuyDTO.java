@@ -7,9 +7,8 @@ import java.util.Date;
 
 @Setter
 @Getter
-public class ConditionShareCodeInfo {
+public class DetailInfoBuyTypeBuyDTO {
 
-    private Long id;
 
     private String shareCode;
 
@@ -17,19 +16,9 @@ public class ConditionShareCodeInfo {
 
     private Date date;
 
-    private Double allProfit = 0.0;
-
-    private  Double tFinalRatio = 0.0;
-
-    private  Double methodRunRatio = 0.0;
-
-    private Boolean isFinish = false;
-
     private Date endDate;
 
     private Integer doubleSize=1;
 
     private Double unitProfit=0.0;
-
-    private Integer k = 0;
 }

@@ -1,5 +1,7 @@
 package com.liuhu.socket.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.HttpClientUtils;
@@ -8,6 +10,7 @@ import com.liuhu.socket.dao.*;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
+import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.dto.SockerExcelEntity;
@@ -21,6 +24,7 @@ import com.liuhu.socket.enums.SpecialSockerEnum;
 import com.liuhu.socket.schedule.MarketScheduleService;
 import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.TradeInfoService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,6 +62,9 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     @Value("${realTime.url}")
     private String realTimeUrl;
+
+    @Value("${xueqiu_realTime.url}")
+    private String xueQiuRealTimeUrl;
 
 
     @Resource
@@ -158,6 +165,7 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     public List<MarketOutputDomain> getRealTimeRateByWangyi() {
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
+        shareInfo.setShareCode("000001");
         String shareCodes = shareInfoMapper.getRealTimeRateByWangyi(shareInfo);
         String newUrl = realTimeUrl + shareCodes;
         String response = HttpClientUtils.getXpath(newUrl);
@@ -181,6 +189,55 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         }
         list = list.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
         return list;
+
+    }
+
+
+
+    @SneakyThrows
+    @Override
+    public List<MarketRealTimeOutputDomain> getRealTimeRateByXueQiu(MarketInputDomain marketInputDomain) {
+        List<String> shareCodeList = marketInputDomain.getShareCodeList();
+        if (Objects.nonNull(marketInputDomain.getShareCode())){
+            shareCodeList.add(marketInputDomain.getShareCode());
+        }
+        if (Objects.isNull(shareCodeList)||shareCodeList.size()==0){
+            throw new Exception("需要查询的代码为空");
+        }
+        List<MarketRealTimeOutputDomain> realTimeOutputDomainList = new ArrayList<>();
+        for (String shareCode:shareCodeList){
+            String newUrl = xueQiuRealTimeUrl + "SH" + shareCode;
+            String response = HttpClientUtils.getXpath(newUrl);
+            JSONObject jsonObject = JSON.parseObject(response);
+            JSONArray jsonArray = (JSONArray)jsonObject.get("data");
+            if (jsonArray.size()==0){
+                newUrl = xueQiuRealTimeUrl + "SZ" + shareCode;
+                response = HttpClientUtils.getXpath(newUrl);
+                jsonObject = JSON.parseObject(response);
+                jsonArray = (JSONArray)jsonObject.get("data");
+            }
+            if (jsonArray.size()==0){
+                log.info("当前不在沪深fund交易组内,shareCode:{}",shareCode);
+                continue;
+            }
+            MarketRealTimeOutputDomain realTimeOutputDomain = new MarketRealTimeOutputDomain();
+            JSONObject entity = (JSONObject) jsonArray.get(0);
+            BigDecimal percent = (BigDecimal) entity.get("percent");
+            BigDecimal lastClose = (BigDecimal)entity.get("last_close");
+            BigDecimal high = (BigDecimal)entity.get("high");
+            BigDecimal low = (BigDecimal)entity.get("low");
+            BigDecimal amount = (BigDecimal)entity.get("amount");
+            BigDecimal current = entity.getBigDecimal("current");
+            realTimeOutputDomain.setAmount(amount.doubleValue());
+            realTimeOutputDomain.setLow(low.doubleValue());
+            realTimeOutputDomain.setHigh(high.doubleValue());
+            realTimeOutputDomain.setLastClose(lastClose.doubleValue());
+            realTimeOutputDomain.setCurrentPercent(percent.doubleValue());
+            realTimeOutputDomain.setCurrentValue(current.doubleValue());
+            realTimeOutputDomain.setShareCode(shareCode);
+            realTimeOutputDomainList.add(realTimeOutputDomain);
+        }
+        return realTimeOutputDomainList;
 
     }
 

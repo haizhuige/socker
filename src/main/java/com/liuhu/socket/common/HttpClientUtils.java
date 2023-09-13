@@ -1,18 +1,13 @@
 package com.liuhu.socket.common;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
-import org.apache.http.ParseException;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,9 +91,12 @@ public class HttpClientUtils {
         logger.info(requestUrl);
         String res="";
         StringBuffer buffer = new StringBuffer();
+        System.setProperty("http.proxyHost", "127.0.0.1");
+        System.setProperty("http.proxyPort", "33210");
         try{
             URL url = new URL(requestUrl);
-            HttpURLConnection urlCon= (HttpURLConnection)url.openConnection();
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new java.net.InetSocketAddress("127.0.0.1", 33210));
+            HttpURLConnection urlCon= (HttpURLConnection)url.openConnection(proxy);
             if(200==urlCon.getResponseCode()){
                 InputStream is = urlCon.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is,"utf-8");

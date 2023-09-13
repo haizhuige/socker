@@ -7,12 +7,15 @@ import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
+import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
+import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.domain.output.RecentDownOrderOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
 import com.liuhu.socket.entity.ShareInfo;
+import com.liuhu.socket.service.SharesInfoService;
 import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,9 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
 
     @Autowired
     TradeInfoService tradeInfoService;
+
+    @Autowired
+    SharesInfoService sharesInfoService;
 
     @Autowired
     MarketInfoNewMapper marketInfoNewMapper;
@@ -247,8 +253,12 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
     public List<QueryRecentSerialRedOutPutDTO> queryFirstBuyMoreThenMarketRatio(GetRateThreeIncomeInputDTO getRateThreeIncomeInputDTO) {
 
         List<String> queryPeriodList = new ArrayList<>();
+        List<QueryRecentSerialRedOutPutDTO> recentList = new ArrayList<>();
         Integer queryPeriod = getRateThreeIncomeInputDTO.getQueryPeriod();
-        if (Objects.nonNull(queryPeriod)&&queryPeriod>1){
+        Boolean realTimeFlag = getRateThreeIncomeInputDTO.getRealTimeFlag();
+        if (realTimeFlag){//如果是实时取当前时间
+            queryPeriodList.add(getRateThreeIncomeInputDTO.getQueryStartTime());
+        }else if (Objects.nonNull(queryPeriod)&&queryPeriod>1){
             List<Date> dateList = tradeInfoService.queryPeriodDateList(getRateThreeIncomeInputDTO.getQueryStartTime(), queryPeriod, null);
             for (Date date:dateList){
                 queryPeriodList.add(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
@@ -259,21 +269,38 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
         List<QueryRecentSerialRedOutPutDTO> respList = new ArrayList<>();
         for (String dateStr:queryPeriodList){
             getRateThreeIncomeInputDTO.setQueryStartTime(dateStr);
-            List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryHeadRatioShareInfo(getRateThreeIncomeInputDTO);
-            if (outPutDTOList.size()<=0){
+            List<String> shareCodeList;
+            if (!realTimeFlag){//非实时
+                List<QueryRecentSerialRedOutPutDTO>  outPutDTOList = marketInfoNewMapper.queryHeadRatioShareInfo(getRateThreeIncomeInputDTO);
+                shareCodeList = outPutDTOList.stream().map(QueryRecentSerialRedOutPutDTO::getShareCode).collect(Collectors.toList());
+            }else {//获取当天实时
+                MarketInputDomain marketInputDomain = new MarketInputDomain();
+                ShareInfo shareInfo = new ShareInfo();
+                shareInfo.setHushenStatus("B");
+                List<ShareInfo> respShareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+                List<String> originalShareCodeList = respShareInfoList.stream().map(shareInfo10 -> shareInfo10.getShareCode()).collect(Collectors.toList());
+                marketInputDomain.setShareCodeList(originalShareCodeList);
+                List<MarketRealTimeOutputDomain> realTimeOutputDomainList = sharesInfoService.getRealTimeRateByXueQiu(marketInputDomain);
+                realTimeOutputDomainList = realTimeOutputDomainList.stream().filter(marketRealTimeOutputDomain -> marketRealTimeOutputDomain.getCurrentPercent()>2).collect(Collectors.toList());
+                shareCodeList = realTimeOutputDomainList.stream().map(marketRealTimeOutputDomain -> marketRealTimeOutputDomain.getShareCode()).collect(Collectors.toList());
+            }
+            if (shareCodeList.size()<=0){
                 continue;
             }
-            List<String> shareCodeList = outPutDTOList.stream().map(QueryRecentSerialRedOutPutDTO::getShareCode).collect(Collectors.toList());
             QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
             String queryStartTime = getRateThreeIncomeInputDTO.getQueryStartTime();
             Date endTime = DateUtils.parse(queryStartTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
-            Date preTime = tradeInfoService.getWantDate(getRateThreeIncomeInputDTO.getRecentDay(), endTime, "sub");
+            Integer recentDay = getRateThreeIncomeInputDTO.getRecentDay();
+            if (realTimeFlag){
+                recentDay = recentDay -1;
+            }
+            Date preTime = tradeInfoService.getWantDate(recentDay, endTime, "sub");
             queryRecentSerialRedConditionDO.setDownStartTime(preTime);
             queryRecentSerialRedConditionDO.setDownEndTime(endTime);
             queryRecentSerialRedConditionDO.setMinDownRate(getRateThreeIncomeInputDTO.getMinDownRate()*(-2));
             queryRecentSerialRedConditionDO.setShareCodeList(shareCodeList);
             queryRecentSerialRedConditionDO.setMinDownDay(getRateThreeIncomeInputDTO.getMinDownDay());
-            List<QueryRecentSerialRedOutPutDTO> recentList = marketInfoMapper.queryRecentSerialGreen(queryRecentSerialRedConditionDO);
+             recentList = marketInfoMapper.queryRecentSerialGreen(queryRecentSerialRedConditionDO);
             if (recentList.size()<=0){
                 continue;
             }
@@ -287,8 +314,14 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
                 respList.addAll(outPutDTOList1);
             }
         }
-        serialTempMapper.insertList(respList,getRateThreeIncomeInputDTO.getRowNum());
-        return new ArrayList<>();
+        if (!realTimeFlag){
+            serialTempMapper.insertList(respList,getRateThreeIncomeInputDTO.getRowNum());
+            return new ArrayList<>();
+        }else {
+            return recentList;
+        }
+
+
     }
 
 }

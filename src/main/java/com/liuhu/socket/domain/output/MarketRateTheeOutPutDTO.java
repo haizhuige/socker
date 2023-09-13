@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +45,21 @@ public class MarketRateTheeOutPutDTO {
     private Date endTime;
 
     private Boolean isFinish=false;
+
+
+    private Map<Date,Integer> doubleSizeMap = new HashMap<>();
+
+    private Double allProfit = 0.0;
+
+    private  Double tFinalRatio = 0.0;
+
+    private  Double methodRunRatio = 0.0;
+
+    private Double unitProfit=0.0;
+
+
+    private Integer k = 0;
+
 
 
 }

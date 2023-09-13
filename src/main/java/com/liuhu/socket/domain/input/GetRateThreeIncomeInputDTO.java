@@ -9,6 +9,9 @@ import java.io.Serializable;
 @Setter
 public class GetRateThreeIncomeInputDTO implements Serializable {
 
+    //是否实时操作
+    private Boolean realTimeFlag=true;
+
     private String type;
 
     private String methodType;
@@ -57,5 +60,14 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
     private Double dealAmount= 5000000.0;
 
     private String shareCode;
+
+
+    private  Double tFinalRatio = 0.0;
+
+    private Double allProfit = 0.0;
+
+    private  Double methodRunRatio = 0.0;
+
+    private Integer k =0;
 
 }
