@@ -1,5 +1,7 @@
 package com.liuhu.socket.common;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.liuhu.socket.enums.TradeStatusEnum;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +23,8 @@ public class MathConstants {
     //印花费率
     private static  double  stampTaxPerFee = 0.001;
     public static final String TEXT = "0123456789";
+
+
 
     public static String generateCode(String codePrefix, int length) {
         StringBuilder sb = new StringBuilder(codePrefix);
@@ -95,9 +99,26 @@ public class MathConstants {
      //   }
      //   return basicProfit;
 
-        int i = countDay / 13+1;
+        int i = countDay / ConstantsUtil.stepCycle+1;
 
-        return i*0.4;
+        return i*ConstantsUtil.initSaleRatio;
+    }
+
+    public static JSONArray getDefinedColumnFromArray(Object obj,String ... column){
+            JSONArray jsonArray = JSONArray.parseArray(JSONArray.toJSONString(obj));
+            JSONArray returnArray = new JSONArray();
+            String[] column1 = column;
+            for (Object unitObj:jsonArray){
+                JSONObject json = JSONObject.parseObject(String.valueOf(unitObj));
+                JSONObject jsonObject = new JSONObject();
+                for (String str:column1){
+                    if (json.containsKey(str)){
+                        jsonObject.put(str,json.get(str));
+                    }
+                }
+                returnArray.add(jsonObject);
+            }
+            return returnArray;
     }
 
 

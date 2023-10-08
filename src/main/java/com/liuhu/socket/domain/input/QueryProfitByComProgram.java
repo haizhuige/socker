@@ -26,6 +26,8 @@ public class QueryProfitByComProgram {
     private String plan;
 
 
+    private Integer maxValue;
+
 
 
 }

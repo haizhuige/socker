@@ -35,4 +35,10 @@ public class QueryRecentSerialRedOutPutDTO {
 
 
     private Double dealAmount;
+
+
+    //临时使用 赎回时间
+    private Date endTime;
+
+    private Double realSaleRatio;
 }

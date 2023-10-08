@@ -47,6 +47,8 @@ public interface MarketInfoMapper {
 
     List<QueryFixSerialDownOutDTO> queryFixSerialDown(@Param("condition") QueryFixSerialDownInDTO queryProfitByComProgram);
 
+    List<QueryFixSerialDownOutDTO> queryFixSerialDownOptimize(@Param("condition") QueryFixSerialDownInDTO queryProfitByComProgram);
+
     List<QueryFixSerialDownOutDTO> getSerialDownOfRiver(@Param("condition")QueryFixSerialDownInDTO conditionDTO);
 
     List<QueryFixSerialDownOutDTO> getPreSelectionSerialDownOfRiver(@Param("condition")QueryFixSerialDownInDTO conditionDTO);

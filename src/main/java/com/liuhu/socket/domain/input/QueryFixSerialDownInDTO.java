@@ -17,4 +17,15 @@ public class QueryFixSerialDownInDTO {
 
     //固定下降额度
     private Double fixDownRatio=-5.0;
+
+    //最大连续次数
+    private Integer maxSerialCount = 10;
+
+    //最小连续次数
+    private Integer minSerialCount = 3;
+
+    //最小的连续水下次数
+    private Integer minDownRiver = 2;
+    //最小的连续水下次数
+    private Double minSumRatio = -1.0;
 }

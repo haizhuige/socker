@@ -12,4 +12,8 @@ public class DownloadMarketInputDTO implements Serializable {
     private String originalShareCode;
     //类型  A：socker  B：fund
     private String shareCodeType;
+
+    private String startTime;
+
+    private String endTime;
 }

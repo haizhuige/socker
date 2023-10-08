@@ -74,4 +74,6 @@ public interface SharesInfoService {
 
 
     List<MarketRealTimeOutputDomain> getRealTimeRateByXueQiu(MarketInputDomain marketInputDomain);
+
+    List<MarketRealTimeOutputDomain> getHistRateByXueQiu(MarketInputDomain marketInputDomain);
 }

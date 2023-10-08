@@ -67,6 +67,12 @@ public class SharesInfoServiceImpl implements SharesInfoService {
     private String xueQiuRealTimeUrl;
 
 
+    @Value("${xueqiu_history.pre.url}")
+    private String xueQiuHisPreUrl;
+
+    @Value("${xueqiu_history.tail.url}")
+    private String xueQiuHisTailUrl;
+
     @Resource
     SerialTempMapper serialTempMapper;
 
@@ -236,6 +242,55 @@ public class SharesInfoServiceImpl implements SharesInfoService {
             realTimeOutputDomain.setCurrentValue(current.doubleValue());
             realTimeOutputDomain.setShareCode(shareCode);
             realTimeOutputDomainList.add(realTimeOutputDomain);
+        }
+        return realTimeOutputDomainList;
+
+    }
+
+    @Override
+    public List<MarketRealTimeOutputDomain> getHistRateByXueQiu(MarketInputDomain marketInputDomain) {
+        List<String> shareCodeList = marketInputDomain.getShareCodeList();
+        if (Objects.nonNull(marketInputDomain.getShareCode())){
+            shareCodeList.add(marketInputDomain.getShareCode());
+        }
+        if (Objects.isNull(shareCodeList)||shareCodeList.size()==0){
+           log.error("需要查询的代码为空");
+           return null;
+        }
+        List<MarketRealTimeOutputDomain> realTimeOutputDomainList = new ArrayList<>();
+        for (String shareCode:shareCodeList){
+            String newUrl = xueQiuHisPreUrl + "?symbol=SH" + shareCode+"&begin="+DateUtils.convertStringToTimestamp(marketInputDomain.getStartTime(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS)
+                    +"&end="+DateUtils.convertStringToTimestamp(marketInputDomain.getEndTime(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS)+xueQiuHisTailUrl;
+            String response = HttpClientUtils.getXpath(newUrl);
+            JSONObject jsonObject = JSON.parseObject(response);
+            JSONObject json = (JSONObject) jsonObject.get("data");
+            if (json.size()==0){
+                newUrl = xueQiuHisPreUrl + "?symbol=SZ" + shareCode+"&begin="+DateUtils.convertStringToTimestamp(marketInputDomain.getStartTime(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS)
+                        +"&end="+DateUtils.convertStringToTimestamp(marketInputDomain.getEndTime(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS)+xueQiuHisTailUrl;
+                response = HttpClientUtils.getXpath(newUrl);
+                jsonObject = JSON.parseObject(response);
+                json = (JSONObject)jsonObject.get("data");
+            }
+            if (json.size()==0){
+                log.info("当前不在沪深fund交易组内,shareCode:{}",shareCode);
+                continue;
+            }
+
+            JSONArray jsonArray = (JSONArray) json.get("item");
+            for (Object obj:jsonArray){
+                MarketRealTimeOutputDomain realTimeOutputDomain = new MarketRealTimeOutputDomain();
+                JSONArray unitArray = (JSONArray)obj;
+                realTimeOutputDomain.setShareCode(marketInputDomain.getShareCode());
+                realTimeOutputDomain.setHigh(unitArray.getDouble(3));
+                realTimeOutputDomain.setLow(unitArray.getDouble(4));
+                realTimeOutputDomain.setCurrentValue(unitArray.getDouble(5));
+                realTimeOutputDomain.setOpen(unitArray.getDouble(2));
+                realTimeOutputDomain.setCurrentPercent(unitArray.getDouble(7));
+                realTimeOutputDomain.setAmount(unitArray.getDouble(9));
+                realTimeOutputDomain.setDate(new Date(unitArray.getLong(0)));
+                realTimeOutputDomainList.add(realTimeOutputDomain);
+            }
+
         }
         return realTimeOutputDomainList;
 

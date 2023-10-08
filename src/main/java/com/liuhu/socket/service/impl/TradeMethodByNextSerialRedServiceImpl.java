@@ -20,6 +20,8 @@ import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -47,6 +49,11 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
     @Autowired
     ShareInfoMapper shareInfoMapper;
 
+
+    @Qualifier("taskExecutor")
+    @Autowired
+    ThreadPoolTaskExecutor taskExecutor;
+
     @Override
     public List<QueryRecentSerialRedOutPutDTO> getRecentFinalRatioStrategy(QueryRecentSerialRedConditionDTO marketInput2Domain) {
         return null;
@@ -60,27 +67,39 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
     @Override
     public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
         List<String> shareCodeList = new ArrayList<>();
-        if (input2Domain.getAllFlag()) {
+        Boolean allFlag = input2Domain.getAllFlag();
+        Date date = null;
+        if (allFlag) {
             ShareInfo shareInfo = new ShareInfo();
             shareInfo.setHushenStatus("B");
             shareInfo.setStatus("1");
             List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
             shareCodeList = shareInfoList.stream().map(shareInfo1 -> shareInfo1.getShareCode()).collect(Collectors.toList());
+            date  =  serialTempMapper.selectMaxDateFromHandleData(shareCodeList.get(0));
         } else {
             shareCodeList.add(input2Domain.getShareCode());
         }
+
         for (String shareCode : shareCodeList) {
-            input2Domain.setRateOrAmountDay(Integer.valueOf(shareCode));
-            List<String> newShareCodeList = new ArrayList<>();
-            String newShareCode = "cn_" + shareCode;
-            newShareCodeList.add(newShareCode);
-            Date date =  serialTempMapper.selectMaxDateFromHandleData(shareCode);
-            input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1,date,"plus"),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-            //查询某一时间区间的socker收益率
-            List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(null, newShareCodeList, input2Domain);
-            if (outPutDTOList.size() > 0) {
-                serialTempMapper.insertList(outPutDTOList, input2Domain.getRateOrAmountDay());
-            }
+            Date finalDate = date;
+            taskExecutor.execute(()->{
+                input2Domain.setRateOrAmountDay(Integer.valueOf(shareCode));
+                List<String> newShareCodeList = new ArrayList<>();
+                String newShareCode = "cn_" + shareCode;
+                newShareCodeList.add(newShareCode);
+               /* if (!allFlag){
+                    finalDate =  serialTempMapper.selectMaxDateFromHandleData(shareCode);
+                }*/
+                input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1, finalDate,"plus"),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+          /*  input2Domain.setStartTime("2018-01-02 00:00:00");
+            input2Domain.setEndTime("2019-12-31 00:00:00");*/
+                //查询某一时间区间的socker收益率
+                List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(null, newShareCodeList, input2Domain);
+                if (outPutDTOList.size() > 0) {
+                    serialTempMapper.insertList(outPutDTOList, Integer.valueOf(shareCode));
+                }
+            });
+
         }
         return null;
     }
@@ -121,11 +140,6 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
             Double allProfit=0.0;
             for (QueryRecentSerialRedOutPutDTO queryRecentSerialRedOutPutDTO : minRateThreeList) {
                 shareCode= queryRecentSerialRedOutPutDTO.getShareCode();
-         /*   Date startTime = queryRecentSerialRedOutPutDTO.getStartTime();
-            String dateStr = DateUtils.format(startTime, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
-            if ("2021-06-16 00:00:00".equals(dateStr)){
-                System.out.println("1111111111111");
-            }*/
                 Integer cycleProfit = getRateThreeIncomeInputDTO.getCycleProfit();
                 if (Objects.nonNull(cycleProfit) && tFinalRatio > getRateThreeIncomeInputDTO.getCycleProfit() && runRatio < getRateThreeIncomeInputDTO.getRunRatio()) {
                     runRatio = 0.0;

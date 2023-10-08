@@ -5,6 +5,7 @@ import com.liuhu.socket.domain.input.QueryFixSerialDownInDTO;
 import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
+import com.liuhu.socket.entity.MarketInfoNew;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -23,4 +24,10 @@ public interface SerialTempMapper {
     Date selectMaxDateFromHandleData(@Param("shareCode")String newShareCode);
 
     List<QueryFixSerialDownOutDTO> queryShareInfoByCondition(@Param("condition")QueryFixSerialDownInDTO conditionDTO);
+
+    List<QueryRecentSerialRedOutPutDTO> getAllRuleConditionResult(@Param("domain") GetRateThreeIncomeInputDTO rateThreeIncomeInputDTO);
+
+    MarketInfoNew getNoSatisfyRecentDay(@Param("condition")QueryRecentSerialRedOutPutDTO outPutDTO);
+
+    List<MarketInfoNew> getAllRecentDay(@Param("condition")QueryRecentSerialRedOutPutDTO outPutDTO);
 }

@@ -163,5 +163,81 @@
              and sinf.share_code = SUBSTR(stp.share_code,4,6)
     </select>
 
+    <select id="getAllRuleConditionResult" resultMap="BaseResultMap">
+          SELECT
+	           csi.share_code as share_code,
+               csi.start_time as start_time,
+               csi.open_ratio as open_ratio,
+               csi.max_ratio as max_ratio,
+               csi.final_ratio as final_ratio
+           FROM
+	           condition_share_info t,
+	           serial_temp csi
+           WHERE
+	           t.date = csi.start_time
+          AND csi.share_code = CONCAT('cn_', t.share_code)
+          AND csi.share_code = CONCAT('cn_',csi.up_period_count)
+          AND csi.start_time >=#{domain.queryStartTime}
+          AND csi.start_time &lt;=#{domain.queryEndTime}
+    </select>
+    <select id="getNoSatisfyRecentDay" resultType="com.liuhu.socket.entity.MarketInfoNew">
+        SELECT
+        DISTINCT
+        share_code as shareCode,
+        first_value(open_value)over( ORDER BY date) as openValue,
+        max(highest)over(PARTITION by share_code ) as highest,
+        first_value(end_value)over(ORDER BY date desc) as endValue
+        FROM
+        market_info_new
+        WHERE
+        share_code = #{condition.shareCode}
+        AND date >= #{condition.startTime}
+        AND date &lt;= (
+        SELECT
+        date
+        FROM
+        trade_date
+        WHERE
+        id = (
+        SELECT
+        id
+        FROM
+        trade_date
+        WHERE
+        date = #{condition.startTime}
+        ) + 4
+        )
+    </select>
+    <select id="getAllRecentDay" resultType="com.liuhu.socket.entity.MarketInfoNew">
+         SELECT
+              share_code as shareCode,
+              open_value as openValue,
+              end_value as endValue,
+              rise_fall_ratio as riseFallRatio,
+              highest,
+              date
+        FROM
+        market_info_new
+        WHERE
+        share_code = #{condition.shareCode}
+        AND date >= #{condition.startTime}
+        AND date &lt;= (
+        SELECT
+        date
+        FROM
+        trade_date
+        WHERE
+        id = (
+        SELECT
+        id
+        FROM
+        trade_date
+        WHERE
+        date = #{condition.startTime}
+        ) + 4
+        )
+        order by date
+    </select>
+
 
 </mapper>

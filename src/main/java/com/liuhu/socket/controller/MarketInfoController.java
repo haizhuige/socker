@@ -80,6 +80,17 @@ public class MarketInfoController {
         return ResponseResult.done(rateList);
     }
 
+
+    /**
+     * 查询实时股票增长率
+     */
+    @ResponseBody
+    @RequestMapping("/getHisRateByXueQiu.do")
+    public ResponseResult getHisRateByXueQiu(@RequestBody MarketInputDomain marketInputDomain) {
+        List<MarketRealTimeOutputDomain> rateList = sharesInfoService.getHistRateByXueQiu(marketInputDomain);
+        return ResponseResult.done(rateList);
+    }
+
     /**
      * 以周、月为维度统计股票增长率信息
      */

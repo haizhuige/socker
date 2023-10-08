@@ -6,14 +6,17 @@
         <result column="date" property="date" jdbcType="DATE"/>
         <result column="type" property="type" jdbcType="VARCHAR"/>
         <result column="share_code" property="shareCode" jdbcType="VARCHAR"/>
+        <result column="count_day" property="countDay" jdbcType="INTEGER"/>
+        <result column="sum_ratio" property="sumRatio" jdbcType="DECIMAL"/>
+
     </resultMap>
 
 
 
     <insert id="insertList" parameterType="java.util.List">
-        insert into condition_share_info(share_code,type,date) VALUES
+        replace into condition_share_info(share_code,type,date,sum_ratio,count_day) VALUES
         <foreach collection="list" item="item" separator=",">
-         (#{item.shareCode},#{item.type},#{item.date})
+         (#{item.shareCode},#{item.type},#{item.date},#{item.sumRatio},#{item.countDay})
         </foreach>
     </insert>
 

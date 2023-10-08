@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Setter
 @Getter
-public class TradeInfoDetail implements Serializable {
+public class TradeCollectInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,6 +36,10 @@ public class TradeInfoDetail implements Serializable {
 
     //详情见PlanEnum 买入方案类型
     private String type;
+
+    private Integer doubleSize;
+
+    private Double sumRatio;
 
 
 

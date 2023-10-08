@@ -32,4 +32,14 @@ public class ConditionShareCodeInfo {
     private Double unitProfit=0.0;
 
     private Integer k = 0;
+
+    private Double sumRatio;
+
+    private Integer countDay;
+
+    private Double score;
+
+    private Date startDate;
+
+    private String shareName;
 }

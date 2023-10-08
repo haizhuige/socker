@@ -10,6 +10,7 @@ import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.DownloadMarketInputDTO;
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 import com.liuhu.socket.entity.MarketInfoNew;
@@ -186,7 +187,10 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             inputDomain.setStartTime(DateUtils.operateDate(date, 1, DateUtils.DateFormat.YYYYMMDD.getFormat()));
 
         }
+
         inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
+       /* inputDomain.setStartTime("2018-01-01 00:00:00");
+        inputDomain.setEndTime("2019-12-31 00:00:00");*/
         if (inputDomain.getEndTime().compareTo(inputDomain.getStartTime()) < 0) {
             return;
         }
@@ -195,6 +199,24 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             return;
         }
         List<MarketInfoNew> list = importEntity.getList();
+      /*  List<MarketInfoNew> list = new ArrayList<>();
+        MarketInputDomain marketInputDomain = new MarketInputDomain();
+        marketInputDomain.setStartTime(inputDomain.getStartTime());
+        marketInputDomain.setEndTime(inputDomain.getEndTime());
+        marketInputDomain.setShareCode(inputDomain.getShareCode());
+        List<MarketRealTimeOutputDomain> originalList = sharesInfoService.getHistRateByXueQiu(marketInputDomain);
+        for (MarketRealTimeOutputDomain domain:originalList){
+            MarketInfoNew marketInfoNew = new MarketInfoNew();
+            marketInfoNew.setOpenValue(domain.getOpen());
+            marketInfoNew.setHighest(domain.getHigh());
+            marketInfoNew.setLowest(domain.getLow());
+            marketInfoNew.setEndValue(domain.getCurrentValue());
+            marketInfoNew.setRiseFallRatio(domain.getCurrentPercent());
+            marketInfoNew.setDealAmount(domain.getAmount());
+            marketInfoNew.setDate(domain.getDate());
+            marketInfoNew.setShareCode(domain.getShareCode());
+            list.add(marketInfoNew);
+        }*/
         if (list != null && list.size() > 0) {
             marketInfoNewMapper.insertOrUpdateMarketInfo(list);
         }

@@ -1,11 +1,14 @@
 package com.liuhu.socket.controller;
 
+import com.alibaba.fastjson.JSONArray;
+import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.common.ResponseResult;
 import com.liuhu.socket.domain.input.*;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
+import com.liuhu.socket.entity.ConditionShareCodeInfo;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.service.TradeInfoService;
 import com.liuhu.socket.service.TradeMethodService;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -241,6 +245,51 @@ public class TradeInfoController {
 
 		List<QueryFixSerialDownOutDTO> preSelectionSerialDownDTOList = tradeInfoService.preSelectionGetSerialDownOfRiver(queryProfitByComProgram);
 		return ResponseResult.done(preSelectionSerialDownDTOList);
+	}
+
+
+	/**
+	 * 查询一段时间内连续水下的
+	 */
+	@ResponseBody
+	@RequestMapping("/preSelection")
+	public ResponseResult preSelection(@RequestBody QueryFixSerialDownInDTO queryProfitByComProgram) throws Exception {
+
+
+		List<QueryFixSerialDownOutDTO> downOfRiverList = tradeInfoService.preSelectionGetSerialDownOfRiver(queryProfitByComProgram);
+		List<ConditionShareCodeInfo> shareCodeInfoList = new ArrayList<>();
+		for (QueryFixSerialDownOutDTO queryFixSerialDownOutDTO:downOfRiverList){
+			ConditionShareCodeInfo conditionShareCodeInfo = new ConditionShareCodeInfo();
+			conditionShareCodeInfo.setType("2");
+			conditionShareCodeInfo.setCountDay(queryFixSerialDownOutDTO.getCountDay());
+			conditionShareCodeInfo.setSumRatio(queryFixSerialDownOutDTO.getSumRatio());
+			conditionShareCodeInfo.setShareCode(queryFixSerialDownOutDTO.getShareCode());
+			conditionShareCodeInfo.setShareName(queryFixSerialDownOutDTO.getShareName());
+			shareCodeInfoList.add(conditionShareCodeInfo);
+		}
+
+		List<QueryFixSerialDownOutDTO> fixSerialDownOutList = tradeInfoService.getPreSelectionSerialDownDTOList(queryProfitByComProgram);
+		for (QueryFixSerialDownOutDTO queryFixSerialDownOutDTO:fixSerialDownOutList){
+			ConditionShareCodeInfo conditionShareCodeInfo = new ConditionShareCodeInfo();
+			conditionShareCodeInfo.setType("1");
+			conditionShareCodeInfo.setCountDay(queryFixSerialDownOutDTO.getCountDay());
+			conditionShareCodeInfo.setSumRatio(queryFixSerialDownOutDTO.getSumRatio());
+			conditionShareCodeInfo.setShareName(queryFixSerialDownOutDTO.getShareName());
+			shareCodeInfoList.add(conditionShareCodeInfo);
+		}
+		List<ConditionShareCodeInfo> respList = tradeInfoService.sortConditionList(shareCodeInfoList);
+		JSONArray definedColumnFromArray = MathConstants.getDefinedColumnFromArray(respList, "shareCode", "shareName","sumRatio", "score");
+		return ResponseResult.done(definedColumnFromArray);
+	}
+
+	/**
+	 * 查询全买结果集
+	 */
+	@ResponseBody
+	@RequestMapping("/allByCondition")
+	public ResponseResult allByCondition(@RequestBody GetRateThreeIncomeInputDTO inputDTO){
+		ConditionShareCodeInfo allResultByConditionRule = tradeInfoService.getAllResultByConditionRule(inputDTO);
+		return ResponseResult.done(allResultByConditionRule);
 	}
 
 }

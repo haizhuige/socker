@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Getter
 @Setter
-public class GetRateThreeIncomeInputDTO implements Serializable {
+public class  GetRateThreeIncomeInputDTO implements Serializable {
 
     //是否实时操作
     private Boolean realTimeFlag=true;
@@ -24,7 +25,7 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
 
     private Double minTurnRate;
 
-    private Integer doubleSize=4;
+    private Integer doubleSize=3;
 
 
     private Integer cycleProfit;
@@ -69,5 +70,7 @@ public class GetRateThreeIncomeInputDTO implements Serializable {
     private  Double methodRunRatio = 0.0;
 
     private Integer k =0;
+
+    private Date startDate;
 
 }

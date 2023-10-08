@@ -21,4 +21,6 @@ public interface TradeDateMapper {
     int insertEntityList(@Param("tradeDateInfoList")List<TradeDateInfo> tradeDateInfoList);
 
     TradeDateInfo queryCloserDate(@Param("handleTime")String startTime,@Param("type") String type);
+
+    Integer queryCountDay(@Param("maxDate")Date maxDate,@Param("minDate")Date minDate);
 }

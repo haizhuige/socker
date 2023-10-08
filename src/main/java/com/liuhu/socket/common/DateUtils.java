@@ -1,5 +1,6 @@
 package com.liuhu.socket.common;
 
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -357,4 +358,27 @@ public class DateUtils  {
         Date d = c.getTime();
         return format.format(d);
     }
+
+    /**
+     * 获取当前小时数
+     */
+    public static int getCurrentHour(){
+        Calendar calendar = Calendar.getInstance();
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+        return currentHour;
+    }
+
+
+    @SneakyThrows
+    public static long convertStringToTimestamp(String dateString, DateFormat format){
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format.getFormat());
+        Date date = dateFormat.parse(dateString);
+        return date.getTime();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(convertStringToTimestamp("2019-06-18 00:00:00",DateFormat.YYYY_MM_DD_HH_MM_SS));
+    }
+
+
 }

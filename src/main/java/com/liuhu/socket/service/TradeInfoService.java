@@ -1,11 +1,11 @@
 package com.liuhu.socket.service;
 
 import com.liuhu.socket.domain.input.*;
+import com.liuhu.socket.domain.output.CalNextSaleOrBuyOutDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
-import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO;
+import com.liuhu.socket.entity.ConditionShareCodeInfo;
 import com.liuhu.socket.entity.TradeDateInfo;
-import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
@@ -42,5 +42,15 @@ public interface TradeInfoService {
 
     List<QueryFixSerialDownOutDTO> preSelectionGetSerialDownOfRiver(QueryFixSerialDownInDTO conditionDTO);
 
+    CalNextSaleOrBuyOutDTO getNextHandleSharePrice(CalNextSaleOrBuyInputDTO calNextSaleOrBuyInputDTO);
 
+    /**
+     * 计算积分并排序
+     * @param originalList
+     * @return
+     */
+    List<ConditionShareCodeInfo> sortConditionList(List<ConditionShareCodeInfo> originalList);
+
+
+    ConditionShareCodeInfo getAllResultByConditionRule(GetRateThreeIncomeInputDTO conditionDTO);
 }

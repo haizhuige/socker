@@ -84,4 +84,12 @@
            </if>
     </select>
 
+    <select id="queryCountDay" resultType="java.lang.Integer">
+        select  maxi.id- mini.id+1 as countday from
+
+(select  id from trade_date where date =#{minDate}) mini,
+
+(select id  from trade_date where date = #{maxDate})maxi
+    </select>
+
 </mapper>

@@ -97,6 +97,8 @@ public class HttpClientUtils {
             URL url = new URL(requestUrl);
             Proxy proxy = new Proxy(Proxy.Type.HTTP, new java.net.InetSocketAddress("127.0.0.1", 33210));
             HttpURLConnection urlCon= (HttpURLConnection)url.openConnection(proxy);
+            urlCon.setRequestProperty("cookie", "xq_a_token=29bdb37dee2432c294425cc9e8f45710a62643a5; xqat=29bdb37dee2432c294425cc9e8f45710a62643a5; xq_r_token=3a35db27fcf5471898becda7aa5dab6afeafe471; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOi0xLCJpc3MiOiJ1YyIsImV4cCI6MTY5NjgxMTc5NCwiY3RtIjoxNjk0NDA4OTAwMTY1LCJjaWQiOiJkOWQwbjRBWnVwIn0.TVdhblfV0vdfvR1YfXUbUZFs4BU47KaGlcltI8R4qRCf2FmCxjznQOxFgTgpcbw6sUP1f13nb9ss9g-pg4SoRPw4MEz_qjWO2trtL7CEq7Ci3nKipakoYdz_ZNEm_eQKaTtZ_OJ2EZiwg1ttd19PfBfIslU8uctM3ycN1RTVFA1PlpOq5sGhO7gZo06DHGgWSKQlWgVZTQRod4CW1Ugny9padbgx_hL1u5YgisTwFjtVPyuvaYHlVC2HLjk7WI6lYLh3eirctmlsUxY7RFpSH6JazwchtvtSwuggWXR7SROih-4RuSi8NVjjedhWQMFlNHJcgqdNELatcTO2C1Gcug; cookiesu=141694408909948; u=141694408909948; Hm_lvt_1db88642e346389874251b5a1eded6e3=1694408912; device_id=a783017b6260994507ae643a75a2db68; s=bs1936mgs2; Hm_lpvt_1db88642e346389874251b5a1eded6e3=1694936785");
+            log.info("urlCon resp code is:{}",urlCon.getResponseCode());
             if(200==urlCon.getResponseCode()){
                 InputStream is = urlCon.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is,"utf-8");
