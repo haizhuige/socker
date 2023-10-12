@@ -1,5 +1,6 @@
 package com.liuhu.socket.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.liuhu.socket.domain.input.*;
 import com.liuhu.socket.domain.output.CalNextSaleOrBuyOutDTO;
 import com.liuhu.socket.domain.output.MarketOutputDomain;
@@ -33,7 +34,7 @@ public interface TradeInfoService {
 
     Map<String,Object> getPreFiveAndSubFive(QueryRecentSerialRedConditionDTO input);
 
-    Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
+    Map<Date, JSONArray> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 
     MarketOutputDomain getProfitFromSerialDown(QueryProfitByComProgram queryProfitByComProgram);
 

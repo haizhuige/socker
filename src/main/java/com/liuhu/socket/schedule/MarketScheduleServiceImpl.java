@@ -143,7 +143,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
         }
 
-        if (date.compareTo(currentMaxDateInfo.getDate())>=0){
+        if (date.compareTo(currentMaxDateInfo.getDate())>0){
             return;
         }
         for (ShareInfo excelShare : shareInfoList) {
@@ -172,7 +172,10 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             tradeDateInfo.setId(++id);
             tradeDateInfoList.add(tradeDateInfo);
         }
-        tradeDateMapper.insertEntityList(tradeDateInfoList);
+        if (tradeDateInfoList.size()>0){
+            tradeDateMapper.insertEntityList(tradeDateInfoList);
+        }
+
     }
 
     @Transactional(propagation= Propagation.REQUIRES_NEW)

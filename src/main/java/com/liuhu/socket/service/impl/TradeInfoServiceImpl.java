@@ -1,5 +1,6 @@
 package com.liuhu.socket.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.liuhu.socket.common.ConstantsUtil;
 import com.liuhu.socket.common.DateUtils;
 import com.liuhu.socket.common.MathConstants;
@@ -429,7 +430,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     }
 
     @Override
-    public Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
+    public Map<Date,JSONArray> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
         String startTime = queryProfitByComProgram.getStartTime();
         if (Objects.isNull(startTime)){
             startTime =  conditionShareInfoMapper.queryMaxStartTime();
@@ -450,7 +451,7 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         //计算总数量吧
         int periodDayCount = endTradeDateInfo.getId() - startTradeDateInfo.getId()+1;
         QueryFixSerialDownInDTO conditionDTO = new QueryFixSerialDownInDTO();
-        final  Map<Date,List<String>> resultMap = new HashMap<>();
+        final  Map<Date,JSONArray> resultMap = new HashMap<>();
         List<QueryFixSerialDownOutDTO> allShareInfoList = new ArrayList<>();
         for ( int i=0;i<periodDayCount;i++) {
             final int temp = i;
@@ -490,14 +491,15 @@ public class TradeInfoServiceImpl implements TradeInfoService {
                     continue;
                 }
                 //过滤出所有满足条件的shareCode
-                List<String> shareCodeList = fixSerialDownOutDTOList.stream().map(QueryFixSerialDownOutDTO::getShareCode).collect(Collectors.toList());
+                JSONArray definedColumnFromArray = MathConstants.getDefinedColumnFromArray(fixSerialDownOutDTOList, "shareCode", "shareName");
+              //  List<String> shareCodeList = fixSerialDownOutDTOList.stream().map(QueryFixSerialDownOutDTO::getShareCode).collect(Collectors.toList());
                 //开始计算profit信息
                 if (Objects.isNull(resultMap.get(profitDate))) {
-                    resultMap.put(profitDate, shareCodeList);
+                    resultMap.put(profitDate, definedColumnFromArray);
                 } else {
-                    List<String> list = resultMap.get(profitDate);
-                    list.addAll(shareCodeList);
-                    resultMap.put(profitDate, list);
+                    JSONArray jsonArray = resultMap.get(profitDate);
+                    jsonArray.addAll(definedColumnFromArray);
+                    resultMap.put(profitDate, jsonArray);
                 }
                 //对满足条件的设置购买时间
                 Date finalProfitDate = profitDate;

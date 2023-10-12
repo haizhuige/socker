@@ -209,7 +209,7 @@ public class TradeInfoController {
 	@RequestMapping("/getFixSerialDown")
 	public ResponseResult getFixSerialDown(@RequestBody QueryProfitByComProgram queryProfitByComProgram) throws Exception {
 
-		Map<Date, List<String>> fixSerialDown = tradeInfoService.getFixSerialDown(queryProfitByComProgram);
+		Map<Date, JSONArray> fixSerialDown = tradeInfoService.getFixSerialDown(queryProfitByComProgram);
 		return ResponseResult.done(fixSerialDown);
 	}
 
