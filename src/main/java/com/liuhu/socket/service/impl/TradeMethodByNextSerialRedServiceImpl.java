@@ -75,14 +75,19 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
             shareInfo.setStatus("1");
             List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
             shareCodeList = shareInfoList.stream().map(shareInfo1 -> shareInfo1.getShareCode()).collect(Collectors.toList());
-            date  =  serialTempMapper.selectMaxDateFromHandleData(shareCodeList.get(0));
+            date = serialTempMapper.selectMaxDateFromHandleData(shareCodeList.get(0));
+            Date marketNewDate = tradeInfoService.queryMaxDate().getDate();
+            if (date.compareTo(marketNewDate)==0){
+                return null;
+            }
+
         } else {
             shareCodeList.add(input2Domain.getShareCode());
         }
 
         for (String shareCode : shareCodeList) {
             Date finalDate = date;
-            taskExecutor.execute(()->{
+            taskExecutor.execute(() -> {
                 input2Domain.setRateOrAmountDay(Integer.valueOf(shareCode));
                 List<String> newShareCodeList = new ArrayList<>();
                 String newShareCode = "cn_" + shareCode;
@@ -90,9 +95,9 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
                /* if (!allFlag){
                     finalDate =  serialTempMapper.selectMaxDateFromHandleData(shareCode);
                 }*/
-                input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1, finalDate,"plus"),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-          /*  input2Domain.setStartTime("2018-01-02 00:00:00");
-            input2Domain.setEndTime("2019-12-31 00:00:00");*/
+                input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1, finalDate, "plus"), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+                /*  input2Domain.setStartTime("2018-01-02 00:00:00");
+                    input2Domain.setEndTime("2019-12-31 00:00:00");*/
                 //查询某一时间区间的socker收益率
                 List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(null, newShareCodeList, input2Domain);
                 if (outPutDTOList.size() > 0) {

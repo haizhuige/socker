@@ -378,25 +378,25 @@ public class TradeInfoServiceImpl implements TradeInfoService {
 
         List<MarketOutputDomain> returnList = new ArrayList<>();
         Integer periodUpDay = input.getPeriodUpDay();
-        for (int i =1;i<periodUpDay;i++ ){
-        QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
-        BeanUtils.copyProperties(input,queryRecentSerialRedConditionDO);
-        queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-        queryRecentSerialRedConditionDO.setSelectEndTime(getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS),"plus"));
-        queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(i,queryRecentSerialRedConditionDO.getSelectStartTime(),"sub"));
-        queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
-        queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
-        queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(),queryRecentSerialRedConditionDO.getDownEndTime(),"sub"));
-        List<MarketOutputDomain> marketOutputDomains = marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
+        for (int i = 1; i < periodUpDay; i++) {
+            QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO = new QueryRecentSerialRedConditionDO();
+            BeanUtils.copyProperties(input, queryRecentSerialRedConditionDO);
+            queryRecentSerialRedConditionDO.setSelectStartTime(DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
+            queryRecentSerialRedConditionDO.setSelectEndTime(getWantDate(queryRecentSerialRedConditionDO.getRecentRateDay(), DateUtils.parse(input.getSelectStartTime(), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS), "plus"));
+            queryRecentSerialRedConditionDO.setUpStartTime(getWantDate(i, queryRecentSerialRedConditionDO.getSelectStartTime(), "sub"));
+            queryRecentSerialRedConditionDO.setUpEndTime(queryRecentSerialRedConditionDO.getSelectStartTime());
+            queryRecentSerialRedConditionDO.setDownEndTime(queryRecentSerialRedConditionDO.getUpStartTime());
+            queryRecentSerialRedConditionDO.setDownStartTime(getWantDate(queryRecentSerialRedConditionDO.getPeriodDownDay(), queryRecentSerialRedConditionDO.getDownEndTime(), "sub"));
+            List<MarketOutputDomain> marketOutputDomains = marketInfoMapper.queryPrePurchaseSocker(queryRecentSerialRedConditionDO);
             List<String> codeList = returnList.stream().map(MarketOutputDomain::getShareCode).collect(Collectors.toList());
-            for (MarketOutputDomain mk:marketOutputDomains){
-                if (!codeList.contains(mk.getShareCode())){
+            for (MarketOutputDomain mk : marketOutputDomains) {
+                if (!codeList.contains(mk.getShareCode())) {
                     returnList.add(mk);
                 }
-        }
+            }
 
         }
-        if (!CollectionUtils.isEmpty(returnList)){
+        if (!CollectionUtils.isEmpty(returnList)) {
             returnList = returnList.stream().sorted(Comparator.comparing(MarketOutputDomain::getRate).reversed()).collect(Collectors.toList());
         }
         return returnList;
@@ -431,7 +431,18 @@ public class TradeInfoServiceImpl implements TradeInfoService {
     @Override
     public Map<Date,List<String>> getFixSerialDown(QueryProfitByComProgram queryProfitByComProgram) {
         String startTime = queryProfitByComProgram.getStartTime();
+        if (Objects.isNull(startTime)){
+            startTime =  conditionShareInfoMapper.queryMaxStartTime();
+            if (Objects.isNull(startTime)){
+                startTime = "2018-01-03 00:00:00";
+            }
+        }
         String endTime = queryProfitByComProgram.getEndTime();
+        if (Objects.isNull(endTime)){
+            TradeDateInfo tradeDateInfo = tradeDateMapper.queryMaxDate();
+            endTime = DateUtils.format(tradeDateInfo.getDate(),DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+        }
+        List<String> planList;
         //计算开始结束的准确工作日
         TradeDateInfo startTradeDateInfo =  tradeDateMapper.queryCloserDate(startTime,"start");
         Date startDate = startTradeDateInfo.getDate();
@@ -441,70 +452,74 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         QueryFixSerialDownInDTO conditionDTO = new QueryFixSerialDownInDTO();
         final  Map<Date,List<String>> resultMap = new HashMap<>();
         List<QueryFixSerialDownOutDTO> allShareInfoList = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(periodDayCount);
-        for ( int i=0;i<periodDayCount;i++){
+        for ( int i=0;i<periodDayCount;i++) {
             final int temp = i;
-           /* taskExecutor.execute(()->{
-                if (taskExecutor.getThreadPoolExecutor().isTerminated()){
-                    return;
-                }
-                latch.countDown();*/
-                Date handleDate = tradeDateMapper.getWantDate(temp, startDate, "plus");
-                conditionDTO.setStartDate(handleDate);
-                String plan = queryProfitByComProgram.getPlan();
-                List<QueryFixSerialDownOutDTO> fixSerialDownOutDTOList;
-                Date profitDate;
+            Date handleDate = tradeDateMapper.getWantDate(temp, startDate, "plus");
+            conditionDTO.setStartDate(handleDate);
+            planList= queryProfitByComProgram.getPlanList();
+            if (Objects.isNull(planList)){
+                planList = Arrays.asList("1","2");
+            }else if (planList.size()==0&&Objects.nonNull(queryProfitByComProgram.getPlan())){
+                planList.add(queryProfitByComProgram.getPlan());
+            }
+            List<QueryFixSerialDownOutDTO> unitAllFixSerialDownOutList = new ArrayList<>();
+            Date profitDate;
+            for (String plan:planList){
                 //获取某一天满足条件的fund信息
-                switch (plan){
+                List<QueryFixSerialDownOutDTO> fixSerialDownOutDTOList;
+                switch (plan) {
                     case "1"://连续down five percent
                         fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
-                        profitDate = tradeDateMapper.getWantDate(1, handleDate, "plus");
+                        profitDate = handleDate;
                         break;
                     case "2"://两连水下
                         fixSerialDownOutDTOList = getSerialDownOfRiver(conditionDTO);
-                        profitDate = tradeDateMapper.getWantDate(1, handleDate, "plus");
+                        profitDate = handleDate;
                         break;
                     case "3":
                         fixSerialDownOutDTOList = getFirstUpPreDown(conditionDTO);
-                        profitDate = handleDate;
+                        profitDate = tradeDateMapper.getWantDate(1, handleDate, "sub");
                         break;
                     default:
                         fixSerialDownOutDTOList = getFixSerialDownOutDTOList(conditionDTO);
-                        profitDate = tradeDateMapper.getWantDate(1, handleDate, "plus");
+                        profitDate = handleDate;
                         break;
                 }
 
-                if (fixSerialDownOutDTOList.size()==0){
+                if (fixSerialDownOutDTOList.size() == 0) {
                     continue;
                 }
-
-                fixSerialDownOutDTOList.forEach(entity-> entity.setHandleDate(profitDate));
-
+                //过滤出所有满足条件的shareCode
                 List<String> shareCodeList = fixSerialDownOutDTOList.stream().map(QueryFixSerialDownOutDTO::getShareCode).collect(Collectors.toList());
                 //开始计算profit信息
-                if (Objects.isNull(resultMap.get(profitDate))){
-                    resultMap.put(profitDate,shareCodeList);
-                }else {
+                if (Objects.isNull(resultMap.get(profitDate))) {
+                    resultMap.put(profitDate, shareCodeList);
+                } else {
                     List<String> list = resultMap.get(profitDate);
                     list.addAll(shareCodeList);
-                    resultMap.put(profitDate,list);
+                    resultMap.put(profitDate, list);
                 }
-
-                allShareInfoList.addAll(fixSerialDownOutDTOList);
-        //    });
+                //对满足条件的设置购买时间
+                Date finalProfitDate = profitDate;
+                fixSerialDownOutDTOList.forEach(entity -> {entity.setHandleDate(finalProfitDate);
+                entity.setPlan(plan);});
+                //把每次方案过滤出来满足条件的数据新增到单个代码中
+                unitAllFixSerialDownOutList.addAll(fixSerialDownOutDTOList);
+            }
+            //如果当前日期下没有满足条件的代码,则进入下一轮循环
+            if (unitAllFixSerialDownOutList.size()==0){
+                continue;
+            }
+            //把满足条件的个股加入到所有满足条件的list中
+            allShareInfoList.addAll(unitAllFixSerialDownOutList);
         }
-        // 关闭线程池
-     //   taskExecutor.shutdown();
-
         try {
-            // 等待所有子线程完成
-         //   latch.await();
             List<ConditionShareCodeInfo> list = new ArrayList<>();
             for (QueryFixSerialDownOutDTO outDTO:allShareInfoList){
                 ConditionShareCodeInfo conditionShareCodeInfo = new ConditionShareCodeInfo();
                 conditionShareCodeInfo.setDate(outDTO.getHandleDate());
                 conditionShareCodeInfo.setShareCode(outDTO.getShareCode());
-                conditionShareCodeInfo.setType(queryProfitByComProgram.getPlan());
+                conditionShareCodeInfo.setType(outDTO.getPlan());
                 conditionShareCodeInfo.setCountDay(outDTO.getCountDay());
                 conditionShareCodeInfo.setSumRatio(outDTO.getSumRatio());
                 list.add(conditionShareCodeInfo);
@@ -515,8 +530,6 @@ public class TradeInfoServiceImpl implements TradeInfoService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
         return resultMap;
     }
 

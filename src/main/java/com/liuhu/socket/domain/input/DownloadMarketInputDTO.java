@@ -5,6 +5,8 @@ import lombok.Setter;
 
 import java.io.Serializable;
 
+import java.util.List;
+
 @Setter
 @Getter
 public class DownloadMarketInputDTO implements Serializable {
@@ -16,4 +18,6 @@ public class DownloadMarketInputDTO implements Serializable {
     private String startTime;
 
     private String endTime;
+
+    private List<String> planList;
 }

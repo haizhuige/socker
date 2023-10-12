@@ -11,4 +11,6 @@ public interface ConditionShareInfoMapper {
     void insertList(@Param(value = "list") List<ConditionShareCodeInfo> shareCodeInfoList);
 
     List<ConditionShareCodeInfo> queryShareCodeByCondition(@Param(value = "condition")QueryProfitByComProgram queryProfitByComProgram);
+
+    String queryMaxStartTime();
 }

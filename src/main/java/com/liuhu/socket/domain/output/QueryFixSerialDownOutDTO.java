@@ -18,4 +18,6 @@ public class QueryFixSerialDownOutDTO {
     private Integer countDay;
 
     private Date handleDate;
+
+    private String plan;
 }

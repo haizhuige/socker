@@ -1,5 +1,6 @@
 package com.liuhu.socket.schedule;
 
+import com.liuhu.socket.domain.input.DownloadMarketInputDTO;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
 
@@ -11,4 +12,5 @@ public interface MarketScheduleService {
 
      SockerSouhuImportEntity getMarketJsonBySouhu(MarketInputDomain inputDomain) throws IOException;
 
+    void runMarketDataInfo(DownloadMarketInputDTO downloadMarketInputDTO);
 }

@@ -78,4 +78,11 @@ public class SharesInfoController {
         }
         return ResponseResult.done("设置成功");
     }
+
+    @ResponseBody
+    @RequestMapping("/runMarketDataInfo")
+    public ResponseResult runMarketDataInfo(@RequestBody DownloadMarketInputDTO downloadMarketInputDTO) {
+        scheduleTask.runMarketDataInfo(downloadMarketInputDTO);
+        return ResponseResult.done("导入成功");
+    }
 }

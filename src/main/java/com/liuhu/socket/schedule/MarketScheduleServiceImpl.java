@@ -10,6 +10,8 @@ import com.liuhu.socket.dao.ShareInfoMapper;
 import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.DownloadMarketInputDTO;
 import com.liuhu.socket.domain.input.MarketInputDomain;
+import com.liuhu.socket.domain.input.QueryProfitByComProgram;
+import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
 import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.dto.SockerExcelEntity;
 import com.liuhu.socket.dto.SockerSouhuImportEntity;
@@ -18,11 +20,14 @@ import com.liuhu.socket.entity.ShareInfo;
 import com.liuhu.socket.entity.TradeDateInfo;
 import com.liuhu.socket.enums.SockerStatusEnum;
 import com.liuhu.socket.service.SharesInfoService;
+import com.liuhu.socket.service.TradeInfoService;
+import com.liuhu.socket.service.TradeMethodService;
 import com.liuhu.socket.service.impl.SharesInfoServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -55,9 +60,11 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     @Value("${sohuDownload.param}")
     private String soHuStaticParam;
 
+    @Resource(name = "nextSerialRed")
+    private TradeMethodService tradeMethodService;
 
-
-
+    @Resource
+    TradeInfoService tradeInfoService;
 
     @Resource
     MarketInfoNewMapper marketInfoNewMapper;
@@ -136,7 +143,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
         }
 
-        if (date.compareTo(currentMaxDateInfo.getDate())>0){
+        if (date.compareTo(currentMaxDateInfo.getDate())>=0){
             return;
         }
         for (ShareInfo excelShare : shareInfoList) {
@@ -319,6 +326,25 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         }
         entity.setList(sohuList);
         return entity;
+    }
+
+    @Override
+    public void runMarketDataInfo(DownloadMarketInputDTO downloadMarketInputDTO) {
+        try {
+            //跑行情数据
+            getMarketInfoBySouHu(downloadMarketInputDTO);
+            //跑收益率数据
+            QueryRecentSerialRedConditionDTO queryRecentSerialRedConditionDTO = new QueryRecentSerialRedConditionDTO();
+            queryRecentSerialRedConditionDTO.setAllFlag(true);
+            tradeMethodService.queryThreeDownRatioByDate(queryRecentSerialRedConditionDTO);
+            //过滤出符合购买条件的数据到condition表中
+            QueryProfitByComProgram queryProfitByComProgram = new QueryProfitByComProgram();
+            BeanUtils.copyProperties(downloadMarketInputDTO,queryProfitByComProgram);
+            tradeInfoService.getFixSerialDown(queryProfitByComProgram);
+
+        } catch (Exception e) {
+            log.error("跑行情失败:{}",e);
+        }
     }
 
     /**

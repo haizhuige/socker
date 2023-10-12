@@ -36,6 +36,9 @@
         </if>
         order by type
     </select>
+    <select id="queryMaxStartTime" resultType="java.lang.String">
+        select max(date) from condition_share_info
+    </select>
 
 
 </mapper>
