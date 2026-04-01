@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
+
 @Slf4j
 @RequestMapping("/trade")
 public class TradeInfoController {

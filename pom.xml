@@ -92,12 +92,6 @@
 			<version>1.2.3</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>org.jfree</groupId>
-			<artifactId>jfreechart</artifactId>
-		</dependency>
-
     </dependencies>
 
 	<build>
