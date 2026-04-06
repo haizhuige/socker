@@ -92,4 +92,8 @@
 (select id  from trade_date where date = #{maxDate})maxi
     </select>
 
+    <select id="getNextTradeDate" resultType="java.util.Date">
+        select date from trade_date where date > #{date} order by date limit 1
+    </select>
+
 </mapper>

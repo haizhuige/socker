@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -433,6 +434,11 @@ public class SharesInfoServiceImpl implements SharesInfoService {
         return null;
     }
 
+    @Override
+    public void updateHqUpdateTimeByShareCode(String shareCode, String hqUpdateTime) {
+        shareInfoMapper.updateHqUpdateTimeByShareCode(shareCode, hqUpdateTime);
+    }
+
     private List<QueryRecentSerialRedOutPutDTO> getExactSerialRedCondition(QueryRecentSerialRedConditionDTO input2Domain, QueryRecentSerialRedConditionDO queryRecentSerialRedConditionDO, Entry entry,Date upStartTime) {
         Date key =(Date)entry.getKey();
         BeanUtils.copyProperties(input2Domain,queryRecentSerialRedConditionDO);
@@ -594,5 +600,80 @@ public class SharesInfoServiceImpl implements SharesInfoService {
 
     }
 
+    @Override
+    public int retryMissingSharesByDate(String date) {
+        List<ShareInfo> missingShareInfos = shareInfoMapper.getMissingShareInfoByDate(date);
+        if (CollectionUtils.isEmpty(missingShareInfos)) {
+            log.info("日期 {} 的股票数据完整，无需补录", date);
+            return 0;
+        }
+        int totalSize = missingShareInfos.size();
+        log.info("日期 {} 缺失 {} 只股票，开始补录", date, totalSize);
+
+        // 使用线程池并发补录，最大 20 个线程
+        int threadPoolSize = 20;
+        java.util.concurrent.ExecutorService executorService = java.util.concurrent.Executors.newFixedThreadPool(threadPoolSize);
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalSize);
+        java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        String endTime = date.replace("-", "").replace(" ", "").substring(0, 8);
+
+        for (ShareInfo shareInfo : missingShareInfos) {
+            executorService.execute(() -> {
+                String shareCode = shareInfo.getShareCode();
+                try {
+                    MarketInputDomain inputDomain = new MarketInputDomain();
+                    inputDomain.setShareCode(shareCode);
+                    // 根据 hq_update_time 决定起始时间，如果没有则取当前时间前 3000 天
+                    String startTime;
+                    if (shareInfo.getHqUpdateTime() != null) {
+                        // 从 hq_update_time 的第二天开始
+                        startTime = DateUtils.operateDate(shareInfo.getHqUpdateTime(), 1, DateUtils.DateFormat.YYYYMMDD.getFormat());
+                    } else {
+                        // 当前时间前 3000 天
+                        startTime = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat());
+                    }
+                    if (startTime.compareTo(endTime) > 0) {
+                        successCount.incrementAndGet();
+                        return;
+                    }
+                    inputDomain.setStartTime(startTime);
+                    inputDomain.setEndTime(endTime);
+                    // 补录使用 5 次重试，提高成功率
+                    SockerSouhuImportEntity importEntity = scheduleTask.getMarketJsonBySouhuWithRetry(inputDomain, 5);
+                    if (importEntity != null && !CollectionUtils.isEmpty(importEntity.getList())) {
+                        marketInfoNewMapper.insertOrUpdateMarketInfo(importEntity.getList());
+                        // 更新 share_info 表的 hq_update_time
+                        updateHqUpdateTimeByShareCode(shareCode, endTime);
+                        successCount.incrementAndGet();
+                        log.debug("股票 {} 补录成功，时间范围 {}~{}，共 {} 条数据", shareCode, startTime, endTime, importEntity.getList().size());
+                    } else {
+                        log.warn("股票 {} 获取数据为空", shareCode);
+                    }
+                } catch (Exception e) {
+                    log.error("股票 {} 补录失败：{}", shareCode, e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // 等待所有任务完成
+        try {
+            long timeout = Math.max(300L, totalSize * 5L / threadPoolSize);
+            log.info("等待补录任务完成，超时时间设置为 {} 秒", timeout);
+            if (!latch.await(timeout, TimeUnit.SECONDS)) {
+                log.warn("部分补录任务未在规定时间内完成");
+            }
+        } catch (InterruptedException e) {
+            log.error("等待补录任务完成时被中断", e);
+            Thread.currentThread().interrupt();
+        } finally {
+            executorService.shutdown();
+        }
+
+        log.info("日期 {} 补录完成，成功 {}/{}", date, successCount.get(), totalSize);
+        return successCount.get();
+    }
 
 }

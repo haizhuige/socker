@@ -778,7 +778,7 @@
          and deal_amount > 8000000) hihi,share_info sinf
         where hihi.rowhi = hihi.xoRownum
         and  SUBSTR(hihi.share_code,4) = sinf.share_code
-        GROUP BY hihi.share_code
+        GROUP BY hihi.share_code, sinf.share_name, sinf.type
         having count(hihi.share_code)>=#{condition.minSerialCount}
         and  sum(rise_fall_ratio)&lt; #{condition.fixDownRatio}
         ORDER BY sinf.type;

@@ -5,6 +5,7 @@ import com.liuhu.socket.common.MathConstants;
 import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
+import com.liuhu.socket.domain.input.QueryStockReturnDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.service.TradeMethodService;
@@ -35,6 +36,11 @@ public class TradeMethodByOneSockerIncomeServiceImpl implements TradeMethodServi
 
     @Override
     public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
+        return null;
+    }
+
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> calculateStockReturn(QueryStockReturnDTO inputDTO) throws Exception {
         return null;
     }
 

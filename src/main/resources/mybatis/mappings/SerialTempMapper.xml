@@ -146,7 +146,7 @@
 
     </select>
     <select id="selectMaxDateFromHandleData" resultType="java.util.Date">
-        select max(start_time) as startTime from  serial_temp where  up_period_count = #{shareCode}
+        select max(start_time) as startTime from  serial_temp where share_code = #{shareCode}
     </select>
     <select id="queryShareInfoByCondition"
             resultType="com.liuhu.socket.domain.output.QueryFixSerialDownOutDTO">

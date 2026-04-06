@@ -20,4 +20,8 @@ public interface ShareInfoMapper {
     List<ShareInfo> getRandomSocket(@Param("count") Integer count);
     //根据条件查询随机的股票代码
     List<String> getRandomSocketByCondition(MarketDetailInputDomain input);
+
+    int updateHqUpdateTimeByShareCode(@Param("shareCode") String shareCode, @Param("hqUpdateTime") String hqUpdateTime);
+
+    List<ShareInfo> getMissingShareInfoByDate(@Param("date") String date);
 }

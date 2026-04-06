@@ -23,4 +23,11 @@ public interface TradeDateMapper {
     TradeDateInfo queryCloserDate(@Param("handleTime")String startTime,@Param("type") String type);
 
     Integer queryCountDay(@Param("maxDate")Date maxDate,@Param("minDate")Date minDate);
+
+    /**
+     * 查询给定日期之后的第一个交易日
+     * @param date 给定日期
+     * @return 下一个交易日
+     */
+    Date getNextTradeDate(@Param("date") Date date);
 }

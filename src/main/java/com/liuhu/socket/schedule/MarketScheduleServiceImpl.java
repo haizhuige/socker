@@ -38,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -110,11 +111,9 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
 
     @Scheduled(cron = "0 0 15 1/1 * ? ")
     public void getMarketInfoBySouHu(DownloadMarketInputDTO downloadMarketInputDTO) throws IOException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-
         String originShareCode = downloadMarketInputDTO.getOriginalShareCode();
         /**
-         * 查询关注的socker信息
+         * 查询关注的 socker 信息
          */
         ShareInfo shareInfo = new ShareInfo();
         shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
@@ -130,52 +129,77 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             shareInfoList.add(newShareInfo);
         }
 
+        int totalSize = shareInfoList.size();
+        log.info("开始下载行情数据，共 {} 只股票", totalSize);
+
+        // 根据股票数量动态调整线程池大小，最大 40 个线程（配合信号量限制）
+        int threadPoolSize = Math.min(40, Math.max(20, totalSize / 125));
+        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
+        CountDownLatch latch = new CountDownLatch(totalSize);
+
+        log.info("线程池大小：{}，预计耗时：{} 分钟", threadPoolSize, (totalSize * 5 / threadPoolSize / 60) + 1);
+
         TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
 
-        if (Objects.nonNull(originShareCode)){
-            originShareCode = "cn_"+originShareCode;
-        }else{
-            originShareCode = "cn_"+shareInfoList.get(0).getShareCode();
-        }
-        Date   date = marketInfoNewMapper.queryMaxDate(originShareCode);
-        if (date ==null){
+        if (currentMaxDateInfo ==null){
             String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS.getFormat());
-            date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+            Date date = DateUtils.parse(s,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+            currentMaxDateInfo = new TradeDateInfo();
+            currentMaxDateInfo.setDate(date);
         }
 
-        if (date.compareTo(currentMaxDateInfo.getDate())>0){
-            return;
-        }
+
+        // 使用线程安全的失败股票列表
+        final List<String> currentFailedShares = failedShareCodes;
+
         for (ShareInfo excelShare : shareInfoList) {
-            excelShare.setDate(date);
-            PatchThread patchThread = new PatchThread(excelShare);
+            PatchThread patchThread = new PatchThread(excelShare, currentFailedShares, latch);
             executorService.execute(patchThread);
         }
-        //关闭线程池
+
+        // 关闭线程池（不再接受新任务）
         executorService.shutdown();
-        // 等待线程池中的任务执行完成
-       try {
-            executorService.awaitTermination(20, TimeUnit.SECONDS);
+
+        // 等待所有任务完成
+        try {
+            // 动态计算超时时间：按每只股票平均 5 秒计算（含重试）
+            // 5000 只股票 / 50 线程 * 5 秒 = 500 秒 ≈ 9 分钟
+            long timeout = Math.max(600L, totalSize * 5L / threadPoolSize);
+            log.info("等待任务完成，超时时间设置为 {} 秒（{} 分钟）", timeout, timeout / 60);
+            if (!latch.await(timeout, TimeUnit.SECONDS)) {
+                log.warn("部分股票下载任务未在规定时间内完成，剩余 {} 个任务", latch.getCount());
+            } else {
+                log.info("所有股票下载任务完成");
+            }
         } catch (InterruptedException e) {
-            // 处理中断异常
+            log.error("等待任务完成时被中断", e);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
         }
-        //插入dateList到日志列表中
+
+        // 插入缺失的日期到 trade_date 表
         List<Date> dateList = queryDistinctDate();
         Date currentMaxDate = currentMaxDateInfo.getDate();
         List<Date> insertDateList = dateList.stream().filter(date1 -> date1.compareTo(currentMaxDate) > 0).sorted(Date::compareTo).collect(Collectors.toList());
-        log.info("查询需要插入的日期为：{}", JSONArray.toJSONString(insertDateList));
         List<TradeDateInfo> tradeDateInfoList = new ArrayList<>();
         int id = currentMaxDateInfo.getId();
-        for (Date insertDate:insertDateList){
+        for (Date insertDate : insertDateList) {
             TradeDateInfo tradeDateInfo = new TradeDateInfo();
             tradeDateInfo.setDate(insertDate);
             tradeDateInfo.setId(++id);
             tradeDateInfoList.add(tradeDateInfo);
         }
-        if (tradeDateInfoList.size()>0){
+        if (!tradeDateInfoList.isEmpty()) {
             tradeDateMapper.insertEntityList(tradeDateInfoList);
+            log.info("插入 {} 个交易日日期到 trade_date 表", tradeDateInfoList.size());
         }
 
+        // 输出失败统计
+        if (!failedShareCodes.isEmpty()) {
+            log.error("本次下载完成，共 {} 只股票失败，可以通过 /retryFailedShares.do 接口重试", failedShareCodes.size());
+        } else {
+            log.info("行情数据下载完成，全部成功！");
+        }
     }
 
     @Transactional(propagation= Propagation.REQUIRES_NEW)
@@ -183,10 +207,14 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         return marketInfoNewMapper.queryDistinctDate();
     }
 
-    private void queryInsert(ShareInfo excelShare) throws Exception {
-        Date date = excelShare.getDate();
+    /**
+     * 处理单个股票的下载任务
+     */
+    private boolean queryInsert(ShareInfo excelShare) throws Exception {
+        Date date = excelShare.getHqUpdateTime();
         MarketInputDomain inputDomain = new MarketInputDomain();
-        inputDomain.setShareCode(excelShare.getShareCode());
+        String shareCode = excelShare.getShareCode();
+        inputDomain.setShareCode(shareCode);
         if (date == null) {
             inputDomain.setStartTime(DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYYMMDD.getFormat()));
         } else {
@@ -194,25 +222,35 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         }
         inputDomain.setEndTime(DateUtils.format(new Date(), DateUtils.DateFormat.YYYYMMDD));
         if (inputDomain.getEndTime().compareTo(inputDomain.getStartTime()) < 0) {
-            return;
+            log.debug("股票 {} 无需更新数据", shareCode);
+            return true;
         }
-        SockerSouhuImportEntity importEntity = this.getMarketJsonBySouhuWithRetry(inputDomain, 3);
+        // 增加重试次数从 3 到 5
+        SockerSouhuImportEntity importEntity = this.getMarketJsonBySouhuWithRetry(inputDomain, 5);
         if (importEntity == null) {
-            log.warn("股票 {} 获取数据失败", excelShare.getShareCode());
-            return;
+            log.warn("股票 {} 获取数据失败", shareCode);
+            return false;
         }
-        log.info("股票 {} 成功获取到 {} 条数据", excelShare.getShareCode(),
+        log.info("股票 {} 成功获取到 {} 条数据", shareCode,
                 importEntity.getList() != null ? importEntity.getList().size() : 0);
         List<MarketInfoNew> list = importEntity.getList();
         if (list != null && list.size() > 0) {
             marketInfoNewMapper.insertOrUpdateMarketInfo(list);
-            log.info("股票 {} 插入 {} 条行情数据成功", excelShare.getShareCode(), list.size());
+            // 更新行情时间 - 使用纯股票代码（去除 cn_ 前缀）
+            String marketShareCode = list.get(0).getShareCode();
+            if (marketShareCode != null && marketShareCode.startsWith("cn_")) {
+                marketShareCode = marketShareCode.substring(3);
+            }
+            log.info("股票 {} 准备更新 hqUpdateTime 为 {}", shareCode, inputDomain.getEndTime());
+            sharesInfoService.updateHqUpdateTimeByShareCode(shareCode, inputDomain.getEndTime());
+            log.info("股票 {} 插入 {} 条行情数据成功，hqUpdateTime 已更新", shareCode, list.size());
         }
+        return true;
     }
 
     private List<String> getInfoByParam(MarketInputDomain inputDomain) throws IOException {
         List<String> list = new ArrayList<>();
-        //有的股票是前缀加0 有的股票前缀加1
+        //有的股票是前缀加 0 有的股票前缀加 1
         String[] array = {"0", "1"};
         for (int i = array.length - 1; i >= 0; i--) {
             if (list != null && list.size() > 1) {
@@ -220,7 +258,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             }
             // 参数
             StringBuffer params = new StringBuffer();
-            // 字符数据最好encoding以下;这样一来，某些特殊字符才能传过去(如:某人的名字就是“&”,不encoding的话,传不过去)
+            // 字符数据最好 encoding 以下;这样一来，某些特殊字符才能传过去 (如：某人的名字就是"&",不 encoding 的话，传不过去)
             if ("A00001".equals(inputDomain.getShareCode())) {
                 params.append("code=0000001");
             } else {
@@ -230,7 +268,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             params.append("start=" + inputDomain.getStartTime().replace("-", ""));
             params.append("&");
             params.append("end=" + inputDomain.getEndTime().replace("-", ""));
-            // 创建Get请求
+            // 创建 Get 请求
             String totalUrl = url + params + staticParam;
             list = HttpClientUtils.commonGetMethodByParam(totalUrl);
             if (list != null && list.size() >= 2 && list.get(1).contains(inputDomain.getShareName())) {
@@ -262,7 +300,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         params.append("start=" + inputDomain.getStartTime().replace("-", ""));
         params.append("&");
         params.append("end=" + inputDomain.getEndTime().replace("-", ""));
-        // 创建Get请求
+        // 创建 Get 请求
         if (StringUtils.isEmpty(period)){
             periodUrl = "&period=d";
         }else {
@@ -309,14 +347,18 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         return entity;
     }
 
+    private static final Random RANDOM = new Random();
+
+    // 信号量限制并发请求数，避免被搜狐限流（优化：从 30 增加到 40）
+    private static final java.util.concurrent.Semaphore RATE_LIMITER = new java.util.concurrent.Semaphore(40);
+
     /**
-     * 带重试机制的搜狐行情获取方法
+     * 带重试机制的搜狐行情获取方法（优化版 - 高成功率 + 性能平衡）
      * @param inputDomain 输入参数
      * @param maxRetries 最大重试次数
      * @return 行情数据实体
      */
     public SockerSouhuImportEntity getMarketJsonBySouhuWithRetry(MarketInputDomain inputDomain, int maxRetries) throws Exception {
-        JSONArray array;
         String period = inputDomain.getPeriod();
         String periodUrl;
         StringBuffer params = new StringBuffer();
@@ -340,66 +382,97 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         String totalUrl = sohuUrl + params + soHuStaticParam+ periodUrl;
 
         int retryCount = 0;
-        String response = null;
+        HttpClientUtils.HttpResponseResult responseResult = null;
 
         while (retryCount < maxRetries) {
+            java.util.concurrent.Semaphore semaphore = RATE_LIMITER;
+            boolean acquired = false;
             try {
-                response = HttpClientUtils.getXpath(totalUrl);
-                log.info("股票 {} 第 {} 次请求，URL: {}", inputDomain.getShareCode(), retryCount + 1, totalUrl);
+                // 获取信号量许可，最多等待 30 秒（增加等待时间）
+                acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
+                if (!acquired) {
+                    log.warn("股票 {} 等待信号量超时，跳过本次请求", inputDomain.getShareCode());
+                    return null;
+                }
 
-                if (response != null && !response.isEmpty() && ! "{}".equals(response)) {
-                    array = JSONArray.parseArray(response);
-                    if (array != null && array.size() > 0) {
-                        SockerSouhuImportEntity entity = array.getObject(0, SockerSouhuImportEntity.class);
-                        List<List<String>> hqList = entity.getHq();
+                // 直接调用底层方法
+                responseResult = HttpClientUtils.getXpathByHttpClient(totalUrl);
 
-                        if (!CollectionUtils.isEmpty(hqList)) {
-                            log.info("股票 {} 获取成功，重试次数：{}，数据量：{}", inputDomain.getShareCode(), retryCount, hqList.size());
-                        }
+                if (responseResult.isSuccess()) {
+                    String response = responseResult.getContent();
+                    if (! "{}".equals(response)) {
+                        JSONArray array = JSONArray.parseArray(response);
+                        if (array != null && array.size() > 0) {
+                            SockerSouhuImportEntity entity = array.getObject(0, SockerSouhuImportEntity.class);
+                            List<List<String>> hqList = entity.getHq();
 
-                        String code = entity.getCode();
-                        List<MarketInfoNew> sohuList = new ArrayList<>();
-                        for (List<String> list : hqList) {
-                            MarketInfoNew socker = new MarketInfoNew();
-                            socker.setDate(DateUtils.parse(list.get(0), DateUtils.DateFormat.YYYY_MM_DD));
-                            socker.setShareCode(code);
-                            socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 4));
-                            socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 4));
-                            socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 4));
-                            if (list.get(4).contains("%")) {
-                                socker.setRiseFallRatio(MathConstants.ParseStrPointKeep(list.get(4).replace("%", ""), 4));
+                            if (!CollectionUtils.isEmpty(hqList)) {
+                                log.debug("股票 {} 获取成功，数据量：{}", inputDomain.getShareCode(), hqList.size());
+
+                                String code = entity.getCode();
+                                List<MarketInfoNew> sohuList = new ArrayList<>();
+                                for (List<String> list : hqList) {
+                                    MarketInfoNew socker = new MarketInfoNew();
+                                    socker.setDate(DateUtils.parse(list.get(0), DateUtils.DateFormat.YYYY_MM_DD));
+                                    socker.setShareCode(code);
+                                    socker.setOpenValue(MathConstants.ParseStrPointKeep(list.get(1), 4));
+                                    socker.setEndValue(MathConstants.ParseStrPointKeep(list.get(2), 4));
+                                    socker.setRiseFall(MathConstants.ParseStrPointKeep(list.get(3), 4));
+                                    if (list.get(4).contains("%")) {
+                                        socker.setRiseFallRatio(MathConstants.ParseStrPointKeep(list.get(4).replace("%", ""), 4));
+                                    }
+                                    socker.setRiseFallRatioStr(list.get(4));
+                                    socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
+                                    socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
+                                    socker.setDealCount(Long.parseLong(list.get(7)));
+                                    socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
+                                    if (list.get(9).contains("%")) {
+                                        socker.setTurnOverRate(MathConstants.ParseStrPointKeep(list.get(9).replace("%", ""), 4));
+                                    }
+                                    sohuList.add(socker);
+                                }
+                                entity.setList(sohuList);
+                                return entity;
                             }
-                            socker.setRiseFallRatioStr(list.get(4));
-                            socker.setLowest(MathConstants.ParseStrPointKeep(list.get(5), 4));
-                            socker.setHighest(MathConstants.ParseStrPointKeep(list.get(6), 4));
-                            socker.setDealCount(Long.parseLong(list.get(7)));
-                            socker.setDealAmount(MathConstants.ParseStrPointKeep(list.get(8), 4) * 10000);
-                            if (list.get(9).contains("%")) {
-                                socker.setTurnOverRate(MathConstants.ParseStrPointKeep(list.get(9).replace("%", ""), 4));
-                            }
-                            sohuList.add(socker);
                         }
-                        entity.setList(sohuList);
-                        return entity;
                     }
                 }
 
                 retryCount++;
                 if (retryCount < maxRetries) {
-                    log.warn("股票 {} 第 {} 次请求返回无效数据，{} 秒后重试", inputDomain.getShareCode(), retryCount, retryCount);
-                    Thread.sleep(1000 * retryCount);
+                    // 优化：中等延迟策略 - 平衡成功率和性能
+                    // 503 错误：1s, 2s, 4s, 8s + 随机 0-500ms
+                    // 其他错误：0.5s, 1s, 2s, 4s + 随机 0-300ms
+                    boolean is503 = responseResult != null && responseResult.is503();
+                    long baseDelay = is503 ? 1000L : 500L;
+                    long delay = baseDelay * (1L << (retryCount - 1)) + RANDOM.nextInt(is503 ? 500 : 300);
+
+                    if (is503) {
+                        log.warn("股票 {} 第 {} 次请求返回 503，{}ms 后重试", inputDomain.getShareCode(), retryCount, delay);
+                    } else {
+                        log.debug("股票 {} 第 {} 次请求返回无效数据，{}ms 后重试", inputDomain.getShareCode(), retryCount, delay);
+                    }
+                    Thread.sleep(delay);
                 }
 
             } catch (Exception e) {
                 retryCount++;
                 if (retryCount < maxRetries) {
-                    log.error("股票 {} 第 {} 次请求失败：{}，{} 秒后重试", inputDomain.getShareCode(), retryCount - 1, e.getMessage(), retryCount);
-                    Thread.sleep(1000 * retryCount);
+                    // 中等延迟：500ms, 1s, 2s, 4s + 随机 0-300ms
+                    long delay = 500L * (1L << (retryCount - 1)) + RANDOM.nextInt(300);
+                    log.debug("股票 {} 第 {} 次请求失败：{}，{}ms 后重试", inputDomain.getShareCode(), retryCount - 1, e.getMessage(), delay);
+                    Thread.sleep(delay);
+                }
+            } finally {
+                if (acquired) {
+                    semaphore.release();
                 }
             }
         }
 
-        log.error("股票 {} 经过 {} 次重试后仍然失败，URL: {}", inputDomain.getShareCode(), maxRetries, totalUrl);
+        if (maxRetries > 0) {
+            log.error("股票 {} 经过 {} 次重试后仍然失败", inputDomain.getShareCode(), maxRetries);
+        }
         return null;
     }
 
@@ -412,7 +485,7 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
             QueryRecentSerialRedConditionDTO queryRecentSerialRedConditionDTO = new QueryRecentSerialRedConditionDTO();
             queryRecentSerialRedConditionDTO.setAllFlag(true);
             tradeMethodService.queryThreeDownRatioByDate(queryRecentSerialRedConditionDTO);
-            //过滤出符合购买条件的数据到condition表中
+            //过滤出符合购买条件的数据到 condition 表中
             QueryProfitByComProgram queryProfitByComProgram = new QueryProfitByComProgram();
             BeanUtils.copyProperties(downloadMarketInputDTO,queryProfitByComProgram);
             tradeInfoService.getFixSerialDown(queryProfitByComProgram);
@@ -462,9 +535,14 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
     }
 
 
+    /**
+     * 下载任务线程
+     */
     class PatchThread implements Runnable{
 
         ShareInfo excelShare;
+        List<String> failedShares;
+        CountDownLatch latch;
 
         public void setExcelShare(ShareInfo excelShare) {
             this.excelShare = excelShare;
@@ -473,17 +551,31 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         public ShareInfo getExcelShare() {
             return excelShare;
         }
-        PatchThread(ShareInfo shareInfo){
+        PatchThread(ShareInfo shareInfo, List<String> failedShares, CountDownLatch latch){
             excelShare = shareInfo;
+            this.failedShares = failedShares;
+            this.latch = latch;
         }
 
 
         @Override
         public void run() {
             try {
-                queryInsert(excelShare);
+                boolean success = queryInsert(excelShare);
+                if (!success) {
+                    synchronized (failedShares) {
+                        failedShares.add(excelShare.getShareCode());
+                    }
+                    log.warn("股票 {} 下载失败，已加入失败列表", excelShare.getShareCode());
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                synchronized (failedShares) {
+                    failedShares.add(excelShare.getShareCode());
+                }
+                log.error("股票 {} 下载异常：{}", excelShare.getShareCode(), e.getMessage());
+            } finally {
+                // 任务完成，计数器减 1
+                latch.countDown();
             }
         }
     }
@@ -493,59 +585,6 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
 
     public static List<String> getFailedShareCodes() {
         return failedShareCodes;
-    }
-
-    /**
-     * 重试失败的股票
-     * @param failedShareCodes 失败的股票代码列表
-     * @param downloadMarketInputDTO 参数
-     */
-    public void retryFailedShares(List<String> failedShareCodes, DownloadMarketInputDTO downloadMarketInputDTO) {
-        if (CollectionUtils.isEmpty(failedShareCodes)) {
-            log.info("没有需要重试的股票");
-            return;
-        }
-
-        log.info("开始重试 {} 只失败的股票：{}", failedShareCodes.size(), JSONArray.toJSONString(failedShareCodes));
-
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
-        List<String> stillFailedShares = new ArrayList<>();
-
-        for (String shareCode : failedShareCodes) {
-            ShareInfo shareInfo = new ShareInfo();
-            shareInfo.setShareCode(shareCode);
-            shareInfo.setStatus(SockerStatusEnum.GROUNDING.getCode());
-            ShareInfo dbShareInfo = shareInfoMapper.getShareInfo(shareInfo).stream().findFirst().orElse(null);
-            if (dbShareInfo == null) {
-                dbShareInfo = shareInfo;
-            }
-            TradeDateInfo currentMaxDateInfo = tradeDateMapper.queryMaxDate();
-            Date date = marketInfoNewMapper.queryMaxDate("cn_" + shareCode);
-            if (date == null) {
-                String s = DateUtils.operateDate(new Date(), -3000, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS.getFormat());
-                date = DateUtils.parse(s, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
-            }
-            dbShareInfo.setDate(date);
-
-            RetryThread retryThread = new RetryThread(dbShareInfo, stillFailedShares);
-            executorService.execute(retryThread);
-        }
-
-        executorService.shutdown();
-        try {
-            executorService.awaitTermination(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            log.error("等待重试任务完成时被打断", e);
-        }
-
-        if (CollectionUtils.isEmpty(stillFailedShares)) {
-            log.info("所有重试完成，全部成功！");
-            failedShareCodes.clear();
-        } else {
-            log.error("仍有 {} 只股票重试失败：{}", stillFailedShares.size(), JSONArray.toJSONString(stillFailedShares));
-            failedShareCodes.clear();
-            failedShareCodes.addAll(stillFailedShares);
-        }
     }
 
     class RetryThread implements Runnable {
@@ -560,12 +599,18 @@ public class MarketScheduleServiceImpl implements MarketScheduleService {
         @Override
         public void run() {
             try {
-                queryInsert(excelShare);
+                boolean success = queryInsert(excelShare);
+                if (!success) {
+                    synchronized (stillFailedShares) {
+                        stillFailedShares.add(excelShare.getShareCode());
+                    }
+                    log.warn("重试股票 {} 仍然失败", excelShare.getShareCode());
+                }
             } catch (Exception e) {
                 synchronized (stillFailedShares) {
                     stillFailedShares.add(excelShare.getShareCode());
                 }
-                log.error("重试股票 {} 失败：{}", excelShare.getShareCode(), e.getMessage());
+                log.error("重试股票 {} 异常：{}", excelShare.getShareCode(), e.getMessage());
             }
         }
     }

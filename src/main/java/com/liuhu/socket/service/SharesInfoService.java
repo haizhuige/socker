@@ -76,4 +76,18 @@ public interface SharesInfoService {
     List<MarketRealTimeOutputDomain> getRealTimeRateByXueQiu(MarketInputDomain marketInputDomain);
 
     List<MarketRealTimeOutputDomain> getHistRateByXueQiu(MarketInputDomain marketInputDomain);
+
+    /**
+     * 根据 share_code 更新 share_info 表的 hq_update_time
+     * @param shareCode 股票代码
+     * @param hqUpdateTime 行情更新时间
+     */
+    void updateHqUpdateTimeByShareCode(String shareCode, String hqUpdateTime);
+
+    /**
+     * 重新下载指定日期缺失的股票数据（根据 hq_update_time 决定起始时间）
+     * @param date 日期 (格式：yyyy-MM-dd HH:mm:ss)
+     * @return 成功数量
+     */
+    int retryMissingSharesByDate(String date);
 }

@@ -161,14 +161,31 @@ public class TradeInfoController {
 	 *
 	 * @param input
 	 * @return
+	 * @deprecated 使用 calculateStockReturn 替代
 	 */
 	@ResponseBody
 	@RequestMapping("/queryThreeDownThen")
+	@Deprecated
 	public ResponseResult queryThreeDownThen(@RequestBody QueryRecentSerialRedConditionDTO input) throws Exception {
         Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
         String methodType = input.getMethodType();
         TradeMethodService tradeMethodService = tradeImpl.get(methodType);
 		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.queryThreeDownRatioByDate(input);
+		return ResponseResult.done(outPutDTOList);
+	}
+
+	/**
+	 * 查询连续三次下跌之后行情（使用 QueryStockReturnDTO 参数，优化版）
+	 * @param inputDTO 查询参数
+	 * @return 执行结果
+	 */
+	@ResponseBody
+	@RequestMapping("/calculateStockReturn")
+	public ResponseResult calculateStockReturn(@RequestBody QueryStockReturnDTO inputDTO) throws Exception {
+		Map<String, TradeMethodService> tradeImpl = tradeMethodStrategyConfig.getTradeImpl();
+		String methodType = inputDTO.getMethodType();
+		TradeMethodService tradeMethodService = tradeImpl.get(methodType);
+		List<QueryRecentSerialRedOutPutDTO> outPutDTOList = tradeMethodService.calculateStockReturn(inputDTO);
 		return ResponseResult.done(outPutDTOList);
 	}
 

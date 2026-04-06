@@ -25,5 +25,7 @@ public class ShareInfo implements Serializable {
 
     private String type;
 
+    private Date hqUpdateTime;
+
 
 }

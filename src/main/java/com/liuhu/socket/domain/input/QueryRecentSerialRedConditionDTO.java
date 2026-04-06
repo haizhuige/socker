@@ -57,6 +57,8 @@ public class QueryRecentSerialRedConditionDTO  implements Serializable {
 
     private Boolean allFlag=false;
 
+    private String hushenStatus = "B";
+
 
 
 }

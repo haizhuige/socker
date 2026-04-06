@@ -6,9 +6,11 @@ import com.liuhu.socket.dao.MarketInfoMapper;
 import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.dao.ShareInfoMapper;
+import com.liuhu.socket.dao.TradeDateMapper;
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.MarketInputDomain;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
+import com.liuhu.socket.domain.input.QueryStockReturnDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.MarketRealTimeOutputDomain;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
@@ -23,8 +25,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component("nextSerialRed")
@@ -49,6 +55,9 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
     @Autowired
     ShareInfoMapper shareInfoMapper;
 
+    @Autowired
+    TradeDateMapper tradeDateMapper;
+
 
     @Qualifier("taskExecutor")
     @Autowired
@@ -66,47 +75,145 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
 
     @Override
     public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
-        List<String> shareCodeList = new ArrayList<>();
-        Boolean allFlag = input2Domain.getAllFlag();
-        Date date = null;
-        if (allFlag) {
-            ShareInfo shareInfo = new ShareInfo();
-            shareInfo.setHushenStatus("B");
-            shareInfo.setStatus("1");
-            List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
-            shareCodeList = shareInfoList.stream().map(shareInfo1 -> shareInfo1.getShareCode()).collect(Collectors.toList());
-            date = serialTempMapper.selectMaxDateFromHandleData(shareCodeList.get(0));
-            Date marketNewDate = tradeInfoService.queryMaxDate().getDate();
-            if (date.compareTo(marketNewDate)==0){
-                return null;
-            }
+        // delegated to optimized calculateStockReturn method
+        QueryStockReturnDTO inputDTO = new QueryStockReturnDTO();
+        inputDTO.setAllFlag(input2Domain.getAllFlag());
+        inputDTO.setShareCode(input2Domain.getShareCode());
+        inputDTO.setStartTime(input2Domain.getStartTime());
+        inputDTO.setEndTime(input2Domain.getEndTime());
+        inputDTO.setHushenStatus(input2Domain.getHushenStatus());
+        inputDTO.setRateOrAmountDay(input2Domain.getRateOrAmountDay());
+        return calculateStockReturn(inputDTO);
+    }
 
-        } else {
-            shareCodeList.add(input2Domain.getShareCode());
+    /**
+     * 计算股票收益率并存储到 serial_temp 表（优化版）
+     */
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> calculateStockReturn(QueryStockReturnDTO inputDTO) throws Exception {
+        List<String> shareCodeList = prepareShareCodeList(inputDTO);
+        if (CollectionUtils.isEmpty(shareCodeList)) {
+            log.warn("未找到符合条件的股票列表");
+            return new ArrayList<>();
         }
+
+        int totalSize = shareCodeList.size();
+        int threadPoolSize = Math.min(40, Math.max(20, totalSize / 125));
+        CountDownLatch latch = new CountDownLatch(totalSize);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        log.info("开始计算股票收益率，总数:{}, 线程池大小:{}", totalSize, threadPoolSize);
 
         for (String shareCode : shareCodeList) {
-            Date finalDate = date;
+            String finalShareCode = shareCode;
             taskExecutor.execute(() -> {
-                input2Domain.setRateOrAmountDay(Integer.valueOf(shareCode));
-                List<String> newShareCodeList = new ArrayList<>();
-                String newShareCode = "cn_" + shareCode;
-                newShareCodeList.add(newShareCode);
-               /* if (!allFlag){
-                    finalDate =  serialTempMapper.selectMaxDateFromHandleData(shareCode);
-                }*/
-                input2Domain.setStartTime(DateUtils.format(tradeInfoService.getWantDate(1, finalDate, "plus"), DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-                /*  input2Domain.setStartTime("2018-01-02 00:00:00");
-                    input2Domain.setEndTime("2019-12-31 00:00:00");*/
-                //查询某一时间区间的socker收益率
-                List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(null, newShareCodeList, input2Domain);
-                if (outPutDTOList.size() > 0) {
-                    serialTempMapper.insertList(outPutDTOList, Integer.valueOf(shareCode));
+                try {
+                    executeSingleShare(finalShareCode, inputDTO);
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failureCount.incrementAndGet();
+                    log.error("计算股票收益率失败，shareCode:{}, e:{}", finalShareCode, e.getMessage());
+                } finally {
+                    latch.countDown();
                 }
             });
-
         }
+
+        // 等待所有任务完成，动态计算超时时间
+        long timeout = Math.max(300, totalSize / threadPoolSize * 2);
+        boolean completed = latch.await(timeout, TimeUnit.SECONDS);
+
+        if (!completed) {
+            log.warn("计算股票收益率超时，timeout:{}s, 剩余任务数:{}", timeout, latch.getCount());
+        }
+
+        log.info("计算股票收益率完成，总数:{}, 成功:{}, 失败:{}, 耗时:{}s",
+                totalSize, successCount.get(), failureCount.get(), timeout);
         return null;
+    }
+
+    /**
+     * 准备股票代码列表
+     */
+    private List<String> prepareShareCodeList(QueryStockReturnDTO inputDTO) throws Exception {
+        if (Boolean.TRUE.equals(inputDTO.getAllFlag())) {
+            ShareInfo shareInfo = new ShareInfo();
+            shareInfo.setHushenStatus(inputDTO.getHushenStatus());
+            shareInfo.setStatus("1");
+            List<ShareInfo> shareInfoList = shareInfoMapper.getShareInfo(shareInfo);
+            if (CollectionUtils.isEmpty(shareInfoList)) {
+                return new ArrayList<>();
+            }
+
+            // 检查是否已处理过最新日期
+            String shareCode = shareInfoList.get(0).getShareCode();
+            Date maxDate = serialTempMapper.selectMaxDateFromHandleData("cn_"+shareCode);
+            Date marketNewDate = tradeInfoService.queryMaxDate().getDate();
+            if (maxDate != null && maxDate.compareTo(marketNewDate) == 0) {
+                log.info("数据已处理到最新日期:{}, 跳过", marketNewDate);
+                return new ArrayList<>();
+            }
+
+            return shareInfoList.stream()
+                    .map(ShareInfo::getShareCode)
+                    .collect(Collectors.toList());
+        } else {
+            String shareCode = inputDTO.getShareCode();
+            if (shareCode == null || shareCode.isEmpty()) {
+                throw new IllegalArgumentException("shareCode 不能为空");
+            }
+            return Collections.singletonList(shareCode);
+        }
+    }
+
+    /**
+     * 执行单只股票收益率计算
+     */
+    private void executeSingleShare(String shareCode, QueryStockReturnDTO inputDTO) {
+        try {
+            List<String> newShareCodeList = Collections.singletonList("cn_" + shareCode);
+
+            // 如果没有指定时间范围，取 serial_temp 中该股票已处理的最大日期，然后取下一个交易日
+            String startTime = inputDTO.getStartTime();
+            if (startTime == null) {
+                // 从 serial_temp 表查询该股票已处理的最大日期
+                Date maxHandleDate = serialTempMapper.selectMaxDateFromHandleData("cn_" + shareCode);
+
+                Date nextTradeDate;
+                if (maxHandleDate != null) {
+                    // 取已处理日期之后的第一个交易日
+                    nextTradeDate = tradeDateMapper.getNextTradeDate(maxHandleDate);
+                } else {
+                    // 如果没有处理过，取当前日期前一天的交易日
+                    Date yesterday = tradeInfoService.getWantDate(1, new Date(), "sub");
+                    nextTradeDate = tradeDateMapper.getNextTradeDate(yesterday);
+                }
+
+                if (nextTradeDate != null) {
+                    startTime = DateUtils.format(nextTradeDate, DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS);
+                } else {
+                    log.warn("未找到下一个交易日，shareCode:{}", shareCode);
+                    return;
+                }
+            }
+
+            QueryRecentSerialRedConditionDTO conditionDTO = new QueryRecentSerialRedConditionDTO();
+            conditionDTO.setStartTime(startTime);
+            conditionDTO.setEndTime(inputDTO.getEndTime());
+
+            // 查询收益率数据
+            List<QueryRecentSerialRedOutPutDTO> outPutDTOList = marketInfoNewMapper.queryThreeDownThen(
+                    null, newShareCodeList, conditionDTO);
+
+            if (!CollectionUtils.isEmpty(outPutDTOList)) {
+                // 插入到 serial_temp 表
+                serialTempMapper.insertList(outPutDTOList, inputDTO.getRateOrAmountDay());
+            }
+        } catch (Exception e) {
+            log.error("执行单只股票收益率计算失败，shareCode:{}, e:{}", shareCode, e.getMessage());
+            throw new RuntimeException("执行失败", e);
+        }
     }
 
     @Override
@@ -138,7 +245,7 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
             Integer doubleSize=1;
             //实时收益率
             Double runRatio = 0.0;
-            //基金净值 开始计算设置为1
+            //基金净值 开始计算设置为 1
             Double unitPrice = 1.0;
             //购买单元
             int unitAmount;
@@ -167,19 +274,19 @@ public class TradeMethodByNextSerialRedServiceImpl implements TradeMethodService
                 unitAmount = 10000* doubleSize;
                 if (doubleSize == 1) {
                     if (minRatio + runRatio > profit) {
-                        tFinalRatio = tFinalRatio + minRatio - fee;//减掉0.2 的sxf
+                        tFinalRatio = tFinalRatio + minRatio - fee;//减掉 0.2 的 sxf
                         unitProfit =  minRatio * unitAmount * 0.01 - unitAmount * fee*0.01;
                         allProfit = allProfit +unitProfit;
                         runRatio = 0.0;
                         continue;
                     } else if (maxRatio + runRatio > profit) {
-                        tFinalRatio = tFinalRatio - runRatio + profit - fee;//减掉0.2 的sxf
+                        tFinalRatio = tFinalRatio - runRatio + profit - fee;//减掉 0.2 的 sxf
                         unitProfit =  (profit - runRatio) * unitAmount * 0.01 - unitAmount * fee*0.01;
                         allProfit = allProfit +unitProfit;
                         runRatio = 0.0;
                         continue;
                     } else {
-                        tFinalRatio = tFinalRatio + finalRatio;//减掉0.2 的sxf
+                        tFinalRatio = tFinalRatio + finalRatio;//减掉 0.2 的 sxf
                         runRatio = runRatio + finalRatio;
                         unitProfit =  finalRatio * unitAmount * 0.01;
                         allProfit = allProfit +unitProfit;

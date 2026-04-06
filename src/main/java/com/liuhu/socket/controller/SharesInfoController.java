@@ -85,4 +85,20 @@ public class SharesInfoController {
         scheduleTask.runMarketDataInfo(downloadMarketInputDTO);
         return ResponseResult.done("导入成功");
     }
+
+    @ResponseBody
+    @RequestMapping("/retryMissingSharesByDate.do")
+    public ResponseResult retryMissingSharesByDate(@RequestParam(value = "date", required = false) String date) {
+        if (date == null || date.isEmpty()) {
+            // 默认使用昨天日期
+            date = com.liuhu.socket.common.DateUtils.operateDate(new java.util.Date(), -1, com.liuhu.socket.common.DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS.getFormat());
+        }
+        try {
+            int successCount = sharesInfoService.retryMissingSharesByDate(date);
+            return ResponseResult.done("补录完成，成功 " + successCount + " 只股票");
+        } catch (Exception e) {
+            log.error("补录失败{}", e);
+            return ResponseResult.done("补录失败：" + e.getMessage());
+        }
+    }
 }

@@ -6,6 +6,7 @@ import com.liuhu.socket.dao.MarketInfoNewMapper;
 import com.liuhu.socket.dao.SerialTempMapper;
 import com.liuhu.socket.domain.input.GetRateThreeIncomeInputDTO;
 import com.liuhu.socket.domain.input.QueryRecentSerialRedConditionDTO;
+import com.liuhu.socket.domain.input.QueryStockReturnDTO;
 import com.liuhu.socket.domain.output.MarketRateTheeOutPutDTO;
 import com.liuhu.socket.domain.output.QueryRecentSerialRedOutPutDTO;
 import com.liuhu.socket.dto.QueryRecentSerialRedConditionDO;
@@ -117,54 +118,20 @@ public class TradeMethodServiceImpl  implements TradeMethodService {
 
     /**
      * 连续三次跳空低开之后一天的行情
+     * 已删除：实际使用 TradeMethodByNextSerialRedServiceImpl 实现
      * @param input2Domain
      * @return
      * @throws Exception
+     * @deprecated 使用 TradeMethodByNextSerialRedServiceImpl.queryThreeDownRatioByDate 替代
      */
     @Override
+    @Deprecated
     public List<QueryRecentSerialRedOutPutDTO> queryThreeDownRatioByDate(QueryRecentSerialRedConditionDTO input2Domain) throws Exception {
+        throw new UnsupportedOperationException("请使用 nextSerialRed 实现");
+    }
 
-        String startTime = input2Domain.getStartTime();
-        if (Objects.isNull(startTime)) {
-            throw new Exception("截至日期不能为空");
-        }
-        List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
-        /**
-         * 分别查询上涨区间内可能完成的交易日查询
-         */
-        //获取需要查询的日期集合
-        List<Date> dateList = tradeInfoService.queryPeriodDateList(startTime, input2Domain.getPeriod(),"sub");
-       // List<QueryRecentSerialRedOutPutDTO> allInfoList = new ArrayList<>();
-
-        for (Date date:dateList){
-
-            input2Domain.setStartTime(DateUtils.format(date,DateUtils.DateFormat.YYYY_MM_DD_HH_MM_SS));
-          //  List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(date);
-            List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.querySerialRedFiveInfoByDate(input2Domain);
-       //     List<MarketInfoNew> marketInfoNewList = marketInfoNewMapper.queryMarketInfoByDate(input2Domain);
-
-            if (marketInfoNewList.size()==0){
-                continue;
-            }
-            List<Date> selectDateList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getDate()).collect(Collectors.toList());
-            Date newDate = selectDateList.get(0);
-             newDate = tradeInfoService.getWantDate(1, newDate, "plus");
-            List<String> shareCodeList = marketInfoNewList.stream().map(marketInfoNew -> marketInfoNew.getShareCode()).collect(Collectors.toList());
-            List<QueryRecentSerialRedOutPutDTO> outPutDTOList =  marketInfoNewMapper.queryThreeDownThen(newDate,shareCodeList,null);
-             for (MarketInfoNew marketInfoNew:marketInfoNewList){
-                 for (QueryRecentSerialRedOutPutDTO outPutDTO:outPutDTOList){
-                     if (marketInfoNew.getShareCode().equals(outPutDTO.getShareCode())){
-                         outPutDTO.setTurnOverRate(marketInfoNew.getTurnOverRate());
-                         break;
-                     }
-                 }
-             }
-            allInfoList.addAll(outPutDTOList);
-        }
-        if (allInfoList.size()>0){
-            serialTempMapper.insertList(allInfoList,input2Domain.getRateOrAmountDay());
-        }
-
+    @Override
+    public List<QueryRecentSerialRedOutPutDTO> calculateStockReturn(QueryStockReturnDTO inputDTO) throws Exception {
         return null;
     }
 
